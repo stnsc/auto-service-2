@@ -8,11 +8,32 @@ import {
 } from "react-native"
 import { NButton } from "../components/NButton"
 import { NInput } from "../components/NInput"
+import { NTabBar } from "../components/NTabBar"
 import { useState } from "react"
+import { Ionicons } from "@expo/vector-icons"
 
 export const ButtonGarden = () => {
     const [count, setCount] = useState(0)
     const [text, setText] = useState("")
+
+    const TABS = [
+        {
+            key: "home",
+            label: "Home",
+            icon: <Ionicons name="home" size={22} color="white" />,
+        },
+        {
+            key: "dash",
+            label: "Dashboard",
+            icon: <Ionicons name="grid" size={22} color="white" />,
+        },
+        {
+            key: "news",
+            label: "News",
+            icon: <Ionicons name="radio" size={22} color="white" />,
+        },
+    ]
+    const [active, setActive] = useState("library")
 
     return (
         <>
@@ -59,6 +80,16 @@ export const ButtonGarden = () => {
                             </View>
                         </NButton>
                     </KeyboardAvoidingView>
+                </View>
+
+                {/** Custom Tab Component */}
+
+                <View style={styles.container}>
+                    <NTabBar
+                        tabs={TABS}
+                        activeKey={active}
+                        onTabPress={setActive}
+                    />
                 </View>
             </ScrollView>
         </>

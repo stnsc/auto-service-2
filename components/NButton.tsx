@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react"
-import { StyleSheet, View, ViewStyle, Text } from "react-native"
+import { StyleSheet, View, ViewStyle } from "react-native"
 import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import Animated, {
     useSharedValue,
@@ -9,23 +9,23 @@ import Animated, {
     runOnJS,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
-import { BlurView } from "expo-blur" // Import BlurView
+import { BlurView } from "expo-blur"
 
 interface NButtonProps {
     onPress?: () => void
     children?: ReactNode
     color?: string
     style?: ViewStyle
-    intensity?: number // Control how strong the blur is (0-100)
+    intensity?: number
 }
 
-export const NButton = ({
+export function NButton({
     onPress,
     children,
-    color = "rgba(255, 255, 255, 0.1)", // Default to a subtle transparent white
+    color = "rgba(255, 255, 255, 0.1)",
     intensity = 30,
     style,
-}: NButtonProps) => {
+}: NButtonProps) {
     const isPressed = useSharedValue(false)
     const translateX = useSharedValue(0)
     const translateY = useSharedValue(0)
@@ -45,12 +45,12 @@ export const NButton = ({
 
     const pan = Gesture.Pan()
         .onUpdate((event) => {
-            translateX.value = event.translationX / 20
-            translateY.value = event.translationY / 20
+            translateX.value = event.translationX / 15
+            translateY.value = event.translationY / 15
         })
         .onEnd(() => {
-            translateX.value = withSpring(0, { damping: 15, stiffness: 120 })
-            translateY.value = withSpring(0, { damping: 15, stiffness: 120 })
+            translateX.value = withSpring(0)
+            translateY.value = withSpring(0)
         })
 
     const composedGestures = Gesture.Simultaneous(tap, pan)
@@ -59,11 +59,14 @@ export const NButton = ({
         transform: [
             { translateX: translateX.value },
             { translateY: translateY.value },
-            { scale: withSpring(isPressed.value ? 1.05 : 1) },
+            { scale: withSpring(isPressed.value ? 1.1 : 1) },
         ],
-        // Glow effect remains the same
-        shadowOpacity: withTiming(isPressed.value ? 0.4 : 0.1),
-        shadowRadius: withTiming(isPressed.value ? 20 : 5),
+    }))
+
+    // This handles the brightness increase
+    const brightnessStyle = useAnimatedStyle(() => ({
+        backgroundColor: "white",
+        opacity: withTiming(isPressed.value ? 0.2 : 0, { duration: 100 }),
     }))
 
     return (
@@ -78,6 +81,10 @@ export const NButton = ({
                         tint="dark"
                         style={[styles.innerButton, { backgroundColor: color }]}
                     >
+                        <Animated.View
+                            style={[StyleSheet.absoluteFill, brightnessStyle]}
+                        />
+
                         {children}
                     </BlurView>
                 </LinearGradient>
@@ -89,13 +96,10 @@ export const NButton = ({
 const styles = StyleSheet.create({
     wrapper: {
         borderRadius: 25,
-        // Overflow hidden is important to keep the blur inside the rounded corners
         overflow: "hidden",
-        shadowColor: "#fff",
-        shadowOffset: { width: 0, height: 0 },
     },
     gradientStroke: {
-        padding: 1, // Thin "glass" edge
+        padding: 1.5,
         borderRadius: 25,
     },
     innerButton: {
@@ -104,5 +108,6 @@ const styles = StyleSheet.create({
         borderRadius: 23,
         alignItems: "center",
         justifyContent: "center",
+        overflow: "hidden",
     },
 })
