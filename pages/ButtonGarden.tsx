@@ -9,6 +9,8 @@ import {
 import { NButton } from "../components/NButton"
 import { NInput } from "../components/NInput"
 import { NTabBar } from "../components/NTabBar"
+import { NContextMenu } from "../components/NContextMenu"
+
 import { useState } from "react"
 import { Ionicons } from "@expo/vector-icons"
 
@@ -31,6 +33,30 @@ export const ButtonGarden = () => {
             key: "news",
             label: "News",
             icon: <Ionicons name="radio" size={22} color="white" />,
+        },
+    ]
+
+    const CONTEXT = [
+        {
+            key: "account",
+            label: "Account Details",
+            icon: <Ionicons name="book-outline" size={18} color="white" />,
+        },
+        {
+            key: "vehicle",
+            label: "Vehicle Configuration",
+            icon: <Ionicons name="settings-outline" size={18} color="white" />,
+        },
+        {
+            key: "language",
+            label: "Language",
+            icon: <Ionicons name="text-outline" size={18} color="white" />,
+        },
+        {
+            key: "logout",
+            label: "Logout",
+            icon: <Ionicons name="log-out-outline" size={18} color="white" />,
+            destructive: true,
         },
     ]
     const [active, setActive] = useState("library")
@@ -91,6 +117,18 @@ export const ButtonGarden = () => {
                         onTabPress={setActive}
                     />
                 </View>
+
+                {/** Custom Context Menu Component */}
+
+                <View style={styles.container}>
+                    <NContextMenu
+                        avatar={
+                            <Ionicons name="person" size={22} color="white" />
+                        }
+                        onAction={(key) => console.log(key)}
+                        actions={CONTEXT}
+                    />
+                </View>
             </ScrollView>
         </>
     )
@@ -104,7 +142,6 @@ const styles = StyleSheet.create({
     },
     scrollViewContainer: {
         flex: 1,
-        width: "100%",
     },
     container: {
         flex: 1,
