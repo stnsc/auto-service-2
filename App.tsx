@@ -1,20 +1,29 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet } from "react-native"
+import React from "react"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
+import { ButtonGarden } from "./pages/ButtonGarden"
 
 export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>The Beginning</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+    return (
+        <GestureHandlerRootView style={styles.container}>
+            <ImageBackground
+                source={require("./assets/autoservice/background.jpg")}
+                style={styles.background}
+            >
+                <ButtonGarden />
+            </ImageBackground>
+        </GestureHandlerRootView>
+    )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+    background: {
+        width: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    container: {
+        flex: 1,
+        backgroundColor: "#121212",
+    },
+})
