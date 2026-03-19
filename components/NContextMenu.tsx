@@ -123,13 +123,20 @@ export function NContextMenu({
 
     // The whole pill grows from circle → rectangle
     const containerStyle = useAnimatedStyle(() => ({
-        width: interpolate(openProgress.value, [0, 1], [60, 250]),
-        height: interpolate(openProgress.value, [0, 1], [60, 240]),
-        borderRadius: interpolate(openProgress.value, [0, 1], [30, 32]),
+        width: interpolate(openProgress.value, [0, 1], [42, 230]),
+        height: interpolate(openProgress.value, [0, 1], [42, 190]),
+        borderRadius: interpolate(openProgress.value, [0, 1], [21, 32]),
     }))
 
+    const avatarButtonStyle = useAnimatedStyle(() => ({
+        width: interpolate(openProgress.value, [0, 0.25], [42, 0], "clamp"),
+        opacity: interpolate(openProgress.value, [0, 0.2], [1, 0], "clamp"),
+        overflow: "hidden",
+    }))
+
+    // Update menuPanelStyle to use full width when avatar is gone
     const menuPanelStyle = useAnimatedStyle(() => ({
-        width: interpolate(openProgress.value, [0, 1], [0, 185]),
+        width: interpolate(openProgress.value, [0, 1], [0, 238]),
         opacity: interpolate(openProgress.value, [0, 0.2, 1], [0, 0, 1]),
     }))
 
@@ -145,13 +152,15 @@ export function NContextMenu({
                     style={[styles.container, { backgroundColor: color }]}
                 >
                     {/* Avatar — the trigger */}
-                    <TouchableOpacity
-                        onPress={toggle}
-                        style={styles.avatarButton}
-                        activeOpacity={0.75}
-                    >
-                        <View style={styles.avatarInner}>{avatar}</View>
-                    </TouchableOpacity>
+                    <Animated.View style={avatarButtonStyle}>
+                        <TouchableOpacity
+                            onPress={toggle}
+                            style={styles.avatarButton}
+                            activeOpacity={0.75}
+                        >
+                            <View style={styles.avatarInner}>{avatar}</View>
+                        </TouchableOpacity>
+                    </Animated.View>
 
                     {/* Expanding items panel — no arrow */}
                     <Animated.View style={[styles.menuPanel, menuPanelStyle]}>
@@ -192,8 +201,8 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     avatarButton: {
-        width: 57,
-        paddingTop: 12,
+        width: 42,
+        paddingTop: 2,
         alignItems: "center",
         flexShrink: 0,
     },
@@ -210,8 +219,9 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     menuItems: {
-        width: 175,
-        paddingRight: 12,
+        width: 228,
+        paddingRight: 14,
+        paddingLeft: 14, // left padding now that avatar is gone
         paddingVertical: 6,
     },
     menuItem: {
@@ -227,7 +237,7 @@ const styles = StyleSheet.create({
     },
     menuItemLabel: {
         color: "rgba(255,255,255,0.9)",
-        fontSize: 15,
+        fontSize: 13,
         fontWeight: "500",
         flexShrink: 1,
     },

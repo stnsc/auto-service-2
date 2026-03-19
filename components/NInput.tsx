@@ -54,7 +54,6 @@ export const NInput = ({
             style={[styles.wrapper, animatedWrapperStyle, containerStyle]}
         >
             <LinearGradient
-                // Border changes from subtle to bright on focus
                 colors={["rgba(255,255,255,0.4)", "rgba(255,255,255,0.05)"]}
                 style={styles.gradientStroke}
             >
