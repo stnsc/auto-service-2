@@ -1,19 +1,21 @@
-import React, { useState } from "react"
-import {
-    StyleSheet,
-    View,
-    TextInput,
-    TextInputProps,
-    ViewStyle,
-} from "react-native"
+import React from "react"
+import { StyleSheet, TextInput, TextInputProps, ViewStyle } from "react-native"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
+    useAnimatedProps,
     withTiming,
+    withSpring,
     interpolateColor,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
+import { fonts } from "../theme"
+
+// ✅ Make TextInput directly animatable — no wrapper needed
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
+
+const MIN_HEIGHT = 50
 
 interface NInputProps extends TextInputProps {
     containerStyle?: ViewStyle
@@ -28,8 +30,18 @@ export const NInput = ({
     ...props
 }: NInputProps) => {
     const focusValue = useSharedValue(0)
+    const inputHeight = useSharedValue(MIN_HEIGHT)
 
-    // Animate the "glow" when the user clicks inside
+    const textLength = useSharedValue(0)
+
+    const onChangeText = (text: string) => {
+        if (text.length == 0) {
+            inputHeight.value = MIN_HEIGHT
+        }
+        textLength.value = text.length
+        props.onChangeText?.(text)
+    }
+
     const onFocus = () => {
         focusValue.value = withTiming(1, { duration: 300 })
     }
@@ -38,8 +50,15 @@ export const NInput = ({
         focusValue.value = withTiming(0, { duration: 300 })
     }
 
+    const onContentSizeChange = (e: any) => {
+        const newHeight = Math.max(MIN_HEIGHT, e.nativeEvent.contentSize.height)
+        inputHeight.value = withSpring(newHeight, {
+            damping: 20,
+            stiffness: 200,
+        })
+    }
+
     const animatedWrapperStyle = useAnimatedStyle(() => ({
-        // The glow gets stronger on focus
         shadowOpacity: interpolateColor(
             focusValue.value,
             [0, 1],
@@ -47,6 +66,10 @@ export const NInput = ({
         ) as any,
         shadowRadius: withTiming(focusValue.value ? 15 : 5),
         transform: [{ scale: withTiming(focusValue.value ? 1.02 : 1) }],
+    }))
+
+    const animatedInputStyle = useAnimatedStyle(() => ({
+        height: inputHeight.value,
     }))
 
     return (
@@ -65,12 +88,23 @@ export const NInput = ({
                         { backgroundColor: color },
                     ]}
                 >
-                    <TextInput
+                    <AnimatedTextInput
                         {...props}
-                        style={[styles.input, props.style]}
+                        style={[
+                            styles.input,
+                            { fontFamily: fonts.regular },
+                            animatedInputStyle,
+                            props.style,
+                        ]}
                         placeholderTextColor="rgba(255,255,255,0.4)"
                         onFocus={onFocus}
                         onBlur={onBlur}
+                        onContentSizeChange={onContentSizeChange}
+                        onChangeText={onChangeText}
+                        multiline={true}
+                        textAlignVertical="top"
+                        scrollEnabled={false}
+                        placeholder="What's your question?"
                     />
                 </BlurView>
             </LinearGradient>
@@ -84,7 +118,6 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         shadowColor: "#fff",
         shadowOffset: { width: 0, height: 0 },
-        marginVertical: 10,
     },
     gradientStroke: {
         padding: 1,

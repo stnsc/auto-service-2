@@ -10,6 +10,9 @@ import Animated, {
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
+import { NText } from "./NText"
+
+const AnimatedNText = Animated.createAnimatedComponent(NText)
 
 export interface TabItem {
     key: string
@@ -99,7 +102,7 @@ function NTab({
                 </View>
 
                 {/* Expanding label */}
-                <Animated.Text
+                <AnimatedNText
                     numberOfLines={1}
                     style={[
                         styles.tabLabel,
@@ -108,7 +111,7 @@ function NTab({
                     ]}
                 >
                     {item.label}
-                </Animated.Text>
+                </AnimatedNText>
             </Animated.View>
         </Pressable>
     )

@@ -4,8 +4,24 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { MainChat } from "./pages/MainChat"
 import { NTabBar } from "./components/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
+import { TopNavBar } from "./components/bundle/TopNavBar"
+
+import {
+    useFonts,
+    IosevkaCharon_300Light,
+    IosevkaCharon_400Regular,
+    IosevkaCharon_500Medium,
+    IosevkaCharon_700Bold,
+} from "@expo-google-fonts/iosevka-charon"
 
 export default function App() {
+    const [fontsLoaded] = useFonts({
+        IosevkaCharon_300Light,
+        IosevkaCharon_400Regular,
+        IosevkaCharon_500Medium,
+        IosevkaCharon_700Bold,
+    })
+
     const TABS = [
         {
             key: "home",
@@ -47,8 +63,15 @@ export default function App() {
 
             {/** App Wrapper */}
             <View style={{ ...StyleSheet.absoluteFillObject }}>
+                <View>
+                    <TopNavBar></TopNavBar>
+                </View>
+
                 <MainChat />
-                <NTabBar tabs={TABS} activeKey={"home"} />
+
+                <View style={{ paddingBottom: 20 }}>
+                    <NTabBar tabs={TABS} activeKey={"home"} />
+                </View>
             </View>
         </GestureHandlerRootView>
     )

@@ -73,13 +73,13 @@ export function NButton({
         <GestureDetector gesture={composedGestures}>
             <Animated.View style={[styles.wrapper, animatedStyle, style]}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.4)", "rgba(255,255,255,0.05)"]}
+                    colors={[color, "rgba(255,255,255,0.05)"]}
                     style={styles.gradientStroke}
                 >
                     <BlurView
                         intensity={intensity}
                         tint="dark"
-                        style={[styles.innerButton, { backgroundColor: color }]}
+                        style={[styles.innerButton]}
                     >
                         <Animated.View
                             style={[StyleSheet.absoluteFill, brightnessStyle]}
@@ -103,8 +103,8 @@ const styles = StyleSheet.create({
         borderRadius: 25,
     },
     innerButton: {
-        paddingVertical: 16,
-        paddingHorizontal: 32,
+        paddingVertical: 15,
+        paddingHorizontal: 15,
         borderRadius: 23,
         alignItems: "center",
         justifyContent: "center",

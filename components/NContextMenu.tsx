@@ -16,6 +16,8 @@ import Animated, {
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
+import { NText } from "./NText"
+import { fonts } from "../theme"
 
 export interface MenuAction {
     key: string
@@ -72,14 +74,15 @@ function AnimatedMenuItem({
                     activeOpacity={0.6}
                 >
                     <View style={styles.menuItemIcon}>{action.icon}</View>
-                    <Text
+                    <NText
                         style={[
                             styles.menuItemLabel,
                             action.destructive && styles.destructiveLabel,
+                            { fontFamily: fonts.light },
                         ]}
                     >
                         {action.label}
-                    </Text>
+                    </NText>
                 </TouchableOpacity>
             </Animated.View>
 
