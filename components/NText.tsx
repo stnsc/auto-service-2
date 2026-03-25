@@ -1,4 +1,3 @@
-// components/NText.tsx
 import { Text, TextProps } from "react-native"
 import { fonts } from "../theme"
 

@@ -1,14 +1,15 @@
-import { StyleSheet, View, Text } from "react-native"
+import { StyleSheet, View } from "react-native"
 import { NButton } from "../components/NButton"
 import { NInput } from "../components/NInput"
 import { Ionicons } from "@expo/vector-icons"
 import { Suggestions } from "../components/bundle/Suggestions"
-import React from "react"
+import { useState } from "react"
 import { NText } from "../components/NText"
 import { fonts } from "../theme"
 
 export const MainChat = () => {
-    const [user, setUser] = React.useState("Vlad")
+    const [user, setUser] = useState("Vlad")
+    const [query, setQuery] = useState("")
 
     return (
         <View style={styles.container}>
@@ -18,10 +19,10 @@ export const MainChat = () => {
                         style={[styles.greeting, { fontFamily: fonts.regular }]}
                     >
                         Hello, {user}! {"\n"}
-                        How can I help ya?
+                        How can I help?
                     </NText>
                 </View>
-                <NInput></NInput>
+                <NInput onChangeText={setQuery} value={query} />
                 <View style={styles.inputButton}>
                     <NButton color="rgba(33, 168, 112, 0.51)">
                         <Ionicons name="send" size={22} color="white" />
@@ -29,7 +30,7 @@ export const MainChat = () => {
                 </View>
             </View>
             <View style={styles.suggestions}>
-                <Suggestions />
+                <Suggestions query={query} onSelect={setQuery} />
             </View>
         </View>
     )

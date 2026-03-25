@@ -1,10 +1,10 @@
 import { Platform, Image, View, StyleSheet } from "react-native"
 import { useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { MainChat } from "./pages/MainChat"
-import { NTabBar } from "./components/NTabBar"
+import { Slot } from "expo-router"
+import { NTabBar } from "../components/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
-import { TopNavBar } from "./components/bundle/TopNavBar"
+import { TopNavBar } from "../components/bundle/TopNavBar"
 
 import {
     useFonts,
@@ -14,7 +14,7 @@ import {
     IosevkaCharon_700Bold,
 } from "@expo-google-fonts/iosevka-charon"
 
-export default function App() {
+export default function RootLayout() {
     const [fontsLoaded] = useFonts({
         IosevkaCharon_300Light,
         IosevkaCharon_400Regular,
@@ -40,18 +40,20 @@ export default function App() {
         },
     ]
 
-    const [hue, setHue] = useState(80) //hue color rotation in degrees
-    const [sat, setSat] = useState(70) //saturation percentage
+    const [hue, setHue] = useState(80)
+    const [sat, setSat] = useState(70)
+
+    // You can keep this early return, or swap it for a loading screen
+    if (!fontsLoaded) return null
 
     return (
         <GestureHandlerRootView style={styles.container}>
             <Image
-                source={require("./assets/autoservice/background.jpg")}
+                source={require("../assets/autoservice/background.jpg")}
                 style={[
                     styles.image,
                     Platform.select({
                         web: {
-                            //this is a workaround for web, as CSS filters are not supported in React Native Web
                             filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
                         } as any,
                     }),
@@ -61,14 +63,11 @@ export default function App() {
 
             <View style={styles.overlay} />
 
-            {/** App Wrapper */}
             <View style={{ ...StyleSheet.absoluteFillObject }}>
-                <View>
-                    <TopNavBar></TopNavBar>
+                <View style={{ height: 60 }}>
+                    <TopNavBar />
                 </View>
-
-                <MainChat />
-
+                <Slot /> {/* ← this is where index.tsx / other pages render */}
                 <View style={{ paddingBottom: 20 }}>
                     <NTabBar tabs={TABS} activeKey={"home"} />
                 </View>

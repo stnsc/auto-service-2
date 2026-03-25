@@ -1,7 +1,7 @@
 {
   "name": "auto-service-2",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -9,11 +9,17 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@ai-sdk/groq": "^3.0.31",
+    "@ai-sdk/openai": "^3.0.48",
     "@expo-google-fonts/iosevka-charon": "^0.4.0",
+    "ai": "^6.0.138",
     "expo": "~54.0.33",
     "expo-blur": "~15.0.8",
+    "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
     "expo-linear-gradient": "~15.0.8",
+    "expo-linking": "~8.0.11",
+    "expo-router": "~6.0.23",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -21,11 +27,15 @@
     "react-native-color-matrix-image-filters": "^8.0.2",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "~4.1.1",
-    "react-native-web": "^0.21.0"
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-web": "^0.21.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "proxy": "http://localhost:8081"
 }
