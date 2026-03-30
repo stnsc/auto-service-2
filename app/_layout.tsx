@@ -64,11 +64,11 @@ export default function RootLayout() {
             <View style={styles.overlay} />
 
             <View style={{ ...StyleSheet.absoluteFillObject }}>
-                <View style={{ height: 60 }}>
+                <View style={{ height: 60, zIndex: 100 }}>
                     <TopNavBar />
                 </View>
                 <Slot /> {/* ← this is where index.tsx / other pages render */}
-                <View style={{ paddingBottom: 20 }}>
+                <View style={{ paddingBottom: 20, zIndex: 100 }}>
                     <NTabBar tabs={TABS} activeKey={"home"} />
                 </View>
             </View>
