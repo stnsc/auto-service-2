@@ -1,7 +1,9 @@
-import React from "react"
+import React, { version } from "react"
 import { View, Text, StyleSheet, Image } from "react-native"
 import { NContextMenu } from "../NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
+import { NText } from "../NText"
+import { fonts } from "../../theme"
 
 export const TopNavBar = () => {
     const CONTEXT = [
@@ -34,6 +36,9 @@ export const TopNavBar = () => {
                 source={require("../../assets/autoservice/logo.png")}
                 style={styles.logo}
             />
+            <NText style={[styles.version, { fontFamily: fonts.light }]}>
+                ALPHA
+            </NText>
             <NContextMenu
                 avatar={<Ionicons name="person" size={22} color="white" />}
                 onAction={(key) => console.log(key)}
@@ -54,5 +59,12 @@ const styles = StyleSheet.create({
         width: 120,
         height: 40,
         resizeMode: "contain",
+    },
+    version: {
+        flex: 1,
+        color: "white",
+        fontSize: 12,
+        opacity: 0.5,
+        left: 0,
     },
 })

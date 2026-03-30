@@ -204,15 +204,19 @@ const styles = StyleSheet.create({
     },
     chatArea: {
         flex: 1,
-        padding: 20,
+        paddingLeft: 20,
+        paddingRight: 20,
         justifyContent: "flex-end",
     },
     messageList: {
         flex: 1,
     },
     messageListContent: {
+        paddingTop: "15%",
+        paddingHorizontal: 10,
         gap: 10,
-        paddingBottom: 12,
+        flexGrow: 1,
+        justifyContent: "flex-end",
     },
     bubble: {
         padding: 6,
@@ -220,7 +224,6 @@ const styles = StyleSheet.create({
     inputWrapper: {
         position: "relative",
         width: "100%",
-        marginTop: 10,
     },
     inputButton: {
         alignItems: "flex-end",

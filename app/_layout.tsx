@@ -13,6 +13,7 @@ import {
     IosevkaCharon_500Medium,
     IosevkaCharon_700Bold,
 } from "@expo-google-fonts/iosevka-charon"
+import { BlurView } from "expo-blur"
 
 export default function RootLayout() {
     const [fontsLoaded] = useFonts({
@@ -63,11 +64,14 @@ export default function RootLayout() {
 
             <View style={styles.overlay} />
 
-            <View style={{ ...StyleSheet.absoluteFillObject }}>
-                <View style={{ height: 60, zIndex: 100 }}>
+            <View style={{ flex: 1 }}>
+                <BlurView style={styles.topNav} intensity={30} tint="dark">
                     <TopNavBar />
+                </BlurView>
+                <View style={{ flex: 1 }}>
+                    <Slot />{" "}
+                    {/* ← this is where index.tsx / other pages render */}
                 </View>
-                <Slot /> {/* ← this is where index.tsx / other pages render */}
                 <View style={{ paddingBottom: 20, zIndex: 100 }}>
                     <NTabBar tabs={TABS} activeKey={"home"} />
                 </View>
@@ -77,6 +81,13 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+    topNav: {
+        width: "100%",
+        zIndex: 100,
+        position: "absolute",
+        borderBottomWidth: 1,
+        borderBottomColor: "rgba(255,255,255,0.1)",
+    },
     container: {
         flex: 1,
         backgroundColor: "#000",
