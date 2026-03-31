@@ -4,21 +4,27 @@ import { useDebounce } from "../../hooks/useDebounce"
 import { fonts } from "../../theme"
 import { NText } from "../NText"
 import { NButton } from "../NButton"
+import { Ionicons } from "@expo/vector-icons"
+import { useRouter } from "expo-router"
 
 const API_URL = "/api/suggestions"
 
 interface Props {
     query: string
-    onSelect: (suggestion: string) => void
+    onSelect: (suggestion: string | void) => void
 }
 
 function SuggestionItem({
     text,
     index,
+    color,
+    icon,
     onPress,
 }: {
     text: string
     index: number
+    color?: string
+    icon?: React.ReactNode
     onPress: () => void
 }) {
     const opacity = useRef(new Animated.Value(0)).current
@@ -45,10 +51,19 @@ function SuggestionItem({
 
     return (
         <Animated.View style={{ opacity, transform: [{ translateY }] }}>
-            <NButton onPress={onPress}>
-                <NText style={{ fontFamily: fonts.regular, color: "#fff" }}>
-                    {text}
-                </NText>
+            <NButton onPress={onPress} color={color}>
+                <View
+                    style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                    }}
+                >
+                    {icon}
+                    <NText style={{ fontFamily: fonts.regular, color: "#fff" }}>
+                        {text}
+                    </NText>
+                </View>
             </NButton>
         </Animated.View>
     )
@@ -56,8 +71,10 @@ function SuggestionItem({
 
 export function Suggestions({ query, onSelect }: Props) {
     const [suggestions, setSuggestions] = useState<string[]>([])
+    const [intent, setIntent] = useState<string>("")
+    const [confidence, setConfidence] = useState<number>(0)
     const [loading, setLoading] = useState(false)
-    const debouncedQuery = useDebounce(query, 300)
+    const debouncedQuery = useDebounce(query, 450)
 
     useEffect(() => {
         if (!debouncedQuery || debouncedQuery.trim().length < 3) {
@@ -77,8 +94,15 @@ export function Suggestions({ query, onSelect }: Props) {
                     signal: controller.signal,
                 })
                 const data = await res.json()
+
+                console.log(data)
+
                 setSuggestions(
                     Array.isArray(data.suggestions) ? data.suggestions : [],
+                )
+                setIntent(typeof data.intent === "string" ? data.intent : "")
+                setConfidence(
+                    typeof data.confidence === "number" ? data.confidence : 0,
                 )
             } catch (err: any) {
                 if (err.name !== "AbortError") console.error(err)
@@ -111,12 +135,56 @@ export function Suggestions({ query, onSelect }: Props) {
 
     return (
         <View style={styles.container}>
+            {intent != "chat" && confidence > 0.75 && (
+                <>
+                    <NText
+                        style={{
+                            fontFamily: fonts.light,
+                            color: "rgba(255,255,255,0.5)",
+                            fontSize: 14,
+                        }}
+                    >
+                        Intent: {intent}, Confidence: {confidence.toFixed(1)}
+                    </NText>
+                    <View>
+                        <SuggestionItem
+                            text={`Go to ${intent}`}
+                            index={0}
+                            icon={
+                                intent === "map" ? (
+                                    <Ionicons
+                                        name="map"
+                                        size={22}
+                                        color="white"
+                                    />
+                                ) : intent === "appointment" ? (
+                                    <Ionicons
+                                        name="calendar"
+                                        size={22}
+                                        color="white"
+                                    />
+                                ) : intent === "shop" ? (
+                                    <Ionicons
+                                        name="cart"
+                                        size={22}
+                                        color="white"
+                                    />
+                                ) : undefined
+                            }
+                            onPress={() => onSelect(`/(tabs)/${intent}`)}
+                            color={"rgba(33, 168, 112, 0.51)"}
+                        />
+                    </View>
+                </>
+            )}
+
             {suggestions.map((s, i) => (
                 <SuggestionItem
                     key={s}
                     text={s}
                     index={i}
                     onPress={() => onSelect(s)}
+                    color={"rgb(60, 60, 60)"}
                 />
             ))}
         </View>
@@ -129,7 +197,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
     },
     container: {
-        paddingHorizontal: 8,
+        padding: 20,
         gap: 8,
     },
 })

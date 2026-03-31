@@ -1,7 +1,7 @@
 import { Platform, Image, View, StyleSheet } from "react-native"
 import { useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { Slot } from "expo-router"
+import { Slot, usePathname, useRouter } from "expo-router"
 import { NTabBar } from "../components/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
@@ -16,6 +16,7 @@ import {
 import { BlurView } from "expo-blur"
 
 export default function RootLayout() {
+    // Font loading
     const [fontsLoaded] = useFonts({
         IosevkaCharon_300Light,
         IosevkaCharon_400Regular,
@@ -23,23 +24,48 @@ export default function RootLayout() {
         IosevkaCharon_700Bold,
     })
 
+    // Router and pathname hooks for navigation and active tab state
+    const router = useRouter()
+    const pathname = usePathname()
+
+    const TAB_ROUTES: Record<string, string> = {
+        chat: "/",
+        appointment: "/appointment",
+        shop: "/shop",
+        map: "/map",
+    }
+
     const TABS = [
         {
-            key: "home",
-            label: "Home",
-            icon: <Ionicons name="home" size={22} color="white" />,
+            key: "chat",
+            label: "Chat",
+            icon: <Ionicons name="chatbubbles" size={22} color="white" />,
         },
         {
-            key: "dash",
-            label: "Dashboard",
-            icon: <Ionicons name="grid" size={22} color="white" />,
+            key: "appointment",
+            label: "Appointments",
+            icon: <Ionicons name="calendar" size={22} color="white" />,
         },
         {
-            key: "news",
-            label: "News",
-            icon: <Ionicons name="radio" size={22} color="white" />,
+            key: "shop",
+            label: "Shop",
+            icon: <Ionicons name="cart" size={22} color="white" />,
+        },
+        {
+            key: "map",
+            label: "Map",
+            icon: <Ionicons name="map" size={22} color="white" />,
         },
     ]
+
+    const activeKey =
+        Object.entries(TAB_ROUTES).find(
+            ([, route]) => pathname === route,
+        )?.[0] ?? "chat"
+
+    const handleTabPress = (key: string) => {
+        router.push(TAB_ROUTES[key] as any)
+    }
 
     const [hue, setHue] = useState(80)
     const [sat, setSat] = useState(70)
@@ -69,11 +95,15 @@ export default function RootLayout() {
                     <TopNavBar />
                 </BlurView>
                 <View style={{ flex: 1 }}>
-                    <Slot />{" "}
+                    <Slot />
                     {/* ← this is where index.tsx / other pages render */}
                 </View>
                 <View style={{ paddingBottom: 20, zIndex: 100 }}>
-                    <NTabBar tabs={TABS} activeKey={"home"} />
+                    <NTabBar
+                        tabs={TABS}
+                        activeKey={activeKey}
+                        onTabPress={handleTabPress}
+                    />
                 </View>
             </View>
         </GestureHandlerRootView>

@@ -1,5 +1,5 @@
 import { Redirect } from "expo-router"
 
-export default function Root() {
+export default function TabsIndex() {
     return <Redirect href="/(tabs)/chat" />
 }

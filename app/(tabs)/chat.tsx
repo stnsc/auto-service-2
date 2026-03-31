@@ -7,13 +7,14 @@ import {
     Easing,
     Platform,
 } from "react-native"
-import { NButton } from "../components/NButton"
-import { NInput } from "../components/NInput"
+import { NButton } from "../../components/NButton"
+import { NInput } from "../../components/NInput"
 import { Ionicons } from "@expo/vector-icons"
-import { Suggestions } from "../components/bundle/Suggestions"
+import { Suggestions } from "../../components/bundle/Suggestions"
 import { useRef, useState } from "react"
-import { NText } from "../components/NText"
-import { fonts } from "../theme"
+import { NText } from "../../components/NText"
+import { fonts } from "../../theme"
+import { useRouter } from "expo-router"
 
 const CHAT_API_URL = "/api/chat"
 
@@ -22,7 +23,10 @@ interface Message {
     content: string
 }
 
-export const MainChat = () => {
+export default function ChatScreen() {
+    // enabling router
+    const router = useRouter()
+
     const [user] = useState("<user>")
     const [query, setQuery] = useState("")
     const [messages, setMessages] = useState<Message[]>([])
@@ -189,7 +193,18 @@ export const MainChat = () => {
                 ]}
             >
                 <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
-                    <Suggestions query={query} onSelect={setQuery} />
+                    <Suggestions
+                        query={query}
+                        onSelect={(suggestion) => {
+                            //routing logic for suggestions
+                            if (!suggestion) return
+                            if (suggestion.startsWith("/(tabs)/")) {
+                                router.push(suggestion as any)
+                            } else {
+                                setQuery(suggestion)
+                            }
+                        }}
+                    />
                 </View>
             </Animated.View>
         </View>
