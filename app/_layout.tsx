@@ -1,5 +1,5 @@
 import { Platform, Image, View, StyleSheet } from "react-native"
-import { useState } from "react"
+import { act, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter } from "expo-router"
 import { NTabBar } from "../components/replacements/NTabBar"
@@ -14,6 +14,10 @@ import {
     IosevkaCharon_700Bold,
 } from "@expo-google-fonts/iosevka-charon"
 import { BlurView } from "expo-blur"
+
+// eww global values i know, but this is a workaround for a bug that BlurView
+// has related to a saturation backdrop filter being applied for no reason when intensity is 0
+let intensity = 0
 
 export default function RootLayout() {
     // Font loading
@@ -67,6 +71,8 @@ export default function RootLayout() {
         router.push(TAB_ROUTES[key] as any)
     }
 
+    activeKey === "chat" ? (intensity = 30) : (intensity = 0)
+
     const [hue, setHue] = useState(80)
     const [sat, setSat] = useState(70)
 
@@ -90,13 +96,20 @@ export default function RootLayout() {
             <View style={styles.overlay} />
 
             <View style={{ flex: 1 }}>
-                <BlurView
-                    style={styles.topNav}
-                    intensity={activeKey === "chat" ? 30 : 0}
-                    tint="dark"
-                >
-                    <TopNavBar />
-                </BlurView>
+                {intensity > 0 ? (
+                    <BlurView
+                        style={styles.topNav}
+                        intensity={intensity}
+                        tint="dark"
+                    >
+                        <TopNavBar />
+                    </BlurView>
+                ) : (
+                    <View style={styles.topNav}>
+                        <TopNavBar />
+                    </View>
+                )}
+
                 <View style={{ flex: 1 }}>
                     <Slot />
                     {/* ← this is where index.tsx / other pages render */}
