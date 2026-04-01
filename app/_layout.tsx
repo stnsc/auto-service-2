@@ -2,7 +2,7 @@ import { Platform, Image, View, StyleSheet } from "react-native"
 import { useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter } from "expo-router"
-import { NTabBar } from "../components/NTabBar"
+import { NTabBar } from "../components/replacements/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
 
@@ -70,7 +70,6 @@ export default function RootLayout() {
     const [hue, setHue] = useState(80)
     const [sat, setSat] = useState(70)
 
-    // You can keep this early return, or swap it for a loading screen
     if (!fontsLoaded) return null
 
     return (
@@ -91,14 +90,18 @@ export default function RootLayout() {
             <View style={styles.overlay} />
 
             <View style={{ flex: 1 }}>
-                <BlurView style={styles.topNav} intensity={30} tint="dark">
+                <BlurView
+                    style={styles.topNav}
+                    intensity={activeKey === "chat" ? 30 : 0}
+                    tint="dark"
+                >
                     <TopNavBar />
                 </BlurView>
                 <View style={{ flex: 1 }}>
                     <Slot />
                     {/* ← this is where index.tsx / other pages render */}
                 </View>
-                <View style={{ paddingBottom: 20, zIndex: 100 }}>
+                <View style={styles.bottomNav}>
                     <NTabBar
                         tabs={TABS}
                         activeKey={activeKey}
@@ -115,8 +118,13 @@ const styles = StyleSheet.create({
         width: "100%",
         zIndex: 100,
         position: "absolute",
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255,255,255,0.1)",
+    },
+    bottomNav: {
+        position: "absolute",
+        paddingBottom: 20,
+        zIndex: 100,
+        bottom: 0,
+        width: "100%",
     },
     container: {
         flex: 1,

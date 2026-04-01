@@ -10,7 +10,7 @@ import Animated, {
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
-import { fonts } from "../theme"
+import { fonts } from "../../theme"
 
 // ✅ Make TextInput directly animatable — no wrapper needed
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)

@@ -6,10 +6,10 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from "react-native"
-import { NButton } from "../components/NButton"
-import { NInput } from "../components/NInput"
-import { NTabBar } from "../components/NTabBar"
-import { NContextMenu } from "../components/NContextMenu"
+import { NButton } from "../components/replacements/NButton"
+import { NInput } from "../components/replacements/NInput"
+import { NTabBar } from "../components/replacements/NTabBar"
+import { NContextMenu } from "../components/replacements/NContextMenu"
 
 import { useState } from "react"
 import { Ionicons } from "@expo/vector-icons"

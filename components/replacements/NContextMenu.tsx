@@ -17,7 +17,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { NText } from "./NText"
-import { fonts } from "../theme"
+import { fonts } from "../../theme"
 
 export interface MenuAction {
     key: string

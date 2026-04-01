@@ -7,12 +7,12 @@ import {
     Easing,
     Platform,
 } from "react-native"
-import { NButton } from "../../components/NButton"
-import { NInput } from "../../components/NInput"
+import { NButton } from "../../components/replacements/NButton"
+import { NInput } from "../../components/replacements/NInput"
 import { Ionicons } from "@expo/vector-icons"
 import { Suggestions } from "../../components/bundle/Suggestions"
 import { useRef, useState } from "react"
-import { NText } from "../../components/NText"
+import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useRouter } from "expo-router"
 

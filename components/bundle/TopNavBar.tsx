@@ -1,8 +1,8 @@
 import React, { version } from "react"
 import { View, Text, StyleSheet, Image } from "react-native"
-import { NContextMenu } from "../NContextMenu"
+import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
-import { NText } from "../NText"
+import { NText } from "../replacements/NText"
 import { fonts } from "../../theme"
 
 export const TopNavBar = () => {
