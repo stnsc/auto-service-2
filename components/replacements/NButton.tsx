@@ -10,6 +10,7 @@ import Animated, {
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
+import { useCarouselGesture } from "../GestureContext"
 
 interface NButtonProps {
     onPress?: () => void
@@ -26,6 +27,8 @@ export function NButton({
     intensity = 30,
     style,
 }: NButtonProps) {
+    const carouselPanRef = useCarouselGesture()
+
     const isPressed = useSharedValue(false)
     const translateX = useSharedValue(0)
     const translateY = useSharedValue(0)
@@ -44,6 +47,12 @@ export function NButton({
         })
 
     const pan = Gesture.Pan()
+        .withTestId("button-pan")
+        // If a carousel pan ref is available, this button's pan waits for it to fail
+        // before claiming the gesture. This lets horizontal drags pass through.
+        .requireExternalGestureToFail(
+            (carouselPanRef as any) || Gesture.Native(),
+        )
         .onUpdate((event) => {
             translateX.value = event.translationX / 15
             translateY.value = event.translationY / 15

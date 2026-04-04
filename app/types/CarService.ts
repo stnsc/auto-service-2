@@ -7,4 +7,5 @@ export interface CarService {
     rating: number
     address: string
     phone: string
+    distance?: number // Optional field to store distance from user, calculated at runtime
 }

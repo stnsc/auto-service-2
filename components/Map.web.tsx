@@ -1,5 +1,11 @@
 // map bundled for the web version only
-import { useEffect, useRef, useState } from "react"
+import {
+    forwardRef,
+    useEffect,
+    useImperativeHandle,
+    useRef,
+    useState,
+} from "react"
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import { CarService } from "../app/types/CarService"
@@ -11,78 +17,50 @@ interface MapProps {
     zoom?: number
     carServices?: CarService[]
     onServicePress?: (service: CarService) => void
+    onCenterChange?: (lat: number, lon: number) => void
 }
 
 const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? ""
 
-// Inject popup styles once into the document head
-const POPUP_STYLE_ID = "maplibre-custom-popup-styles"
-
-function injectPopupStyles() {
-    if (document.getElementById(POPUP_STYLE_ID)) return
-
-    const style = document.createElement("style")
-    style.id = POPUP_STYLE_ID
-    style.innerHTML = `
-        /* Remove default MapLibre popup chrome */
-        .service-marker.maplibregl-popup .maplibregl-popup-content {
-            font-family: 'IosevkaCharon_400Regular';
-            padding: 0;
-            margin: 6px;
-            border-radius: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
-            overflow: hidden;
-            background: #31313185;
-            backdrop-filter: blur(3px);
-        }
-
-        /* Hide the default close button */
-        .service-marker.maplibregl-popup .maplibregl-popup-close-button {
-            display: none;
-        }
-
-        /* Remove the tip/arrow */
-        .service-marker.maplibregl-popup .maplibregl-popup-tip {
-            display: none;
-        }
-
-        .popup-inner {
-            padding: 12px 14px;
-        }
-
-        .popup-name {
-            font-size: 14px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 4px;
-        }
-
-        .popup-address {
-            font-size: 12px;
-            color: #c0c0c0;
-            margin-bottom: 6px;
-            line-height: 1.4;
-        }
-    `
-    document.head.appendChild(style)
+export interface MapHandle {
+    flyTo: (lat: number, lon: number) => void
 }
 
-export default function Map({
-    latitude = 45.6427,
-    longitude = 25.5887,
-    zoom = 12,
-    carServices = CAR_SERVICES,
-    onServicePress,
-}: MapProps) {
+const Map = forwardRef<MapHandle, MapProps>(function Map(
+    {
+        latitude = 45.6427,
+        longitude = 25.5887,
+        zoom = 12,
+        carServices = CAR_SERVICES,
+        onServicePress,
+        onCenterChange,
+    }: MapProps,
+    ref,
+) {
     const containerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<maplibregl.Map | null>(null)
     const markersRef = useRef<maplibregl.Marker[]>([])
     const [mapLoaded, setMapLoaded] = useState(false)
 
+    // Always-current refs so event listeners never capture stale callbacks
+    const onServicePressRef = useRef(onServicePress)
+    const onCenterChangeRef = useRef(onCenterChange)
     useEffect(() => {
-        if (!containerRef.current || mapRef.current) return
+        onServicePressRef.current = onServicePress
+    }, [onServicePress])
 
-        injectPopupStyles()
+    useEffect(() => {
+        onCenterChangeRef.current = onCenterChange
+    }, [onCenterChange])
+
+    // Map init — runs once, refs keep callbacks fresh without recreating the map
+    useEffect(() => {
+        if (
+            typeof window === "undefined" ||
+            !containerRef.current ||
+            mapRef.current
+        )
+            return
 
         mapRef.current = new maplibregl.Map({
             container: containerRef.current,
@@ -94,16 +72,22 @@ export default function Map({
             maxPitch: 50,
         })
 
-        mapRef.current.addControl(new maplibregl.NavigationControl())
         mapRef.current.on("load", () => setMapLoaded(true))
+
+        // Reads from ref at call time — always has the latest onCenterChange
+        mapRef.current.on("moveend", () => {
+            const center = mapRef.current!.getCenter()
+            onCenterChangeRef.current?.(center.lat, center.lng)
+        })
 
         return () => {
             mapRef.current?.remove()
             mapRef.current = null
             setMapLoaded(false)
         }
-    }, [])
+    }, []) // empty — map created once, refs handle callback freshness
 
+    // Markers — recreated only when the services list changes, not on callback changes
     useEffect(() => {
         if (!mapRef.current || !mapLoaded) return
 
@@ -124,7 +108,7 @@ export default function Map({
 
             const popup = new maplibregl.Popup({
                 offset: 14,
-                className: "service-marker", // targets .service-marker.maplibregl-popup in CSS
+                className: "service-marker",
             }).setHTML(`
                 <div class="popup-inner">
                     <div class="popup-name">${service.name}</div>
@@ -137,11 +121,28 @@ export default function Map({
                 .setPopup(popup)
                 .addTo(mapRef.current!)
 
-            el.addEventListener("click", () => onServicePress?.(service))
+            el.addEventListener("click", (e) => {
+                // Prevent the map's own click handler from firing and
+                // competing with the marker press
+                e.stopPropagation()
+                onServicePressRef.current?.(service)
+            })
 
             markersRef.current.push(marker)
         })
-    }, [mapLoaded, carServices, onServicePress])
+    }, [mapLoaded, carServices]) // onServicePress intentionally omitted — ref handles it
+
+    useImperativeHandle(ref, () => ({
+        flyTo: (lat: number, lon: number) => {
+            mapRef.current?.flyTo({
+                center: [lon, lat],
+                zoom: 15,
+                duration: 1000,
+            })
+        },
+    }))
 
     return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
-}
+})
+
+export default Map

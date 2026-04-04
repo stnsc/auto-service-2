@@ -15,14 +15,24 @@ export const CAR_SERVICES: CarService[] = [
   },
   {
     id: "2",
-    name: "SpeedWash",
+    name: "Danove Auto",
     latitude: 45.6380,
     longitude: 25.5910,
-    type: "car_wash",
+    type: "tire_shop",
     rating: 4.0,
     address: "Str. Mihai Viteazul 5",
     phone: "0268 456 789",
   },
+  {
+    id: "3",
+    name: "Instant Car Fix",
+    latitude: 44.4299,
+    longitude: 26.1089,
+    type: "mechanic",
+    rating: 5.0,
+    address: "J. Street 45",
+    phone: "0267 676 767",
+  }
 ]
 
 export const TYPE_COLORS: Record<CarService["type"], string> = {
