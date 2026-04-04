@@ -1,10 +1,11 @@
 import { Platform, Image, View, StyleSheet } from "react-native"
-import { act, useState } from "react"
+import { act, useEffect, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter } from "expo-router"
 import { NTabBar } from "../components/replacements/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
+import maplibregl from "maplibre-gl"
 
 import {
     useFonts,
@@ -20,6 +21,10 @@ import { BlurView } from "expo-blur"
 let intensity = 0
 
 export default function RootLayout() {
+    useEffect(() => {
+        maplibregl.prewarm()
+    }, [])
+
     // Font loading
     const [fontsLoaded] = useFonts({
         IosevkaCharon_300Light,

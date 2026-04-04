@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/groq": "^3.0.31",
-    "@anthropic-ai/sdk": "^0.80.0",
+    "@anthropic-ai/sdk": "^0.82.0",
     "@expo-google-fonts/iosevka-charon": "^0.4.0",
     "@react-native-masked-view/masked-view": "0.3.2",
     "ai": "^6.0.141",
@@ -37,6 +37,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/node": "^25.5.2",
     "@types/react": "~19.1.0",
     "typescript": "~5.9.2"
   },

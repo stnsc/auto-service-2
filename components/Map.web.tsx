@@ -10,6 +10,11 @@ import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import { CarService } from "../app/types/CarService"
 import { CAR_SERVICES, TYPE_COLORS } from "../data/carServicesMock"
+import { View, StyleSheet, ActivityIndicator } from "react-native"
+import { NText } from "./replacements/NText"
+import { fonts } from "../theme"
+import { NButton } from "./replacements/NButton"
+import { BlurView } from "expo-blur"
 
 interface MapProps {
     latitude?: number
@@ -62,28 +67,41 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         )
             return
 
-        mapRef.current = new maplibregl.Map({
-            container: containerRef.current,
-            style: `https://api.maptiler.com/maps/019d49f9-3b3c-7cee-991d-87e447e8578e/style.json?key=${MAPTILER_KEY}`,
-            center: [longitude, latitude],
-            zoom,
-            pitch: 15,
-            bearing: -17,
-            maxPitch: 50,
-        })
+        const initMap = () => {
+            mapRef.current = new maplibregl.Map({
+                container: containerRef.current!,
+                style: `https://api.maptiler.com/maps/019d49f9-3b3c-7cee-991d-87e447e8578e/style.json?key=${MAPTILER_KEY}`,
+                center: [longitude, latitude],
+                zoom,
+                pitch: 15,
+                bearing: -17,
+                maxPitch: 50,
+            })
 
-        mapRef.current.on("load", () => setMapLoaded(true))
+            mapRef.current.on("load", () => setMapLoaded(true))
 
-        // Reads from ref at call time — always has the latest onCenterChange
-        mapRef.current.on("moveend", () => {
-            const center = mapRef.current!.getCenter()
-            onCenterChangeRef.current?.(center.lat, center.lng)
-        })
+            // Reads from ref at call time — always has the latest onCenterChange
+            mapRef.current.on("moveend", () => {
+                const center = mapRef.current!.getCenter()
+                onCenterChangeRef.current?.(center.lat, center.lng)
+            })
+        }
 
-        return () => {
-            mapRef.current?.remove()
-            mapRef.current = null
-            setMapLoaded(false)
+        if ("requestIdleCallback" in window) {
+            const id = requestIdleCallback(initMap, { timeout: 2000 })
+            return () => {
+                cancelIdleCallback(id)
+                mapRef.current?.remove()
+                mapRef.current = null
+            }
+        } else {
+            // Safari fallback
+            const id = setTimeout(initMap, 0)
+            return () => {
+                clearTimeout(id)
+                mapRef.current?.remove()
+                mapRef.current = null
+            }
         }
     }, []) // empty — map created once, refs handle callback freshness
 
@@ -142,7 +160,58 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         },
     }))
 
-    return <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+    return (
+        <div style={{ width: "100%", height: "100%", position: "relative" }}>
+            <div ref={containerRef} style={{ width: "100%", height: "110%" }} />
+            {!mapLoaded && (
+                <BlurView
+                    intensity={50}
+                    tint="dark"
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        position: "absolute",
+                        inset: 0,
+                    }}
+                >
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <NButton>
+                            <NText style={styles.loadingText}>
+                                Loading map...
+                            </NText>
+                            <ActivityIndicator
+                                color="#ffffff"
+                                style={{ marginTop: 10 }}
+                            />
+                        </NButton>
+                    </div>
+                </BlurView>
+            )}
+        </div>
+    )
+})
+
+const styles = StyleSheet.create({
+    loading: {
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    loadingText: {
+        color: "#ffffff",
+        fontFamily: fonts.bold,
+    },
 })
 
 export default Map
