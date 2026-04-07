@@ -104,12 +104,10 @@ export default function AppointmentScreen() {
         // Validate field as user types
         const fieldRules = VALIDATION_RULES[field]
         if (fieldRules) {
-            const error = fieldRules.reduce(
-                (err, rule) => {
-                    return err || rule(value)
-                },
-                null as string | null,
-            )
+            const error = fieldRules.reduce((err: string | null, rule: any) => {
+                if (err) return err
+                return typeof rule === "function" ? rule(value) : null
+            }, null)
             setErrors((prev) => ({ ...prev, [field]: error }))
         }
     }

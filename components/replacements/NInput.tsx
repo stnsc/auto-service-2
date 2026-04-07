@@ -114,18 +114,7 @@ export const NInput = ({
                         />
                     </BlurView>
                 </LinearGradient>
-                {failed && (
-                    <NText
-                        style={{
-                            fontFamily: fonts.bold,
-                            color: "red",
-                            textAlign: "center",
-                            marginTop: 5,
-                        }}
-                    >
-                        {failedText}
-                    </NText>
-                )}
+                {failed && <NText style={styles.failed}>{failedText}</NText>}
             </Animated.View>
         </>
     )
@@ -151,5 +140,17 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         fontSize: 16,
         color: "#fff",
+    },
+    failed: {
+        backgroundColor: "rgba(255,0,0,0.3)",
+        fontFamily: fonts.bold,
+        color: "white",
+        textAlign: "center",
+        paddingTop: 25,
+        paddingBottom: 5,
+        marginTop: -25,
+        zIndex: -1,
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20,
     },
 })
