@@ -15,7 +15,7 @@ import {
     PanGesture,
 } from "react-native-gesture-handler"
 import { NButton } from "../replacements/NButton"
-import { GestureContext } from "../GestureContext"
+import { GestureContext } from "../../context/GestureContext"
 import { NText } from "../replacements/NText"
 import { CarService } from "../../app/types/CarService"
 import { fonts } from "../../theme"

@@ -7,7 +7,7 @@ interface AIResponse {
   suggestions: string[];
 }
 
-function parseAIResponse(text: string): AIResponse | null {
+function parseAIResponse(text: string, expectSuggestions: boolean = true): AIResponse | null {
   const cleaned = text.replace(/```(?:json)?/g, '').trim();
 
   let parsed: unknown;
@@ -33,7 +33,7 @@ function parseAIResponse(text: string): AIResponse | null {
     }
   }
 
-  if (suggestions.length === 0) return null;
+  if (expectSuggestions && suggestions.length === 0) return null;
 
   return {
     intent: (obj.intent as AIResponse['intent']) ?? 'chat',
@@ -42,7 +42,7 @@ function parseAIResponse(text: string): AIResponse | null {
   };
 }
 
-async function fetchSuggestions(query: string): Promise<AIResponse>  {
+async function fetchSuggestions(query: string, chatStarted: boolean): Promise<AIResponse>  {
   const { text } = await generateText({
     model: groq('llama-3.1-8b-instant'),
     prompt: `
@@ -51,7 +51,7 @@ async function fetchSuggestions(query: string): Promise<AIResponse>  {
       Given what the user typed, return ONLY a raw JSON object  (no markdown, no explanation) with:
       - intent: one of "map", "appointment", "shop", "chat"
       - confidence: 0.0 to 1.0
-      - suggestions: return 3 short auto-service questions a customer might ask. Each must be under 60 characters.
+      ${!chatStarted ? '- suggestions: return 3 short auto-service questions a customer might ask. Each must be under 60 characters.' : ''}
 
       Intents mean:
       - map: user wants to find a nearby garage, shop, or service center
@@ -63,14 +63,14 @@ async function fetchSuggestions(query: string): Promise<AIResponse>  {
     `,
   });
 
-  const result = parseAIResponse(text);
+  const result = parseAIResponse(text, !chatStarted);
   if (!result) throw new Error(`Could not parse response from: ${text}`);
 
   return result;
 }
 
 export async function POST(request: Request) {
-  const { query } = await request.json();
+  const { query, chatStarted } = await request.json();
 
   if (!query || query.trim().length < 3) {
     return Response.json({ intent: 'chat', confidence: 0, suggestions: [] });
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const result = await fetchSuggestions(query);
+      const result = await fetchSuggestions(query, chatStarted);
       return Response.json(result); // { intent, confidence, suggestions }
     } catch (error) {
       console.error(`AI attempt ${attempt} failed:`, error);

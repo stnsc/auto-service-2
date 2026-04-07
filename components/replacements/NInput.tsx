@@ -11,22 +11,27 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { fonts } from "../../theme"
+import { NText } from "./NText"
 
-// ✅ Make TextInput directly animatable — no wrapper needed
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 
 const MIN_HEIGHT = 50
 
 interface NInputProps extends TextInputProps {
     containerStyle?: ViewStyle
+    placeholder?: string
     color?: string
     intensity?: number
+    failed?: boolean
+    failedText?: string
 }
 
 export const NInput = ({
     containerStyle,
     color = "rgba(255, 255, 255, 0.05)",
     intensity = 30,
+    failed = false,
+    failedText = "Invalid input",
     ...props
 }: NInputProps) => {
     const focusValue = useSharedValue(0)
@@ -73,42 +78,56 @@ export const NInput = ({
     }))
 
     return (
-        <Animated.View
-            style={[styles.wrapper, animatedWrapperStyle, containerStyle]}
-        >
-            <LinearGradient
-                colors={["rgba(255,255,255,0.4)", "rgba(255,255,255,0.05)"]}
-                style={styles.gradientStroke}
+        <>
+            <Animated.View
+                style={[styles.wrapper, animatedWrapperStyle, containerStyle]}
             >
-                <BlurView
-                    intensity={intensity}
-                    tint="dark"
-                    style={[
-                        styles.innerInputContainer,
-                        { backgroundColor: color },
-                    ]}
+                <LinearGradient
+                    colors={["rgba(255,255,255,0.4)", "rgba(255,255,255,0.05)"]}
+                    style={styles.gradientStroke}
                 >
-                    <AnimatedTextInput
-                        {...props}
+                    <BlurView
+                        intensity={intensity}
+                        tint="dark"
                         style={[
-                            styles.input,
-                            { fontFamily: fonts.regular },
-                            animatedInputStyle,
-                            props.style,
+                            styles.innerInputContainer,
+                            { backgroundColor: color },
                         ]}
-                        placeholderTextColor="rgba(255,255,255,0.4)"
-                        onFocus={onFocus}
-                        onBlur={onBlur}
-                        onContentSizeChange={onContentSizeChange}
-                        onChangeText={onChangeText}
-                        multiline={true}
-                        textAlignVertical="top"
-                        scrollEnabled={false}
-                        placeholder="What's your question?"
-                    />
-                </BlurView>
-            </LinearGradient>
-        </Animated.View>
+                    >
+                        <AnimatedTextInput
+                            {...props}
+                            style={[
+                                styles.input,
+                                { fontFamily: fonts.regular },
+                                animatedInputStyle,
+                                props.style,
+                            ]}
+                            placeholderTextColor="rgba(255,255,255,0.4)"
+                            onFocus={onFocus}
+                            onBlur={onBlur}
+                            onContentSizeChange={onContentSizeChange}
+                            onChangeText={onChangeText}
+                            multiline={true}
+                            textAlignVertical="top"
+                            scrollEnabled={false}
+                            placeholder={props.placeholder}
+                        />
+                    </BlurView>
+                </LinearGradient>
+                {failed && (
+                    <NText
+                        style={{
+                            fontFamily: fonts.bold,
+                            color: "red",
+                            textAlign: "center",
+                            marginTop: 5,
+                        }}
+                    >
+                        {failedText}
+                    </NText>
+                )}
+            </Animated.View>
+        </>
     )
 }
 

@@ -12,6 +12,8 @@ const API_URL = "/api/suggestions"
 interface Props {
     query: string
     onSelect: (suggestion: string | void) => void
+    chatStarted: boolean
+    onHasIntentSuggestion?: (hasIntent: boolean) => void
 }
 
 function SuggestionItem({
@@ -69,12 +71,17 @@ function SuggestionItem({
     )
 }
 
-export function Suggestions({ query, onSelect }: Props) {
+export function Suggestions({ query, onSelect, chatStarted, onHasIntentSuggestion }: Props) {
     const [suggestions, setSuggestions] = useState<string[]>([])
     const [intent, setIntent] = useState<string>("")
     const [confidence, setConfidence] = useState<number>(0)
     const [loading, setLoading] = useState(false)
     const debouncedQuery = useDebounce(query, 450)
+
+    useEffect(() => {
+        const hasIntentSuggestion = intent !== "chat" && confidence > 0.75
+        onHasIntentSuggestion?.(hasIntentSuggestion)
+    }, [intent, confidence, onHasIntentSuggestion])
 
     useEffect(() => {
         if (!debouncedQuery || debouncedQuery.trim().length < 3) {
@@ -90,7 +97,10 @@ export function Suggestions({ query, onSelect }: Props) {
                 const res = await fetch(API_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ query: debouncedQuery }),
+                    body: JSON.stringify({
+                        query: debouncedQuery,
+                        chatStarted,
+                    }),
                     signal: controller.signal,
                 })
                 const data = await res.json()
@@ -113,11 +123,11 @@ export function Suggestions({ query, onSelect }: Props) {
 
         fetchSuggestions()
         return () => controller.abort()
-    }, [debouncedQuery])
+    }, [debouncedQuery, chatStarted])
 
     if (loading) return null
 
-    if (suggestions.length === 0) {
+    if (suggestions.length === 0 && !chatStarted) {
         return (
             <View style={styles.center}>
                 <NText
@@ -136,46 +146,27 @@ export function Suggestions({ query, onSelect }: Props) {
     return (
         <View style={styles.container}>
             {intent != "chat" && confidence > 0.75 && (
-                <>
-                    <NText
-                        style={{
-                            fontFamily: fonts.light,
-                            color: "rgba(255,255,255,0.5)",
-                            fontSize: 14,
-                        }}
-                    >
-                        Intent: {intent}, Confidence: {confidence.toFixed(1)}
-                    </NText>
-                    <View>
-                        <SuggestionItem
-                            text={`Go to ${intent}`}
-                            index={0}
-                            icon={
-                                intent === "map" ? (
-                                    <Ionicons
-                                        name="map"
-                                        size={22}
-                                        color="white"
-                                    />
-                                ) : intent === "appointment" ? (
-                                    <Ionicons
-                                        name="calendar"
-                                        size={22}
-                                        color="white"
-                                    />
-                                ) : intent === "shop" ? (
-                                    <Ionicons
-                                        name="cart"
-                                        size={22}
-                                        color="white"
-                                    />
-                                ) : undefined
-                            }
-                            onPress={() => onSelect(`/(tabs)/${intent}`)}
-                            color={"rgba(33, 168, 112, 0.51)"}
-                        />
-                    </View>
-                </>
+                <View>
+                    <SuggestionItem
+                        text={`Go to ${intent}`}
+                        index={0}
+                        icon={
+                            intent === "map" ? (
+                                <Ionicons name="map" size={22} color="white" />
+                            ) : intent === "appointment" ? (
+                                <Ionicons
+                                    name="calendar"
+                                    size={22}
+                                    color="white"
+                                />
+                            ) : intent === "shop" ? (
+                                <Ionicons name="cart" size={22} color="white" />
+                            ) : undefined
+                        }
+                        onPress={() => onSelect(`/(tabs)/${intent}`)}
+                        color={"rgba(33, 168, 112, 0.51)"}
+                    />
+                </View>
             )}
 
             {suggestions.map((s, i) => (
@@ -197,6 +188,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
     },
     container: {
+        justifyContent: "flex-start",
         padding: 20,
         gap: 8,
     },

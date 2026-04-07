@@ -10,7 +10,7 @@ import Animated, {
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
-import { useCarouselGesture } from "../GestureContext"
+import { useCarouselGesture } from "../../context/GestureContext"
 
 interface NButtonProps {
     onPress?: () => void
