@@ -7,11 +7,13 @@ import Animated, {
     withTiming,
     withSpring,
     interpolateColor,
+    Easing,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { fonts } from "../../theme"
 import { NText } from "./NText"
+import { Ionicons } from "@expo/vector-icons"
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 
@@ -73,6 +75,18 @@ export const NInput = ({
         transform: [{ scale: withTiming(focusValue.value ? 1.02 : 1) }],
     }))
 
+    const errorTiming = { duration: 250, easing: Easing.out(Easing.cubic) }
+
+    const errorAnimation = useAnimatedStyle(() => ({
+        transform: [
+            {
+                translateY: withTiming(failed ? 0 : -20, errorTiming),
+            },
+        ],
+        opacity: withTiming(failed ? 1 : 0, errorTiming),
+        zIndex: -1,
+    }))
+
     const animatedInputStyle = useAnimatedStyle(() => ({
         height: inputHeight.value,
     }))
@@ -114,7 +128,9 @@ export const NInput = ({
                         />
                     </BlurView>
                 </LinearGradient>
-                {failed && <NText style={styles.failed}>{failedText}</NText>}
+                <Animated.View style={[errorAnimation]}>
+                    <NText style={styles.failed}>{failedText}</NText>
+                </Animated.View>
             </Animated.View>
         </>
     )
@@ -148,8 +164,8 @@ const styles = StyleSheet.create({
         textAlign: "center",
         paddingTop: 25,
         paddingBottom: 5,
+        paddingHorizontal: 15,
         marginTop: -25,
-        zIndex: -1,
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },

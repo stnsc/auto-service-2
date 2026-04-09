@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
 import maplibregl from "maplibre-gl"
 import { ChatProvider } from "../context/ChatContext"
+import { AppointmentProvider } from "../context/AppointmentContext"
 
 import {
     useFonts,
@@ -53,7 +54,7 @@ export default function RootLayout() {
         },
         {
             key: "appointment",
-            label: "Appointments",
+            label: "Schedule",
             icon: <Ionicons name="calendar" size={22} color="white" />,
         },
         {
@@ -86,50 +87,52 @@ export default function RootLayout() {
 
     return (
         <ChatProvider>
-            <GestureHandlerRootView style={styles.container}>
-                <Image
-                    source={require("../assets/autoservice/background.jpg")}
-                    style={[
-                        styles.image,
-                        Platform.select({
-                            web: {
-                                filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
-                            } as any,
-                        }),
-                    ]}
-                    resizeMode="cover"
-                />
+            <AppointmentProvider>
+                <GestureHandlerRootView style={styles.container}>
+                    <Image
+                        source={require("../assets/autoservice/background.jpg")}
+                        style={[
+                            styles.image,
+                            Platform.select({
+                                web: {
+                                    filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
+                                } as any,
+                            }),
+                        ]}
+                        resizeMode="cover"
+                    />
 
-                <View style={styles.overlay} />
-
-                <View style={{ flex: 1 }}>
-                    {intensity > 0 ? (
-                        <BlurView
-                            style={styles.topNav}
-                            intensity={intensity}
-                            tint="dark"
-                        >
-                            <TopNavBar />
-                        </BlurView>
-                    ) : (
-                        <View style={styles.topNav}>
-                            <TopNavBar />
-                        </View>
-                    )}
+                    <View style={styles.overlay} />
 
                     <View style={{ flex: 1 }}>
-                        <Slot />
-                        {/* ← this is where index.tsx / other pages render */}
+                        {intensity > 0 ? (
+                            <BlurView
+                                style={styles.topNav}
+                                intensity={intensity}
+                                tint="dark"
+                            >
+                                <TopNavBar />
+                            </BlurView>
+                        ) : (
+                            <View style={styles.topNav}>
+                                <TopNavBar />
+                            </View>
+                        )}
+
+                        <View style={{ flex: 1 }}>
+                            <Slot />
+                            {/* ← this is where index.tsx / other pages render */}
+                        </View>
+                        <View style={styles.bottomNav}>
+                            <NTabBar
+                                tabs={TABS}
+                                activeKey={activeKey}
+                                onTabPress={handleTabPress}
+                            />
+                        </View>
                     </View>
-                    <View style={styles.bottomNav}>
-                        <NTabBar
-                            tabs={TABS}
-                            activeKey={activeKey}
-                            onTabPress={handleTabPress}
-                        />
-                    </View>
-                </View>
-            </GestureHandlerRootView>
+                </GestureHandlerRootView>
+            </AppointmentProvider>
         </ChatProvider>
     )
 }

@@ -2,8 +2,9 @@ import { StyleSheet, View } from "react-native"
 import Map, { MapHandle } from "../../components/Map.web"
 import { CAR_SERVICES } from "../../data/carServicesMock"
 import HorizontalCarousel from "../../components/bundle/HorizontalCarousel"
-import { useState, useCallback, useEffect, useRef } from "react"
+import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { CarService } from "../../app/types/CarService"
+import { useLocalSearchParams } from "expo-router"
 
 // Haversine distance in km between two lat/lng points
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -28,15 +29,55 @@ function sortByDistance(lat: number, lon: number, services: CarService[]) {
 }
 
 export default function MapScreen() {
+    const params = useLocalSearchParams<{
+        serviceId?: string
+        latitude?: string
+        longitude?: string
+    }>()
+
+    const initialLatitude = useMemo(() => {
+        const parsed = Number(params.latitude)
+        return Number.isFinite(parsed) ? parsed : 45.6427 //fallback, set to a random spot in Brasov
+    }, [params.latitude])
+
+    const initialLongitude = useMemo(() => {
+        const parsed = Number(params.longitude)
+        return Number.isFinite(parsed) ? parsed : 25.5887 //fallback, set to a random spot in Brasov
+    }, [params.longitude])
+
     const mapRef = useRef<MapHandle>(null)
     const isFlyingRef = useRef(false) // Track if a flyTo animation is in progress
     const shouldFlyRef = useRef(false) // Track if we should fly to the active service after sorting
+    const hasAppliedRouteFocusRef = useRef(false)
 
     const [sortedServices, setSortedServices] = useState<CarService[]>(
-        // Initial sort from default map center
-        sortByDistance(45.6427, 25.5887, CAR_SERVICES),
+        // Initial sort uses route coordinates when provided.
+        sortByDistance(initialLatitude, initialLongitude, CAR_SERVICES),
     )
     const [activeIndex, setActiveIndex] = useState(0)
+
+    useEffect(() => {
+        setSortedServices(
+            sortByDistance(initialLatitude, initialLongitude, CAR_SERVICES),
+        )
+        hasAppliedRouteFocusRef.current = false
+    }, [initialLatitude, initialLongitude])
+
+    useEffect(() => {
+        if (hasAppliedRouteFocusRef.current) return
+        hasAppliedRouteFocusRef.current = true
+
+        const selectedServiceId =
+            typeof params.serviceId === "string" ? params.serviceId : ""
+        if (!selectedServiceId) return
+
+        const index = sortedServices.findIndex(
+            (s) => s.id === selectedServiceId,
+        )
+        if (index === -1) return
+        setActiveIndex(index)
+        shouldFlyRef.current = true
+    }, [params.serviceId, sortedServices])
 
     // Called whenever the map is panned/zoomed — re-sort by new center
     const handleCenterChange = useCallback((lat: number, lon: number) => {
@@ -82,8 +123,8 @@ export default function MapScreen() {
         <View style={styles.container}>
             <Map
                 ref={mapRef}
-                latitude={45.6427}
-                longitude={25.5887}
+                latitude={initialLatitude}
+                longitude={initialLongitude}
                 zoom={14}
                 carServices={CAR_SERVICES}
                 onServicePress={handleServicePress}

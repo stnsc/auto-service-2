@@ -1,35 +1,22 @@
-import { View, StyleSheet, ScrollView } from "react-native"
-import { useState, useEffect } from "react"
+import { View, StyleSheet, ScrollView, Pressable } from "react-native"
+import { useState, useEffect, useMemo } from "react"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useChatContext } from "../../context/ChatContext"
-
-interface FormData {
-    // Step 1: Vehicle Info
-    vehicleYear: string
-    vehicleMake: string
-    vehicleModel: string
-    vehiclePlate: string
-
-    // Step 2: Problem Description
-    problemDescription: string
-
-    // Step 3: Appointment Details
-    preferredDate: string
-    preferredTime: string
-
-    // Step 4: Contact & Additional Info
-    customerName: string
-    customerPhone: string
-    customerEmail: string
-    additionalNotes: string
-}
+import { CAR_SERVICES } from "../../data/carServicesMock"
+import { useRouter } from "expo-router"
+import {
+    useAppointmentContext,
+    AppointmentFormData,
+} from "../../context/AppointmentContext"
+import { fonts } from "../../theme"
 
 const STEPS = [
     "Vehicle Info",
     "Problem Description",
+    "Service Center",
     "Appointment Details",
     "Contact & Additional Info",
     "Confirmation",
@@ -51,7 +38,10 @@ const VALIDATION_RULES = {
         validators.minLength(10),
     ],
 
-    // Step 3: Appointment Details
+    // Step 3: Service Center
+    serviceCenterId: [validators.required("Service center")],
+
+    // Step 4: Appointment Details
     preferredDate: [
         validators.required("Preferred date"),
         validators.date("YYYY-MM-DD"),
@@ -61,29 +51,38 @@ const VALIDATION_RULES = {
         validators.time("HH:MM"),
     ],
 
-    // Step 4: Contact & Additional Info
+    // Step 5: Contact & Additional Info
     customerName: [validators.required("Full name")],
     customerPhone: [validators.required("Phone number"), validators.phone()],
     customerEmail: [validators.required("Email"), validators.email()],
     additionalNotes: [],
 }
 
+const DEFAULT_CENTER = { latitude: 45.6427, longitude: 25.5887 }
+
+function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371
+    const dLat = ((lat2 - lat1) * Math.PI) / 180
+    const dLon = ((lon2 - lon1) * Math.PI) / 180
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+            Math.cos((lat2 * Math.PI) / 180) *
+            Math.sin(dLon / 2) ** 2
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 export default function AppointmentScreen() {
-    const [currentStep, setCurrentStep] = useState(0)
-    const [formData, setFormData] = useState<FormData>({
-        vehicleYear: "",
-        vehicleMake: "",
-        vehicleModel: "",
-        vehiclePlate: "",
-        problemDescription: "",
-        preferredDate: "",
-        preferredTime: "",
-        customerName: "",
-        customerPhone: "",
-        customerEmail: "",
-        additionalNotes: "",
-    })
-    const [errors, setErrors] = useState<Record<string, string | null>>({})
+    const router = useRouter()
+    const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
+    const {
+        currentStep,
+        setCurrentStep,
+        formData,
+        setFormData,
+        errors,
+        setErrors,
+    } = useAppointmentContext()
 
     // Get vehicle info from chat context
     const { vehicleInfo, summary } = useChatContext()
@@ -92,14 +91,57 @@ export default function AppointmentScreen() {
     useEffect(() => {
         setFormData((prev) => ({
             ...prev,
-            vehicleYear: vehicleInfo.year ? vehicleInfo.year.toString() : "",
-            vehicleMake: vehicleInfo.make || "",
-            vehicleModel: vehicleInfo.model || "",
-            problemDescription: summary || "",
+            vehicleYear:
+                prev.vehicleYear ||
+                (vehicleInfo.year ? vehicleInfo.year.toString() : ""),
+            vehicleMake: prev.vehicleMake || vehicleInfo.make || "",
+            vehicleModel: prev.vehicleModel || vehicleInfo.model || "",
+            problemDescription: prev.problemDescription || summary || "",
         }))
     }, [vehicleInfo.year, vehicleInfo.make, vehicleInfo.model, summary])
 
-    const updateField = (field: keyof FormData, value: string) => {
+    // Use geolocation when available so the nearest center is shown first.
+    useEffect(() => {
+        if (typeof navigator === "undefined" || !navigator.geolocation) {
+            return
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setUserLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                })
+            },
+            () => {
+                setUserLocation(DEFAULT_CENTER)
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+            },
+        )
+    }, [])
+
+    const servicesByDistance = useMemo(() => {
+        return [...CAR_SERVICES].sort((a, b) => {
+            const aDistance = distanceKm(
+                userLocation.latitude,
+                userLocation.longitude,
+                a.latitude,
+                a.longitude,
+            )
+            const bDistance = distanceKm(
+                userLocation.latitude,
+                userLocation.longitude,
+                b.latitude,
+                b.longitude,
+            )
+            return aDistance - bDistance
+        })
+    }, [userLocation.latitude, userLocation.longitude])
+
+    const updateField = (field: keyof AppointmentFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
         // Validate field as user types
         const fieldRules = VALIDATION_RULES[field]
@@ -114,18 +156,19 @@ export default function AppointmentScreen() {
 
     const handleNext = () => {
         // Determine which fields to validate based on current step
-        const fieldsToValidate: (keyof FormData)[] = {
+        const fieldsToValidate: (keyof AppointmentFormData)[] = {
             0: ["vehicleYear", "vehicleMake", "vehicleModel", "vehiclePlate"],
             1: ["problemDescription"],
-            2: ["preferredDate", "preferredTime"],
-            3: ["customerName", "customerPhone", "customerEmail"],
-            4: [],
-        }[currentStep] as (keyof FormData)[]
+            2: ["serviceCenterId"],
+            3: ["preferredDate", "preferredTime"],
+            4: ["customerName", "customerPhone", "customerEmail"],
+            5: [],
+        }[currentStep] as (keyof AppointmentFormData)[]
 
         // Validate current step fields
         const rulesMap = Object.entries(VALIDATION_RULES)
             .filter(([field]) =>
-                fieldsToValidate.includes(field as keyof FormData),
+                fieldsToValidate.includes(field as keyof AppointmentFormData),
             )
             .reduce(
                 (acc, [field, rules]) => {
@@ -162,11 +205,18 @@ export default function AppointmentScreen() {
         console.log("Form submitted:", formData)
     }
 
+    const selectedServiceCenter = CAR_SERVICES.find(
+        (service) => service.id === formData.serviceCenterId,
+    )
+
+    const mapTargetService =
+        selectedServiceCenter ?? servicesByDistance[0] ?? CAR_SERVICES[0]
+
     const renderStepContent = () => {
         switch (currentStep) {
             case 0: // Vehicle Info
                 return (
-                    <View style={styles.stepContent}>
+                    <View>
                         <NInput
                             placeholder="Year"
                             value={formData.vehicleYear}
@@ -212,7 +262,7 @@ export default function AppointmentScreen() {
 
             case 1: // Problem Description
                 return (
-                    <View style={styles.stepContent}>
+                    <View>
                         <NInput
                             placeholder="Describe the issue with your vehicle"
                             value={formData.problemDescription}
@@ -227,9 +277,142 @@ export default function AppointmentScreen() {
                     </View>
                 )
 
-            case 2: // Appointment Details
+            case 2: // Service Center
                 return (
-                    <View style={styles.stepContent}>
+                    <View>
+                        <NText style={styles.stepTitle}>
+                            Choose where you want to schedule your service
+                        </NText>
+                        <View style={{ marginBottom: 15 }}>
+                            <NButton
+                                onPress={() =>
+                                    router.push({
+                                        pathname: "/map",
+                                        params: {
+                                            serviceId: mapTargetService.id,
+                                            latitude:
+                                                mapTargetService.latitude.toString(),
+                                            longitude:
+                                                mapTargetService.longitude.toString(),
+                                        },
+                                    })
+                                }
+                                color="rgba(33, 168, 112, 0.51)"
+                            >
+                                <NText
+                                    style={{
+                                        fontFamily: fonts.bold,
+                                        color: "white",
+                                    }}
+                                >
+                                    Open Map for the the selected center
+                                </NText>
+                            </NButton>
+                        </View>
+                        {servicesByDistance.map((service, index) => {
+                            const isSelected =
+                                formData.serviceCenterId === service.id
+                            return (
+                                <NButton
+                                    key={service.id}
+                                    color={
+                                        isSelected
+                                            ? "rgba(30, 212, 157, 0.4)"
+                                            : "rgba(0, 0, 0, 0.4)"
+                                    }
+                                    onPress={() =>
+                                        updateField(
+                                            "serviceCenterId",
+                                            service.id,
+                                        )
+                                    }
+                                    style={{ marginBottom: 10 }}
+                                >
+                                    <View style={{ flex: 1, width: "100%" }}>
+                                        <View
+                                            style={{
+                                                flex: 1,
+                                                flexDirection: "row",
+                                                justifyContent: "space-between",
+                                            }}
+                                        >
+                                            <NText
+                                                style={{
+                                                    fontFamily: fonts.bold,
+                                                    fontSize: 20,
+                                                    color: "white",
+                                                    marginBottom: 5,
+                                                }}
+                                            >
+                                                {service.name}
+                                            </NText>
+                                            {index === 0 && (
+                                                <NText
+                                                    style={{
+                                                        fontFamily: fonts.bold,
+                                                        fontSize: 16,
+                                                        color: "rgb(30, 212, 157)",
+                                                    }}
+                                                >
+                                                    Nearest to you
+                                                </NText>
+                                            )}
+                                        </View>
+                                        <View
+                                            style={{
+                                                flex: 1,
+                                                flexDirection: "row",
+                                                justifyContent: "space-between",
+                                            }}
+                                        >
+                                            <View>
+                                                <NText
+                                                    style={styles.serviceMeta}
+                                                >
+                                                    {service.address}
+                                                </NText>
+                                                <NText
+                                                    style={styles.serviceMeta}
+                                                >
+                                                    Rating:{" "}
+                                                    {service.rating.toFixed(1)}
+                                                </NText>
+                                            </View>
+                                            <View
+                                                style={{
+                                                    justifyContent: "flex-end",
+                                                }}
+                                            >
+                                                <NText
+                                                    style={styles.serviceMeta}
+                                                >
+                                                    Distance:{" "}
+                                                    {distanceKm(
+                                                        userLocation.latitude,
+                                                        userLocation.longitude,
+                                                        service.latitude,
+                                                        service.longitude,
+                                                    ).toFixed(1)}{" "}
+                                                    km
+                                                </NText>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </NButton>
+                            )
+                        })}
+
+                        {!!errors.serviceCenterId && (
+                            <NText style={styles.stepErrorText}>
+                                {errors.serviceCenterId}
+                            </NText>
+                        )}
+                    </View>
+                )
+
+            case 3: // Appointment Details
+                return (
+                    <View>
                         <NInput
                             placeholder="Preferred Date (YYYY-MM-DD)"
                             value={formData.preferredDate}
@@ -253,9 +436,9 @@ export default function AppointmentScreen() {
                     </View>
                 )
 
-            case 3: // Contact & Additional Info
+            case 4: // Contact & Additional Info
                 return (
-                    <View style={styles.stepContent}>
+                    <View>
                         <NInput
                             placeholder="Full Name"
                             value={formData.customerName}
@@ -298,40 +481,71 @@ export default function AppointmentScreen() {
                     </View>
                 )
 
-            case 4: // Confirmation
+            case 5: // Confirmation
                 return (
-                    <View style={styles.stepContent}>
-                        <View style={styles.confirmationBox}>
-                            <NText style={styles.confirmLabel}>Vehicle:</NText>
-                            <NText style={styles.confirmValue}>
-                                {formData.vehicleYear} {formData.vehicleMake}{" "}
-                                {formData.vehicleModel}
-                            </NText>
+                    <View>
+                        <NButton
+                            style={{
+                                width: "100%",
+                                justifyContent: "flex-start",
+                            }}
+                            color="rgba(255, 255, 255, 0.05)"
+                        >
+                            <View
+                                style={{
+                                    width: "100%",
+                                    alignItems: "flex-start",
+                                }}
+                            >
+                                <NText style={styles.confirmLabel}>
+                                    Vehicle:
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {formData.vehicleYear}{" "}
+                                    {formData.vehicleMake}{" "}
+                                    {formData.vehicleModel}
+                                </NText>
 
-                            <NText style={styles.confirmLabel}>Problem:</NText>
-                            <NText style={styles.confirmValue}>
-                                {formData.problemDescription}
-                            </NText>
+                                <NText style={styles.confirmLabel}>
+                                    Problem:
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {formData.problemDescription}
+                                </NText>
 
-                            <NText style={styles.confirmLabel}>
-                                Appointment:
-                            </NText>
-                            <NText style={styles.confirmValue}>
-                                {formData.preferredDate} at{" "}
-                                {formData.preferredTime}
-                            </NText>
+                                <NText style={styles.confirmLabel}>
+                                    Service Center:
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {selectedServiceCenter?.name ||
+                                        "Not selected"}
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {selectedServiceCenter?.address || ""}
+                                </NText>
 
-                            <NText style={styles.confirmLabel}>Contact:</NText>
-                            <NText style={styles.confirmValue}>
-                                {formData.customerName}
-                            </NText>
-                            <NText style={styles.confirmValue}>
-                                {formData.customerPhone}
-                            </NText>
-                            <NText style={styles.confirmValue}>
-                                {formData.customerEmail}
-                            </NText>
-                        </View>
+                                <NText style={styles.confirmLabel}>
+                                    Appointment:
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {formData.preferredDate} at{" "}
+                                    {formData.preferredTime}
+                                </NText>
+
+                                <NText style={styles.confirmLabel}>
+                                    Contact:
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {formData.customerName}
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {formData.customerPhone}
+                                </NText>
+                                <NText style={styles.confirmValue}>
+                                    {formData.customerEmail}
+                                </NText>
+                            </View>
+                        </NButton>
                     </View>
                 )
 
@@ -348,7 +562,14 @@ export default function AppointmentScreen() {
             {/* Progress Indicator */}
             <View style={styles.progressContainer}>
                 {STEPS.map((step, index) => (
-                    <View key={index} style={styles.progressItem}>
+                    <View
+                        key={index}
+                        style={[
+                            styles.progressItem,
+                            index < STEPS.length - 1 &&
+                                styles.progressItemWithLine,
+                        ]}
+                    >
                         <View
                             style={[
                                 styles.progressDot,
@@ -429,11 +650,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 30,
+        marginTop: 20,
     },
     progressItem: {
-        flex: 1,
         alignItems: "center",
         flexDirection: "row",
+    },
+    progressItemWithLine: {
+        flex: 1,
     },
     progressDot: {
         width: 36,
@@ -467,14 +691,19 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         marginBottom: 20,
     },
-    stepContent: {
-        marginBottom: 30,
-    },
     stepTitle: {
         color: "rgba(255, 255, 255, 0.7)",
         fontSize: 16,
         fontWeight: "600",
         marginBottom: 20,
+    },
+    stepErrorText: {
+        color: "rgba(255, 0, 0, 0.8)",
+        marginTop: 10,
+    },
+    serviceMeta: {
+        fontFamily: fonts.light,
+        color: "rgba(255,255,255,0.7)",
     },
     input: {
         marginBottom: 15,
@@ -500,6 +729,9 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     buttonContainer: {
+        backgroundColor: "rgba(0, 0, 0, 0.2)",
+        padding: 15,
+        borderRadius: 30,
         flexDirection: "row",
         gap: 12,
         marginTop: 20,

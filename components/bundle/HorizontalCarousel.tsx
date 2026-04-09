@@ -283,7 +283,7 @@ export default function HorizontalCarousel({
                                                                     color: "#fff",
                                                                 }}
                                                             >
-                                                                Set Appointment
+                                                                Schedule
                                                             </NText>
                                                         </NButton>
                                                         <NButton color={"#333"}>

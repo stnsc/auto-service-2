@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     },
     newChatButton: {
         top: 0,
-        marginTop: "20%",
+        marginTop: 90,
         alignSelf: "flex-end",
         paddingVertical: 8,
         position: "absolute",
