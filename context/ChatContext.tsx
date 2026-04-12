@@ -20,6 +20,8 @@ interface ChatContextType {
     setSummary: (summary: string) => void
     vehicleInfo: VehicleInfo
     setVehicleInfo: (info: VehicleInfo) => void
+    partQuery: string
+    setPartQuery: (query: string) => void
     clearChat: () => void
 }
 
@@ -28,6 +30,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 export function ChatProvider({ children }: { children: ReactNode }) {
     const [messages, setMessages] = useState<Message[]>([])
     const [summary, setSummary] = useState("")
+    const [partQuery, setPartQuery] = useState("")
     const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo>({
         make: null,
         model: null,
@@ -39,6 +42,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const clearChat = () => {
         setMessages([])
         setSummary("")
+        setPartQuery("")
         setVehicleInfo({
             make: null,
             model: null,
@@ -57,6 +61,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 setSummary,
                 vehicleInfo,
                 setVehicleInfo,
+                partQuery,
+                setPartQuery,
                 clearChat,
             }}
         >

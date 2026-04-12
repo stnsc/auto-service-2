@@ -5,7 +5,10 @@ export async function POST(request: Request) {
     const { messages, vehicleInfo } = await request.json();
 
     if (!messages || messages.length === 0) {
-        return Response.json({ error: "No messages provided" }, { status: 400 });
+        return new Response(
+            JSON.stringify({ error: "No messages provided" }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
     }
 
     // Filter out any messages without content to prevent validation errors
@@ -14,7 +17,10 @@ export async function POST(request: Request) {
     );
 
     if (validMessages.length === 0) {
-        return Response.json({ error: "No valid messages provided" }, { status: 400 });
+        return new Response(
+            JSON.stringify({ error: "No valid messages provided" }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+        );
     }
 
     try {
@@ -38,7 +44,8 @@ export async function POST(request: Request) {
                         "year": "number or null if not mentioned",
                         "mileage": "number or null if not mentioned",
                         "warningLights": "boolean or null if not mentioned"
-                    }
+                    },
+                    "partQuery": "A concise marketplace search query for a car part the user needs, including vehicle details if known (e.g., 'brake pads 2015 Honda Civic'). Return null if the user is not asking about buying or replacing a specific part."
                 }
 
                 Current known vehicle info: ${JSON.stringify(vehicleInfo)}
@@ -47,43 +54,73 @@ export async function POST(request: Request) {
                 The response should be your main answer to the user.
                 The summary should capture the vehicle issue and any important details mentioned for them to
                 be reported to a service center.
+                ALWAYS include the partQuery field. If the user mentions needing, wanting to buy, or replacing
+                any car part or accessory, set partQuery to a short search string like "brake pads 2015 Honda Civic".
+                If the user is NOT talking about buying a part, set partQuery to null.
 `,
             messages: validMessages,
         });
 
         // Parse and validate the JSON response from the AI
+        // The LLM sometimes outputs text before the JSON block, so extract it
         let parsed;
         try {
             parsed = JSON.parse(text);
-        } catch (parseError) {
-            console.error('Failed to parse AI response:', text);
-            return Response.json(
-                { error: 'Invalid response format from AI' },
-                { status: 500 }
-            );
+        } catch {
+            // Try to extract JSON object from the text
+            const jsonMatch = text.match(/\{[\s\S]*\}/)
+            if (jsonMatch) {
+                try {
+                    parsed = JSON.parse(jsonMatch[0])
+                } catch {
+                    console.error('Failed to parse extracted JSON:', text);
+                    return new Response(
+                        JSON.stringify({ error: 'Invalid response format from AI' }),
+                        { status: 500, headers: { 'Content-Type': 'application/json' } }
+                    );
+                }
+            } else {
+                console.error('No JSON found in AI response:', text);
+                return new Response(
+                    JSON.stringify({ error: 'Invalid response format from AI' }),
+                    { status: 500, headers: { 'Content-Type': 'application/json' } }
+                );
+            }
         }
 
         // Validate required fields exist
         if (!parsed.response || typeof parsed.response !== 'string') {
             console.error('Missing or invalid response field:', parsed);
-            return Response.json(
-                { error: 'Invalid response structure' },
-                { status: 500 }
+            return new Response(
+                JSON.stringify({ error: 'Invalid response structure' }),
+                { status: 500, headers: { 'Content-Type': 'application/json' } }
             );
         }
 
-        return Response.json({
+        const body = JSON.stringify({
             reply: parsed.response,
             summary: parsed.summary || '',
             intent: parsed.intent || null,
             confidence: parsed.confidence || 0,
             vehicleInfo: parsed.vehicleInfo || {},
+            partQuery: parsed.partQuery || null,
+        });
+
+        return new Response(body, {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': String(Buffer.byteLength(body)),
+            },
         });
     } catch (error) {
         console.error('Chat API error:', error);
-        return Response.json(
-            { error: 'Failed to generate response' },
-            { status: 500 }
+        return new Response(
+            JSON.stringify({ error: 'Failed to generate response' }),
+            {
+                status: 500,
+                headers: { 'Content-Type': 'application/json' },
+            }
         );
     }
 }

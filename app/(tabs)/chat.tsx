@@ -43,6 +43,7 @@ export default function ChatScreen() {
         setSummary,
         vehicleInfo,
         setVehicleInfo,
+        setPartQuery,
         clearChat,
     } = useChatContext()
 
@@ -130,6 +131,11 @@ export default function ChatScreen() {
                     ...vehicleInfo,
                     ...data.vehicleInfo,
                 })
+            }
+
+            // Update part query for the shop tab
+            if (data.partQuery) {
+                setPartQuery(data.partQuery)
             }
 
             // Update intent and confidence for suggestions
