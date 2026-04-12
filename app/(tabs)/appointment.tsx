@@ -12,6 +12,7 @@ import {
     AppointmentFormData,
 } from "../../context/AppointmentContext"
 import { fonts } from "../../theme"
+import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
 
 const STEPS = [
     "Vehicle Info",
@@ -413,26 +414,22 @@ export default function AppointmentScreen() {
             case 3: // Appointment Details
                 return (
                     <View>
-                        <NInput
-                            placeholder="Preferred Date (YYYY-MM-DD)"
-                            value={formData.preferredDate}
-                            onChangeText={(text) =>
-                                updateField("preferredDate", text)
-                            }
-                            containerStyle={styles.input}
-                            failed={!!errors.preferredDate}
-                            failedText={errors.preferredDate || ""}
+                        <WeeklyCalendar
+                            serviceCenterId={formData.serviceCenterId}
+                            selectedDate={formData.preferredDate}
+                            selectedTime={formData.preferredTime}
+                            onSelectSlot={(date, time) => {
+                                updateField("preferredDate", date)
+                                updateField("preferredTime", time)
+                            }}
                         />
-                        <NInput
-                            placeholder="Preferred Time (HH:MM)"
-                            value={formData.preferredTime}
-                            onChangeText={(text) =>
-                                updateField("preferredTime", text)
-                            }
-                            containerStyle={styles.input}
-                            failed={!!errors.preferredTime}
-                            failedText={errors.preferredTime || ""}
-                        />
+                        {(!!errors.preferredDate ||
+                            !!errors.preferredTime) && (
+                            <NText style={styles.stepErrorText}>
+                                {errors.preferredDate ||
+                                    errors.preferredTime}
+                            </NText>
+                        )}
                     </View>
                 )
 
@@ -555,54 +552,57 @@ export default function AppointmentScreen() {
     }
 
     return (
-        <ScrollView
-            style={styles.container}
-            contentContainerStyle={styles.contentContainer}
-        >
-            {/* Progress Indicator */}
-            <View style={styles.progressContainer}>
-                {STEPS.map((step, index) => (
-                    <View
-                        key={index}
-                        style={[
-                            styles.progressItem,
-                            index < STEPS.length - 1 &&
-                                styles.progressItemWithLine,
-                        ]}
-                    >
+        <View style={styles.root}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.contentContainer}
+            >
+                {/* Progress Indicator */}
+                <View style={styles.progressContainer}>
+                    {STEPS.map((step, index) => (
                         <View
+                            key={index}
                             style={[
-                                styles.progressDot,
-                                index <= currentStep &&
-                                    styles.progressDotActive,
+                                styles.progressItem,
+                                index < STEPS.length - 1 &&
+                                    styles.progressItemWithLine,
                             ]}
                         >
-                            <NText style={styles.progressNumber}>
-                                {index + 1}
-                            </NText>
-                        </View>
-                        {index < STEPS.length - 1 && (
                             <View
                                 style={[
-                                    styles.progressLine,
-                                    index < currentStep &&
-                                        styles.progressLineActive,
+                                    styles.progressDot,
+                                    index <= currentStep &&
+                                        styles.progressDotActive,
                                 ]}
-                            />
-                        )}
-                    </View>
-                ))}
-            </View>
+                            >
+                                <NText style={styles.progressNumber}>
+                                    {index + 1}
+                                </NText>
+                            </View>
+                            {index < STEPS.length - 1 && (
+                                <View
+                                    style={[
+                                        styles.progressLine,
+                                        index < currentStep &&
+                                            styles.progressLineActive,
+                                    ]}
+                                />
+                            )}
+                        </View>
+                    ))}
+                </View>
 
-            {/* Step Title */}
-            <NText style={styles.currentStep}>
-                Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep]}
-            </NText>
+                {/* Step Title */}
+                <NText style={styles.currentStep}>
+                    Step {currentStep + 1} of {STEPS.length}:{" "}
+                    {STEPS[currentStep]}
+                </NText>
 
-            {/* Step Content */}
-            {renderStepContent()}
+                {/* Step Content */}
+                {renderStepContent()}
+            </ScrollView>
 
-            {/* Navigation Buttons */}
+            {/* Navigation Buttons - fixed above tab bar */}
             <View style={styles.buttonContainer}>
                 <NButton
                     onPress={handlePrev}
@@ -632,14 +632,17 @@ export default function AppointmentScreen() {
                     </NButton>
                 )}
             </View>
-        </ScrollView>
+        </View>
     )
 }
 
 const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
         marginTop: "10%",
+    },
+    container: {
+        flex: 1,
     },
     contentContainer: {
         padding: 20,
@@ -731,10 +734,11 @@ const styles = StyleSheet.create({
     buttonContainer: {
         backgroundColor: "rgba(0, 0, 0, 0.2)",
         padding: 15,
+        marginHorizontal: 20,
+        marginBottom: 100,
         borderRadius: 30,
         flexDirection: "row",
         gap: 12,
-        marginTop: 20,
     },
     button: {
         flex: 1,
