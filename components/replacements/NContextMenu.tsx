@@ -127,7 +127,7 @@ export function NContextMenu({
     // The whole pill grows from circle → rectangle
     const containerStyle = useAnimatedStyle(() => ({
         width: interpolate(openProgress.value, [0, 1], [42, 230]),
-        height: interpolate(openProgress.value, [0, 1], [42, 190]),
+        height: interpolate(openProgress.value, [0, 1], [42, 42 + actions.length * 38]),
         borderRadius: interpolate(openProgress.value, [0, 1], [21, 32]),
     }))
 

@@ -1,4 +1,4 @@
-import { Platform, Image, View, StyleSheet } from "react-native"
+import { Platform, Image, View, StyleSheet, useWindowDimensions } from "react-native"
 import { act, useEffect, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter } from "expo-router"
@@ -78,7 +78,11 @@ export default function RootLayout() {
         router.push(TAB_ROUTES[key] as any)
     }
 
+    const isAdmin = pathname.startsWith("/admin")
+
     activeKey === "chat" ? (intensity = 30) : (intensity = 0)
+
+    const { width: windowWidth } = useWindowDimensions()
 
     const [hue, setHue] = useState(80)
     const [sat, setSat] = useState(70)
@@ -89,46 +93,57 @@ export default function RootLayout() {
         <ChatProvider>
             <AppointmentProvider>
                 <GestureHandlerRootView style={styles.container}>
-                    <Image
-                        source={require("../assets/autoservice/background.jpg")}
-                        style={[
-                            styles.image,
-                            Platform.select({
-                                web: {
-                                    filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
-                                } as any,
-                            }),
-                        ]}
-                        resizeMode="cover"
-                    />
-
-                    <View style={styles.overlay} />
-
-                    <View style={{ flex: 1 }}>
-                        {intensity > 0 ? (
-                            <BlurView
-                                style={styles.topNav}
-                                intensity={intensity}
-                                tint="dark"
-                            >
-                                <TopNavBar />
-                            </BlurView>
-                        ) : (
-                            <View style={styles.topNav}>
-                                <TopNavBar />
-                            </View>
-                        )}
+                    <View style={[styles.appFrame, !isAdmin && styles.customerShell, !isAdmin && windowWidth > 600 && styles.customerShellDesktop]}>
+                        {/* Background layer — clipped separately so overflow:hidden
+                             doesn't break backdrop-filter on content BlurViews */}
+                        <View style={[styles.bgLayer, !isAdmin && windowWidth > 600 && styles.bgLayerRounded]}>
+                            <Image
+                                source={require("../assets/autoservice/background.jpg")}
+                                style={[
+                                    styles.image,
+                                    Platform.select({
+                                        web: {
+                                            filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
+                                        } as any,
+                                    }),
+                                ]}
+                                resizeMode="cover"
+                            />
+                            <View style={styles.overlay} />
+                        </View>
 
                         <View style={{ flex: 1 }}>
-                            <Slot />
-                            {/* ← this is where index.tsx / other pages render */}
-                        </View>
-                        <View style={styles.bottomNav}>
-                            <NTabBar
-                                tabs={TABS}
-                                activeKey={activeKey}
-                                onTabPress={handleTabPress}
-                            />
+                            {!isAdmin && (
+                                <>
+                                    {intensity > 0 ? (
+                                        <BlurView
+                                            style={[styles.topNav, windowWidth > 600 && { borderRadius: 20 }]}
+                                            intensity={intensity}
+                                            tint="dark"
+                                        >
+                                            <TopNavBar />
+                                        </BlurView>
+                                    ) : (
+                                        <View style={styles.topNav}>
+                                            <TopNavBar />
+                                        </View>
+                                    )}
+                                </>
+                            )}
+
+                            <View style={{ flex: 1 }}>
+                                <Slot />
+                            </View>
+
+                            {!isAdmin && (
+                                <View style={styles.bottomNav}>
+                                    <NTabBar
+                                        tabs={TABS}
+                                        activeKey={activeKey}
+                                        onTabPress={handleTabPress}
+                                    />
+                                </View>
+                            )}
                         </View>
                     </View>
                 </GestureHandlerRootView>
@@ -153,6 +168,25 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#000",
+    },
+    appFrame: {
+        flex: 1,
+    },
+    customerShell: {
+        maxWidth: 600,
+        width: "100%",
+        alignSelf: "center",
+    },
+    customerShellDesktop: {
+        marginVertical: 16,
+        borderRadius: 20,
+    },
+    bgLayer: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    bgLayerRounded: {
+        borderRadius: 20,
+        overflow: "hidden",
     },
     image: {
         ...StyleSheet.absoluteFillObject,

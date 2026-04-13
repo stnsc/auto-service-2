@@ -1,11 +1,14 @@
-import React, { version } from "react"
+import React from "react"
 import { View, Text, StyleSheet, Image } from "react-native"
+import { useRouter } from "expo-router"
 import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../replacements/NText"
 import { fonts } from "../../theme"
 
 export const TopNavBar = () => {
+    const router = useRouter()
+
     const CONTEXT = [
         {
             key: "account",
@@ -16,6 +19,11 @@ export const TopNavBar = () => {
             key: "vehicle",
             label: "Vehicle Configuration",
             icon: <Ionicons name="settings-outline" size={18} color="white" />,
+        },
+        {
+            key: "admin",
+            label: "Admin Panel",
+            icon: <Ionicons name="shield-outline" size={18} color="white" />,
         },
         {
             key: "language",
@@ -30,6 +38,14 @@ export const TopNavBar = () => {
         },
     ]
 
+    const handleAction = (key: string) => {
+        if (key === "admin") {
+            router.push("/admin/dashboard" as any)
+            return
+        }
+        console.log(key)
+    }
+
     return (
         <View style={styles.container}>
             <Image
@@ -41,7 +57,7 @@ export const TopNavBar = () => {
             </NText>
             <NContextMenu
                 avatar={<Ionicons name="person" size={22} color="white" />}
-                onAction={(key) => console.log(key)}
+                onAction={handleAction}
                 actions={CONTEXT}
             />
         </View>

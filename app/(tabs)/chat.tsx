@@ -171,12 +171,14 @@ export default function ChatScreen() {
         <View style={styles.container}>
             <View style={styles.chatArea}>
                 {!chatStarted ? (
-                    <NText
-                        style={[styles.greeting, { fontFamily: fonts.regular }]}
-                    >
-                        Hello, {user}! {"\n"}
-                        How can I help?
-                    </NText>
+                    <View style={styles.centerContent}>
+                        <NText
+                            style={[styles.greeting, { fontFamily: fonts.regular }]}
+                        >
+                            Hello, {user}! {"\n"}
+                            How can I help?
+                        </NText>
+                    </View>
                 ) : (
                     <>
                         <NButton
@@ -218,12 +220,7 @@ export default function ChatScreen() {
                             }
                         >
                             <Animated.View
-                                style={{
-                                    paddingBottom: chatShiftAnim.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [0, 80], // Shift up when intent suggestion present
-                                    }),
-                                }}
+                                
                             >
                                 {messages.map((msg, i) => (
                                     <View
@@ -300,50 +297,12 @@ export default function ChatScreen() {
                     </>
                 )}
 
-                <View style={styles.inputWrapper}>
-                    <NInput
-                        onChangeText={setQuery}
-                        value={query}
-                        onSubmitEditing={handleSubmit}
-                        placeholder="What's your question?"
-                    />
-                    <View style={styles.inputButton}>
-                        <NButton
-                            color="rgba(33, 168, 112, 0.51)"
-                            onPress={handleSubmit}
-                        >
-                            <Ionicons name="send" size={22} color="white" />
-                        </NButton>
-                    </View>
-                </View>
-            </View>
-
-            <Animated.View
-                style={[
-                    {
-                        flex: 1,
-                        maxHeight: transitionAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ["10%", "50%"], // Smaller when chat active
-                        }),
-                        transform: [
-                            {
-                                translateY: transitionAnim.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [-180, 0], // Move up when chat active
-                                }),
-                            },
-                        ],
-                    },
-                ]}
-            >
-                <View style={{ flex: 1, width: "100%", overflow: "hidden" }}>
+                <View style={{ width: "100%", overflow: "hidden" }}>
                     <Suggestions
                         query={query}
                         chatStarted={chatStarted}
                         onHasIntentSuggestion={setHasIntentSuggestion}
                         onSelect={(suggestion) => {
-                            //routing logic for suggestions
                             if (!suggestion) return
                             if (suggestion.startsWith("/(tabs)/")) {
                                 router.push(suggestion as any)
@@ -353,7 +312,26 @@ export default function ChatScreen() {
                         }}
                     />
                 </View>
-            </Animated.View>
+
+                <View style={styles.inputWrapper}>
+                    <NInput
+                        containerStyle={{ flex: 1 }}
+                        onChangeText={setQuery}
+                        value={query}
+                        onSubmitEditing={handleSubmit}
+                        placeholder="What's your question?"
+                    />
+                    <View>
+                        <NButton
+                            color="rgba(33, 168, 112, 0.51)"
+                            onPress={handleSubmit}
+                            style={{paddingLeft: 10}}
+                        >
+                            <Ionicons name="send" size={19} color="white" /> 
+                        </NButton>
+                    </View>
+                </View>
+            </View>
         </View>
     )
 }
@@ -362,7 +340,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: "column",
-        backgroundColor: "transparent",
     },
     chatArea: {
         flex: 1,
@@ -391,18 +368,15 @@ const styles = StyleSheet.create({
     bubble: {
         padding: 6,
     },
-    inputWrapper: {
-        position: "relative",
-        width: "100%",
-    },
-    inputButton: {
-        alignItems: "flex-end",
-        marginTop: -20,
-    },
-    suggestionsContainer: {
+    centerContent: {
+        flex: 1,
         justifyContent: "center",
-        alignItems: "center",
+        alignItems: "flex-start",
+    },
+    inputWrapper: {
+        flexDirection: "row",
         width: "100%",
+        paddingBottom: 80,
     },
     greeting: {
         color: "#fff",

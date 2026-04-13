@@ -132,7 +132,7 @@ export function Suggestions({ query, onSelect, chatStarted, onHasIntentSuggestio
             <View style={styles.center}>
                 <NText
                     style={{
-                        fontFamily: fonts.regular,
+                        fontFamily: fonts.light,
                         color: "rgba(255,255,255,0.5)",
                         fontSize: 14,
                     }}
@@ -184,8 +184,8 @@ export function Suggestions({ query, onSelect, chatStarted, onHasIntentSuggestio
 
 const styles = StyleSheet.create({
     center: {
-        alignItems: "center",
-        paddingVertical: 16,
+        alignItems: "flex-start",
+        padding: 16,
     },
     container: {
         justifyContent: "flex-start",

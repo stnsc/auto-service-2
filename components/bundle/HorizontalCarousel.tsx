@@ -22,12 +22,6 @@ import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useRouter } from "expo-router"
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window")
-
-const PEEK_WIDTH = SCREEN_WIDTH * 0.15
-const CARD_WIDTH = SCREEN_WIDTH - PEEK_WIDTH * 2
-const CARD_STEP = CARD_WIDTH
-
 interface HorizontalCarouselProps {
     services: CarService[]
     activeIndex: number
@@ -43,6 +37,14 @@ export default function HorizontalCarousel({
     onIndexChange,
 }: HorizontalCarouselProps) {
     const router = useRouter()
+
+    const [containerWidth, setContainerWidth] = useState(
+        Dimensions.get("window").width,
+    )
+
+    const peekWidth = containerWidth * 0.15
+    const cardWidth = containerWidth - peekWidth * 2
+    const cardStep = cardWidth
 
     const indexCount = services.length
 
@@ -63,37 +65,37 @@ export default function HorizontalCarousel({
             const clamped = clamp(index, 0, indexCount - 1)
             onIndexChange(clamped)
             Animated.spring(translateX, {
-                toValue: -clamped * CARD_STEP,
+                toValue: -clamped * cardStep,
                 useNativeDriver: true,
                 damping: 20,
                 stiffness: 180,
                 mass: 0.8,
             }).start()
         },
-        [translateX, onIndexChange, indexCount],
+        [translateX, onIndexChange, indexCount, cardStep],
     )
 
     useEffect(() => {
         Animated.spring(translateX, {
-            toValue: -activeIndex * CARD_STEP,
+            toValue: -activeIndex * cardStep,
             useNativeDriver: true,
             damping: 20,
             stiffness: 180,
             mass: 0.8,
         }).start()
-    }, [activeIndex])
+    }, [activeIndex, cardStep])
 
     const pan = Gesture.Pan()
         .withRef(panRef)
         .runOnJS(true)
         .onBegin(() => {
             // Capture current offset so we can add drag delta on top
-            offsetAtGestureStart.current = -activeIndex * CARD_STEP
+            offsetAtGestureStart.current = -activeIndex * cardStep
         })
         .onUpdate((e) => {
             // Apply drag with slight rubber-banding at the edges
             const raw = offsetAtGestureStart.current + e.translationX
-            const minTranslate = -(indexCount - 1) * CARD_STEP
+            const minTranslate = -(indexCount - 1) * cardStep
             const maxTranslate = 0
 
             let clamped = raw
@@ -119,7 +121,7 @@ export default function HorizontalCarousel({
                 targetIndex = activeIndex - 1
             } else {
                 // Slow drag — snap to whichever card is closest to center
-                targetIndex = Math.round(-currentOffset / CARD_STEP)
+                targetIndex = Math.round(-currentOffset / cardStep)
             }
 
             snapToIndex(targetIndex)
@@ -128,21 +130,29 @@ export default function HorizontalCarousel({
     return (
         <GestureContext.Provider value={panRef}>
             <GestureHandlerRootView style={styles.root}>
-                <View style={styles.container}>
+                <View
+                    style={styles.container}
+                    onLayout={(e) =>
+                        setContainerWidth(e.nativeEvent.layout.width)
+                    }
+                >
                     {/* The GestureDetector wraps only the carousel track */}
                     <GestureDetector gesture={pan}>
-                        <View style={styles.track}>
+                        <View style={[styles.track, { width: containerWidth }]}>
                             <Animated.View
                                 style={[
                                     styles.row,
-                                    { transform: [{ translateX }] },
+                                    {
+                                        paddingHorizontal: peekWidth,
+                                        transform: [{ translateX }],
+                                    },
                                 ]}
                             >
                                 {services.map((service, index) => {
                                     const inputRange = [
-                                        -(index + 1) * CARD_STEP,
-                                        -index * CARD_STEP,
-                                        -(index - 1) * CARD_STEP,
+                                        -(index + 1) * cardStep,
+                                        -index * cardStep,
+                                        -(index - 1) * cardStep,
                                     ]
 
                                     const scale = translateX.interpolate({
@@ -163,6 +173,7 @@ export default function HorizontalCarousel({
                                             style={[
                                                 styles.card,
                                                 {
+                                                    width: cardWidth,
                                                     transform: [{ scale }],
                                                     opacity,
                                                 },
@@ -339,24 +350,20 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: "700",
         letterSpacing: 1,
-        paddingHorizontal: PEEK_WIDTH,
         marginBottom: 24,
     },
-    // Clipping window — only SCREEN_WIDTH wide, overflow hidden hides the rest
+    // Clipping window — overflow hidden hides the rest
     track: {
-        width: SCREEN_WIDTH,
         overflow: "hidden",
         height: 240,
     },
-    // The full row of cards, laid out side by side starting at PEEK_WIDTH
+    // The full row of cards, laid out side by side
     row: {
         flexDirection: "row",
-        paddingHorizontal: PEEK_WIDTH,
         height: "100%",
         alignItems: "center",
     },
     card: {
-        width: CARD_WIDTH,
         borderRadius: 20,
         justifyContent: "center",
     },

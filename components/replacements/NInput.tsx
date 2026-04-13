@@ -1,5 +1,5 @@
 import React from "react"
-import { StyleSheet, TextInput, TextInputProps, ViewStyle } from "react-native"
+import { Platform, StyleSheet, TextInput, TextInputProps, ViewStyle } from "react-native"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -42,10 +42,13 @@ export const NInput = ({
     const textLength = useSharedValue(0)
 
     const onChangeText = (text: string) => {
-        if (text.length == 0) {
-            inputHeight.value = MIN_HEIGHT
-        }
         textLength.value = text.length
+        if (text.length === 0) {
+            inputHeight.value = withSpring(MIN_HEIGHT, {
+                damping: 20,
+                stiffness: 200,
+            })
+        }
         props.onChangeText?.(text)
     }
 
@@ -58,6 +61,7 @@ export const NInput = ({
     }
 
     const onContentSizeChange = (e: any) => {
+        if (textLength.value === 0) return
         const newHeight = Math.max(MIN_HEIGHT, e.nativeEvent.contentSize.height)
         inputHeight.value = withSpring(newHeight, {
             damping: 20,
@@ -66,12 +70,6 @@ export const NInput = ({
     }
 
     const animatedWrapperStyle = useAnimatedStyle(() => ({
-        shadowOpacity: interpolateColor(
-            focusValue.value,
-            [0, 1],
-            [0.1, 0.5],
-        ) as any,
-        shadowRadius: withTiming(focusValue.value ? 15 : 5),
         transform: [{ scale: withTiming(focusValue.value ? 1.02 : 1) }],
     }))
 
@@ -138,10 +136,7 @@ export const NInput = ({
 
 const styles = StyleSheet.create({
     wrapper: {
-        width: "100%",
         borderRadius: 25,
-        shadowColor: "#fff",
-        shadowOffset: { width: 0, height: 0 },
     },
     gradientStroke: {
         padding: 1,
@@ -156,6 +151,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         fontSize: 16,
         color: "#fff",
+        ...(Platform.OS === "web" ? { outlineStyle: "none", overflow: "hidden" } as any : {}),
     },
     failed: {
         backgroundColor: "rgba(255,0,0,0.3)",
