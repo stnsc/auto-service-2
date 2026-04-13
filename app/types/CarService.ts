@@ -3,7 +3,7 @@ export interface CarService {
     name: string
     latitude: number
     longitude: number
-    type: "mechanic" | "car_wash" | "tire_shop"
+    type: "mechanic" | "tire_shop"
     rating: number
     address: string
     phone: string

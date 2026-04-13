@@ -10,7 +10,13 @@ import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import { CarService } from "../app/types/CarService"
 import { CAR_SERVICES, TYPE_COLORS } from "../data/carServicesMock"
+import { Asset } from "expo-asset"
 import { View, StyleSheet, ActivityIndicator } from "react-native"
+
+const TYPE_ICONS: Record<string, string> = {
+    mechanic: Asset.fromModule(require("../assets/autoservice/mechanic_icon.png")).uri,
+    tire_shop: Asset.fromModule(require("../assets/autoservice/tire_shop_icon.png")).uri,
+}
 import { NText } from "./replacements/NText"
 import { fonts } from "../theme"
 import { NButton } from "./replacements/NButton"
@@ -115,14 +121,22 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         carServices.forEach((service) => {
             const el = document.createElement("div")
             el.style.cssText = `
-                width: 24px;
-                height: 24px;
-                background-color: ${TYPE_COLORS[service.type]};
-                border-radius: 2em;
+                width: 36px;
+                height: 36px;
                 cursor: pointer;
-                border: 2px solid white;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
             `
+            const img = document.createElement("img")
+            img.src = TYPE_ICONS[service.type] ?? TYPE_ICONS.mechanic
+            img.style.cssText = `
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+            `
+            el.appendChild(img)
 
             const popup = new maplibregl.Popup({
                 offset: 14,

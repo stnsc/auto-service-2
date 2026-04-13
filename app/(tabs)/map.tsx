@@ -121,15 +121,17 @@ export default function MapScreen() {
 
     return (
         <View style={styles.container}>
-            <Map
-                ref={mapRef}
-                latitude={initialLatitude}
-                longitude={initialLongitude}
-                zoom={14}
-                carServices={CAR_SERVICES}
-                onServicePress={handleServicePress}
-                onCenterChange={handleCenterChange}
-            />
+            <View style={styles.mapClip}>
+                <Map
+                    ref={mapRef}
+                    latitude={initialLatitude}
+                    longitude={initialLongitude}
+                    zoom={14}
+                    carServices={CAR_SERVICES}
+                    onServicePress={handleServicePress}
+                    onCenterChange={handleCenterChange}
+                />
+            </View>
             <View style={styles.carousel}>
                 <HorizontalCarousel
                     services={sortedServices}
@@ -143,6 +145,11 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
+    mapClip: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 20,
+        overflow: "hidden",
+    },
     carousel: {
         position: "absolute",
         bottom: 20,
