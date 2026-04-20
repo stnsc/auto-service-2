@@ -19,6 +19,8 @@ import { AuthProvider, useAuthContext } from "../context/AuthContext"
 import { NModal } from "../components/replacements/NModal"
 import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 
 import {
     useFonts,
@@ -252,6 +254,8 @@ function AuthGatedLayout() {
                             </NText>
                         </NModal>
                     )}
+                    <Analytics />
+                    <SpeedInsights />
                 </GestureHandlerRootView>
             </AppointmentProvider>
         </ChatProvider>

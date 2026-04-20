@@ -17,6 +17,8 @@
     "@expo-google-fonts/iosevka-charon": "^0.4.0",
     "@expo/server": "^0.7.5",
     "@react-native-masked-view/masked-view": "0.3.2",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "ai": "^6.0.141",
     "amazon-cognito-identity-js": "^6.3.16",
     "expo": "~54.0.33",
