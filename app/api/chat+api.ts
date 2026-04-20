@@ -1,8 +1,36 @@
 import { generateText } from 'ai';
 import { groq } from '@ai-sdk/groq';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+
+const ddbClient = new DynamoDBClient({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+});
+const docClient = DynamoDBDocumentClient.from(ddbClient);
+
+async function logAction(userId: string, action: string, payload: Record<string, unknown>) {
+    if (!userId || !process.env.DYNAMODB_TABLE_NAME) return;
+    try {
+        await docClient.send(new PutCommand({
+            TableName: process.env.DYNAMODB_TABLE_NAME,
+            Item: {
+                userId,
+                timestamp: new Date().toISOString(),
+                action,
+                payload,
+            },
+        }));
+    } catch (err) {
+        console.error('Failed to log action:', err);
+    }
+}
 
 export async function POST(request: Request) {
-    const { messages, vehicleInfo } = await request.json();
+    const { messages, vehicleInfo, userId } = await request.json();
 
     if (!messages || messages.length === 0) {
         return new Response(
@@ -104,6 +132,15 @@ export async function POST(request: Request) {
             confidence: parsed.confidence || 0,
             vehicleInfo: parsed.vehicleInfo || {},
             partQuery: parsed.partQuery || null,
+        });
+
+        // Log chat interaction to DynamoDB
+        const lastUserMessage = validMessages[validMessages.length - 1];
+        logAction(userId || 'anonymous', 'chat_message', {
+            userMessage: lastUserMessage?.content || '',
+            assistantReply: parsed.response,
+            summary: parsed.summary || '',
+            vehicleInfo: parsed.vehicleInfo || {},
         });
 
         return new Response(body, {

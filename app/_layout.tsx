@@ -1,13 +1,20 @@
-import { Platform, Image, View, StyleSheet, useWindowDimensions } from "react-native"
-import { act, useEffect, useState } from "react"
+import {
+    Platform,
+    Image,
+    View,
+    StyleSheet,
+    useWindowDimensions,
+} from "react-native"
+import { useEffect, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
-import { Slot, usePathname, useRouter } from "expo-router"
+import { Slot, usePathname, useRouter, useSegments } from "expo-router"
 import { NTabBar } from "../components/replacements/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
 import maplibregl from "maplibre-gl"
 import { ChatProvider } from "../context/ChatContext"
 import { AppointmentProvider } from "../context/AppointmentContext"
+import { AuthProvider, useAuthContext } from "../context/AuthContext"
 
 import {
     useFonts,
@@ -23,6 +30,31 @@ import { BlurView } from "expo-blur"
 let intensity = 0
 
 export default function RootLayout() {
+    return (
+        <AuthProvider>
+            <AuthGatedLayout />
+        </AuthProvider>
+    )
+}
+
+function AuthGatedLayout() {
+    const { isAuthenticated, isLoading } = useAuthContext()
+    const segments = useSegments()
+    const router = useRouter()
+
+    // Auth guard — redirect based on auth state
+    useEffect(() => {
+        if (isLoading) return
+
+        const inAuthGroup = segments[0] === "(auth)"
+
+        if (!isAuthenticated && !inAuthGroup) {
+            router.replace("/(auth)/login")
+        } else if (isAuthenticated && inAuthGroup) {
+            router.replace("/")
+        }
+    }, [isAuthenticated, isLoading, segments])
+
     useEffect(() => {
         maplibregl.prewarm()
     }, [])
@@ -35,8 +67,7 @@ export default function RootLayout() {
         IosevkaCharon_700Bold,
     })
 
-    // Router and pathname hooks for navigation and active tab state
-    const router = useRouter()
+    // Pathname hook for active tab state
     const pathname = usePathname()
 
     const TAB_ROUTES: Record<string, string> = {
@@ -79,6 +110,11 @@ export default function RootLayout() {
     }
 
     const isAdmin = pathname.startsWith("/admin")
+    const isAuth = ["/login", "/signup", "/verify", "/pending"].includes(
+        pathname,
+    )
+    const showContainer = !isAdmin
+    const showNav = !isAdmin && !isAuth
 
     activeKey === "chat" ? (intensity = 30) : (intensity = 0)
 
@@ -93,10 +129,25 @@ export default function RootLayout() {
         <ChatProvider>
             <AppointmentProvider>
                 <GestureHandlerRootView style={styles.container}>
-                    <View style={[styles.appFrame, !isAdmin && styles.customerShell, !isAdmin && windowWidth > 600 && styles.customerShellDesktop]}>
+                    <View
+                        style={[
+                            styles.appFrame,
+                            showContainer && styles.customerShell,
+                            showContainer &&
+                                windowWidth > 600 &&
+                                styles.customerShellDesktop,
+                        ]}
+                    >
                         {/* Background layer — clipped separately so overflow:hidden
                              doesn't break backdrop-filter on content BlurViews */}
-                        <View style={[styles.bgLayer, !isAdmin && windowWidth > 600 && styles.bgLayerRounded]}>
+                        <View
+                            style={[
+                                styles.bgLayer,
+                                showContainer &&
+                                    windowWidth > 600 &&
+                                    styles.bgLayerRounded,
+                            ]}
+                        >
                             <Image
                                 source={require("../assets/autoservice/background.jpg")}
                                 style={[
@@ -113,11 +164,16 @@ export default function RootLayout() {
                         </View>
 
                         <View style={{ flex: 1 }}>
-                            {!isAdmin && (
+                            {showNav && (
                                 <>
                                     {intensity > 0 ? (
                                         <BlurView
-                                            style={[styles.topNav, windowWidth > 600 && { borderRadius: 20 }]}
+                                            style={[
+                                                styles.topNav,
+                                                windowWidth > 600 && {
+                                                    borderRadius: 20,
+                                                },
+                                            ]}
                                             intensity={intensity}
                                             tint="dark"
                                         >
@@ -135,7 +191,7 @@ export default function RootLayout() {
                                 <Slot />
                             </View>
 
-                            {!isAdmin && (
+                            {showNav && (
                                 <View style={styles.bottomNav}>
                                     <NTabBar
                                         tabs={TABS}

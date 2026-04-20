@@ -11,9 +11,13 @@
   "dependencies": {
     "@ai-sdk/groq": "^3.0.31",
     "@anthropic-ai/sdk": "^0.82.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1032.0",
+    "@aws-sdk/client-dynamodb": "^3.1032.0",
+    "@aws-sdk/lib-dynamodb": "^3.1032.0",
     "@expo-google-fonts/iosevka-charon": "^0.4.0",
     "@react-native-masked-view/masked-view": "0.3.2",
     "ai": "^6.0.141",
+    "amazon-cognito-identity-js": "^6.3.16",
     "expo": "~54.0.33",
     "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",

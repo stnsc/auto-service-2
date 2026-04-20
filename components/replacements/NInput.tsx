@@ -1,5 +1,11 @@
 import React from "react"
-import { Platform, StyleSheet, TextInput, TextInputProps, ViewStyle } from "react-native"
+import {
+    Platform,
+    StyleSheet,
+    TextInput,
+    TextInputProps,
+    ViewStyle,
+} from "react-native"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -119,7 +125,7 @@ export const NInput = ({
                             onBlur={onBlur}
                             onContentSizeChange={onContentSizeChange}
                             onChangeText={onChangeText}
-                            multiline={true}
+                            multiline={!props.secureTextEntry}
                             textAlignVertical="top"
                             scrollEnabled={false}
                             placeholder={props.placeholder}
@@ -151,7 +157,9 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         fontSize: 16,
         color: "#fff",
-        ...(Platform.OS === "web" ? { outlineStyle: "none", overflow: "hidden" } as any : {}),
+        ...(Platform.OS === "web"
+            ? ({ outlineStyle: "none", overflow: "hidden" } as any)
+            : {}),
     },
     failed: {
         backgroundColor: "rgba(255,0,0,0.3)",

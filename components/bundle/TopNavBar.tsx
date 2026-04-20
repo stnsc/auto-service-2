@@ -5,9 +5,11 @@ import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../replacements/NText"
 import { fonts } from "../../theme"
+import { useAuthContext } from "../../context/AuthContext"
 
 export const TopNavBar = () => {
     const router = useRouter()
+    const { signOut } = useAuthContext()
 
     const CONTEXT = [
         {
@@ -41,6 +43,11 @@ export const TopNavBar = () => {
     const handleAction = (key: string) => {
         if (key === "admin") {
             router.push("/admin/dashboard" as any)
+            return
+        }
+        if (key === "logout") {
+            signOut()
+            router.replace("/(auth)/login")
             return
         }
         console.log(key)

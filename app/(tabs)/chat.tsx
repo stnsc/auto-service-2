@@ -16,6 +16,7 @@ import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useRouter } from "expo-router"
 import { useChatContext } from "../../context/ChatContext"
+import { useAuthContext } from "../../context/AuthContext"
 
 const CHAT_API_URL = "/api/chat"
 
@@ -29,6 +30,8 @@ export default function ChatScreen() {
     const router = useRouter()
 
     const [user] = useState("<user>")
+    const { userEmail } = useAuthContext()
+    const displayName = userEmail?.split("@")[0] || "User"
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [chatIntent, setChatIntent] = useState<string>("")
@@ -100,7 +103,7 @@ export default function ChatScreen() {
             const res = await fetch(CHAT_API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: newMessages, vehicleInfo }),
+                body: JSON.stringify({ messages: newMessages, vehicleInfo, userId: userEmail }),
             })
 
             if (!res.ok) {
@@ -175,7 +178,7 @@ export default function ChatScreen() {
                         <NText
                             style={[styles.greeting, { fontFamily: fonts.regular }]}
                         >
-                            Hello, {user}! {"\n"}
+                            Hello, {displayName}! {"\n"}
                             How can I help?
                         </NText>
                     </View>
@@ -239,7 +242,7 @@ export default function ChatScreen() {
                                                         textAlign: "right",
                                                     }}
                                                 >
-                                                    {user}
+                                                    {displayName}
                                                 </NText>
                                                 <NButton color="rgba(33, 168, 112, 0.51)">
                                                     <NText

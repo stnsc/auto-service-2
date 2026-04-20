@@ -76,6 +76,19 @@ export const validators = {
         return null
     },
 
+    password: (): ValidationRule => (value) => {
+        if (value.length === 0) return null
+        if (value.length < 8) return "Must be at least 8 characters"
+        if (!/[A-Z]/.test(value)) return "Must include an uppercase letter"
+        if (!/[a-z]/.test(value)) return "Must include a lowercase letter"
+        if (!/[0-9]/.test(value)) return "Must include a number"
+        return null
+    },
+
+    matches: (otherValue: () => string, message: string = "Fields do not match"): ValidationRule => (_value) => {
+        return _value !== otherValue() ? message : null
+    },
+
     custom: (validator: (value: string) => boolean, message: string): ValidationRule => (value) => {
         return value.trim().length === 0 || validator(value) ? null : message
     },
