@@ -73,7 +73,9 @@ export async function POST(request: Request) {
                         "mileage": "number or null if not mentioned",
                         "warningLights": "boolean or null if not mentioned"
                     },
-                    "partQuery": "A concise marketplace search query for a car part the user needs, including vehicle details if known (e.g., 'brake pads 2015 Honda Civic'). Return null if the user is not asking about buying or replacing a specific part."
+                    "partQuery": "A concise marketplace search query for a car part the user needs, including vehicle details if known (e.g., 'brake pads 2015 Honda Civic'). Return null if the user is not asking about buying or replacing a specific part.",
+                    "intent": "One of: 'appointment', 'shop', 'map', 'chat'. Use 'appointment' if the user should book a service or repair. Use 'shop' if they need to buy or find a specific part. Use 'map' if they need to find a nearby garage or service center. Use 'chat' if no navigation is needed.",
+                    "confidence": "A number between 0 and 1 indicating how confident you are in the intent. Only set above 0.75 when the intent is clear and actionable."
                 }
 
                 Current known vehicle info: ${JSON.stringify(vehicleInfo)}

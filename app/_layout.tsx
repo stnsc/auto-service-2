@@ -135,7 +135,7 @@ function AuthGatedLayout() {
         "/verify": "Verify Email",
         "/pending": "Pending Approval",
     }
-    const pageTitle = `AutoService - ${PAGE_TITLES[pathname] || "Home"}`
+    const pageTitle = `${PAGE_TITLES[pathname] || "Home"} - AutoService Closed Alpha ${process.env.EXPO_PUBLIC_APP_TYPE}`
 
     const { width: windowWidth } = useWindowDimensions()
 

@@ -233,63 +233,141 @@ export default function ChatScreen() {
                             }
                         >
                             <Animated.View>
-                                {messages.map((msg, i) => (
-                                    <View
-                                        key={i}
-                                        style={[
-                                            styles.bubble,
-                                            { alignSelf: "center" },
-                                        ]}
-                                    >
-                                        {msg.role === "user" ? (
-                                            <>
-                                                <NText
-                                                    style={{
-                                                        fontFamily: fonts.bold,
-                                                        color: "#fff",
-                                                        textAlign: "right",
-                                                    }}
-                                                >
-                                                    {displayName}
-                                                </NText>
-                                                <NButton color="rgba(33, 168, 112, 0.51)">
+                                {messages.map((msg, i) => {
+                                    const isLastAssistant =
+                                        msg.role === "assistant" &&
+                                        i === messages.length - 1 &&
+                                        !loading
+                                    const showIntentRecommendation =
+                                        isLastAssistant &&
+                                        chatIntent &&
+                                        chatIntent !== "chat" &&
+                                        chatConfidence > 0.75
+
+                                    const intentIcon =
+                                        chatIntent === "map" ? (
+                                            <Ionicons
+                                                name="map"
+                                                size={16}
+                                                color="white"
+                                            />
+                                        ) : chatIntent === "appointment" ? (
+                                            <Ionicons
+                                                name="calendar"
+                                                size={16}
+                                                color="white"
+                                            />
+                                        ) : chatIntent === "shop" ? (
+                                            <Ionicons
+                                                name="cart"
+                                                size={16}
+                                                color="white"
+                                            />
+                                        ) : null
+
+                                    return (
+                                        <View
+                                            key={i}
+                                            style={[
+                                                styles.bubble,
+                                                { alignSelf: "center" },
+                                            ]}
+                                        >
+                                            {msg.role === "user" ? (
+                                                <>
                                                     <NText
                                                         style={{
                                                             fontFamily:
                                                                 fonts.bold,
                                                             color: "#fff",
+                                                            textAlign: "right",
                                                         }}
                                                     >
-                                                        {msg.content}
+                                                        {displayName}
                                                     </NText>
-                                                </NButton>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <NText
-                                                    style={{
-                                                        fontFamily:
-                                                            fonts.regular,
-                                                        color: "#fff",
-                                                    }}
-                                                >
-                                                    AutoService Intelligence
-                                                </NText>
-                                                <NButton color="rgba(34, 34, 34, 0.51)">
+                                                    <NButton color="rgba(33, 168, 112, 0.51)">
+                                                        <NText
+                                                            style={{
+                                                                fontFamily:
+                                                                    fonts.bold,
+                                                                color: "#fff",
+                                                            }}
+                                                        >
+                                                            {msg.content}
+                                                        </NText>
+                                                    </NButton>
+                                                </>
+                                            ) : (
+                                                <>
                                                     <NText
                                                         style={{
                                                             fontFamily:
-                                                                fonts.light,
+                                                                fonts.regular,
                                                             color: "#fff",
                                                         }}
                                                     >
-                                                        {msg.content}
+                                                        AutoService Intelligence
                                                     </NText>
-                                                </NButton>
-                                            </>
-                                        )}
-                                    </View>
-                                ))}
+                                                    <NButton color="rgba(34, 34, 34, 0.51)">
+                                                        <NText
+                                                            style={{
+                                                                fontFamily:
+                                                                    fonts.light,
+                                                                color: "#fff",
+                                                            }}
+                                                        >
+                                                            {msg.content}
+                                                        </NText>
+                                                    </NButton>
+                                                    {showIntentRecommendation && (
+                                                        <NButton
+                                                            color="rgba(33, 168, 112, 0.51)"
+                                                            onPress={() =>
+                                                                router.push(
+                                                                    `/(tabs)/${chatIntent}` as any,
+                                                                )
+                                                            }
+                                                            style={{
+                                                                marginTop: 6,
+                                                                alignSelf:
+                                                                    "flex-start",
+                                                            }}
+                                                        >
+                                                            <View
+                                                                style={{
+                                                                    flexDirection:
+                                                                        "row",
+                                                                    alignItems:
+                                                                        "center",
+                                                                    gap: 6,
+                                                                }}
+                                                            >
+                                                                {intentIcon}
+                                                                <NText
+                                                                    style={{
+                                                                        fontFamily:
+                                                                            fonts.bold,
+                                                                        color: "#fff",
+                                                                    }}
+                                                                >
+                                                                    Go to{" "}
+                                                                    {chatIntent
+                                                                        .charAt(
+                                                                            0,
+                                                                        )
+                                                                        .toUpperCase() +
+                                                                        chatIntent.slice(
+                                                                            1,
+                                                                        )}
+                                                                </NText>
+                                                            </View>
+                                                        </NButton>
+                                                    )}
+                                                </>
+                                            )}
+                                        </View>
+                                    )
+                                })}
                             </Animated.View>
                             {loading && (
                                 <View

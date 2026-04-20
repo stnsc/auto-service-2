@@ -1,25 +1,23 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import {
     Platform,
     StyleSheet,
+    Text,
     TextInput,
     TextInputProps,
+    View,
     ViewStyle,
 } from "react-native"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    useAnimatedProps,
     withTiming,
-    withSpring,
-    interpolateColor,
     Easing,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { fonts } from "../../theme"
 import { NText } from "./NText"
-import { Ionicons } from "@expo/vector-icons"
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 
@@ -45,17 +43,27 @@ export const NInput = ({
     const focusValue = useSharedValue(0)
     const inputHeight = useSharedValue(MIN_HEIGHT)
 
-    const textLength = useSharedValue(0)
+    // Track value internally so the shadow Text always reflects current content,
+    // even for uncontrolled usage or external clears (e.g. after send).
+    const [shadowValue, setShadowValue] = useState(props.value ?? "")
+
+    useEffect(() => {
+        if (props.value !== undefined) {
+            setShadowValue(props.value)
+        }
+    }, [props.value])
 
     const onChangeText = (text: string) => {
-        textLength.value = text.length
-        if (text.length === 0) {
-            inputHeight.value = withSpring(MIN_HEIGHT, {
-                damping: 20,
-                stiffness: 200,
-            })
-        }
+        setShadowValue(text)
         props.onChangeText?.(text)
+    }
+
+    const onShadowLayout = (e: any) => {
+        const h = Math.max(MIN_HEIGHT, e.nativeEvent.layout.height)
+        inputHeight.value = withTiming(h, {
+            duration: 300,
+            easing: Easing.out(Easing.ease),
+        })
     }
 
     const onFocus = () => {
@@ -64,15 +72,6 @@ export const NInput = ({
 
     const onBlur = () => {
         focusValue.value = withTiming(0, { duration: 300 })
-    }
-
-    const onContentSizeChange = (e: any) => {
-        if (textLength.value === 0) return
-        const newHeight = Math.max(MIN_HEIGHT, e.nativeEvent.contentSize.height)
-        inputHeight.value = withSpring(newHeight, {
-            damping: 20,
-            stiffness: 200,
-        })
     }
 
     const animatedWrapperStyle = useAnimatedStyle(() => ({
@@ -123,13 +122,25 @@ export const NInput = ({
                             placeholderTextColor="rgba(255,255,255,0.4)"
                             onFocus={onFocus}
                             onBlur={onBlur}
-                            onContentSizeChange={onContentSizeChange}
                             onChangeText={onChangeText}
                             multiline={!props.secureTextEntry}
                             textAlignVertical="top"
                             scrollEnabled={false}
                             placeholder={props.placeholder}
                         />
+                        {/* Shadow Text: mirrors input value and fires onLayout on any size change,
+                            including shrink — more reliable than onContentSizeChange cross-platform */}
+                        <View
+                            pointerEvents="none"
+                            style={styles.shadowContainer}
+                        >
+                            <Text
+                                style={[styles.input, styles.shadowText]}
+                                onLayout={onShadowLayout}
+                            >
+                                {shadowValue || " "}
+                            </Text>
+                        </View>
                     </BlurView>
                 </LinearGradient>
                 <Animated.View style={[errorAnimation]}>
@@ -160,6 +171,17 @@ const styles = StyleSheet.create({
         ...(Platform.OS === "web"
             ? ({ outlineStyle: "none", overflow: "hidden" } as any)
             : {}),
+    },
+    shadowContainer: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        opacity: 0,
+    },
+    shadowText: {
+        height: undefined,
+        color: "transparent",
     },
     failed: {
         backgroundColor: "rgba(255,0,0,0.3)",
