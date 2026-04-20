@@ -8,6 +8,7 @@ import {
 import { useEffect, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter, useSegments } from "expo-router"
+import Head from "expo-router/head"
 import { NTabBar } from "../components/replacements/NTabBar"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
@@ -122,6 +123,18 @@ function AuthGatedLayout() {
 
     activeKey === "chat" ? (intensity = 30) : (intensity = 0)
 
+    const PAGE_TITLES: Record<string, string> = {
+        "/": "Chat",
+        "/appointment": "Schedule",
+        "/shop": "Shop",
+        "/map": "Map",
+        "/login": "Sign In",
+        "/signup": "Sign Up",
+        "/verify": "Verify Email",
+        "/pending": "Pending Approval",
+    }
+    const pageTitle = `AutoService - ${PAGE_TITLES[pathname] || "Home"}`
+
     const { width: windowWidth } = useWindowDimensions()
 
     const [hue, setHue] = useState(80)
@@ -133,6 +146,9 @@ function AuthGatedLayout() {
         <ChatProvider>
             <AppointmentProvider>
                 <GestureHandlerRootView style={styles.container}>
+                    <Head>
+                        <title>{pageTitle}</title>
+                    </Head>
                     <View
                         style={[
                             styles.appFrame,
@@ -219,15 +235,15 @@ function AuthGatedLayout() {
                             </NText>
                             <NText style={modalStyles.text}>
                                 - All chatbot conversations are logged to help
-                                us improve the AI assistant.
+                                improve the AI assistant.
                             </NText>
                             <NText style={modalStyles.text}>
-                                - Features may change or be removed as we
-                                iterate on the product.
+                                - Features may change or be removed as the app
+                                evolves.
                             </NText>
                             <NText style={modalStyles.text}>
                                 - If you encounter bugs or have feedback, please
-                                let us know by accessing the GitHub page found
+                                let me know by accessing the GitHub page found
                                 in the top right!
                             </NText>
                             <NText style={modalStyles.text}>

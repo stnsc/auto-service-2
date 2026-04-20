@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, StyleSheet, Image } from "react-native"
+import { View, Text, StyleSheet, Image, Linking } from "react-native"
 import { useRouter } from "expo-router"
 import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
@@ -13,25 +13,16 @@ export const TopNavBar = () => {
 
     const CONTEXT = [
         {
-            key: "account",
-            label: "Account Details",
-            icon: <Ionicons name="book-outline" size={18} color="white" />,
-        },
-        {
-            key: "vehicle",
-            label: "Vehicle Configuration",
-            icon: <Ionicons name="settings-outline" size={18} color="white" />,
+            key: "github",
+            label: "Report Bug / Feedback",
+            icon: <Ionicons name="bug-outline" size={18} color="white" />,
         },
         {
             key: "admin",
             label: "Admin Panel",
             icon: <Ionicons name="shield-outline" size={18} color="white" />,
         },
-        {
-            key: "language",
-            label: "Language",
-            icon: <Ionicons name="text-outline" size={18} color="white" />,
-        },
+
         {
             key: "logout",
             label: "Logout",
@@ -41,6 +32,11 @@ export const TopNavBar = () => {
     ]
 
     const handleAction = (key: string) => {
+        if (key === "github") {
+            const url = "https://github.com/stnsc/auto-service-2/issues"
+            Linking.openURL(url)
+            return
+        }
         if (key === "admin") {
             router.push("/admin/dashboard" as any)
             return
@@ -60,7 +56,7 @@ export const TopNavBar = () => {
                 style={styles.logo}
             />
             <NText style={[styles.version, { fontFamily: fonts.light }]}>
-                ALPHA
+                CLOSED ALPHA
             </NText>
             <NContextMenu
                 avatar={<Ionicons name="person" size={22} color="white" />}
