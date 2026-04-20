@@ -9,6 +9,7 @@ import {
 } from "react-native"
 import { NButton } from "../../components/replacements/NButton"
 import { NInput } from "../../components/replacements/NInput"
+import { NModal } from "../../components/replacements/NModal"
 import { Ionicons } from "@expo/vector-icons"
 import { Suggestions } from "../../components/bundle/Suggestions"
 import { useRef, useState, useEffect } from "react"
@@ -17,6 +18,7 @@ import { fonts } from "../../theme"
 import { useRouter } from "expo-router"
 import { useChatContext } from "../../context/ChatContext"
 import { useAuthContext } from "../../context/AuthContext"
+import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 
 const CHAT_API_URL = "/api/chat"
 
@@ -37,6 +39,7 @@ export default function ChatScreen() {
     const [chatIntent, setChatIntent] = useState<string>("")
     const [chatConfidence, setChatConfidence] = useState<number>(0)
     const [hasIntentSuggestion, setHasIntentSuggestion] = useState(false)
+    const chatNotice = useAlphaNotice("chat-logging")
 
     // Use global chat context
     const {
@@ -103,7 +106,11 @@ export default function ChatScreen() {
             const res = await fetch(CHAT_API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ messages: newMessages, vehicleInfo, userId: userEmail }),
+                body: JSON.stringify({
+                    messages: newMessages,
+                    vehicleInfo,
+                    userId: userEmail,
+                }),
             })
 
             if (!res.ok) {
@@ -176,7 +183,10 @@ export default function ChatScreen() {
                 {!chatStarted ? (
                     <View style={styles.centerContent}>
                         <NText
-                            style={[styles.greeting, { fontFamily: fonts.regular }]}
+                            style={[
+                                styles.greeting,
+                                { fontFamily: fonts.regular },
+                            ]}
                         >
                             Hello, {displayName}! {"\n"}
                             How can I help?
@@ -222,9 +232,7 @@ export default function ChatScreen() {
                                 })
                             }
                         >
-                            <Animated.View
-                                
-                            >
+                            <Animated.View>
                                 {messages.map((msg, i) => (
                                     <View
                                         key={i}
@@ -328,13 +336,28 @@ export default function ChatScreen() {
                         <NButton
                             color="rgba(33, 168, 112, 0.51)"
                             onPress={handleSubmit}
-                            style={{paddingLeft: 10}}
+                            style={{ paddingLeft: 10 }}
                         >
-                            <Ionicons name="send" size={19} color="white" /> 
+                            <Ionicons name="send" size={19} color="white" />
                         </NButton>
                     </View>
                 </View>
             </View>
+
+            <NModal
+                visible={chatNotice.visible}
+                onDismiss={chatNotice.dismiss}
+                title="Chat Preview"
+            >
+                <NText style={styles.noticeText}>
+                    During the Closed Alpha, all conversations with the AI
+                    chatbot are being logged to help improve the service.
+                </NText>
+                <NText style={styles.noticeText}>
+                    Please avoid sharing personal or sensitive information in
+                    your messages.
+                </NText>
+            </NModal>
         </View>
     )
 }
@@ -386,5 +409,11 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: "100",
         padding: 20,
+    },
+    noticeText: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 10,
     },
 })

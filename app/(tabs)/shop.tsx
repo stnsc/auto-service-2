@@ -9,9 +9,11 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
+import { NModal } from "../../components/replacements/NModal"
 import { useChatContext } from "../../context/ChatContext"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
+import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 
 interface ShopResult {
     title: string
@@ -35,6 +37,7 @@ const SORT_OPTIONS: { key: SortMode; label: string }[] = [
 
 export default function ShopScreen() {
     const { partQuery } = useChatContext()
+    const shopNotice = useAlphaNotice("shop-alpha")
 
     const [searchQuery, setSearchQuery] = useState("")
     const [results, setResults] = useState<ShopResult[]>([])
@@ -256,6 +259,24 @@ export default function ShopScreen() {
                         </NButton>
                     ))}
             </ScrollView>
+
+            <NModal
+                visible={shopNotice.visible}
+                onDismiss={shopNotice.dismiss}
+                title="Shop Preview"
+            >
+                <NText style={styles.noticeText}>
+                    The parts shop is a preview feature during the Closed Alpha.
+                    Prices and availability shown may not be accurate.
+                </NText>
+                <NText style={styles.noticeText}>
+                    This feature is here for testing and feedback purposes.
+                </NText>
+                <NText style={styles.noticeText}>
+                    Note that the number is API requests is very limited during
+                    the alpha, so please be mindful with your searches.
+                </NText>
+            </NModal>
         </View>
     )
 }
@@ -404,5 +425,11 @@ const styles = StyleSheet.create({
         color: "rgba(255, 0, 0, 0.8)",
         marginTop: 10,
         textAlign: "center",
+    },
+    noticeText: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 10,
     },
 })

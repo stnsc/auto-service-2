@@ -22,13 +22,9 @@ const ADMIN_CONTEXT: MenuAction[] = [
     {
         key: "customer",
         label: "Customer View",
-        icon: <Ionicons name="swap-horizontal-outline" size={18} color="white" />,
-    },
-    {
-        key: "logout",
-        label: "Logout",
-        icon: <Ionicons name="log-out-outline" size={18} color="white" />,
-        destructive: true,
+        icon: (
+            <Ionicons name="swap-horizontal-outline" size={18} color="white" />
+        ),
     },
 ]
 

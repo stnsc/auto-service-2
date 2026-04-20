@@ -5,6 +5,9 @@ import HorizontalCarousel from "../../components/bundle/HorizontalCarousel"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { CarService } from "../../app/types/CarService"
 import { useLocalSearchParams } from "expo-router"
+import { NModal } from "../../components/replacements/NModal"
+import { NText } from "../../components/replacements/NText"
+import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 
 // Haversine distance in km between two lat/lng points
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -34,6 +37,7 @@ export default function MapScreen() {
         latitude?: string
         longitude?: string
     }>()
+    const mapNotice = useAlphaNotice("map-alpha")
 
     const initialLatitude = useMemo(() => {
         const parsed = Number(params.latitude)
@@ -139,9 +143,32 @@ export default function MapScreen() {
                     onIndexChange={handleIndexChange}
                 />
             </View>
+
+            <NModal
+                visible={mapNotice.visible}
+                onDismiss={mapNotice.dismiss}
+                title="Map Preview"
+            >
+                <NText style={noticeStyles.text}>
+                    Service center locations shown on the map are sample data
+                    for testing purposes during the Closed Alpha.
+                </NText>
+                <NText style={noticeStyles.text}>
+                    Real service center listings will be available later.
+                </NText>
+            </NModal>
         </View>
     )
 }
+
+const noticeStyles = StyleSheet.create({
+    text: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 10,
+    },
+})
 
 const styles = StyleSheet.create({
     container: { flex: 1 },

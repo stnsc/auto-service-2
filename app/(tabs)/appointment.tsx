@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
+import { NModal } from "../../components/replacements/NModal"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useChatContext } from "../../context/ChatContext"
 import { CAR_SERVICES } from "../../data/carServicesMock"
@@ -13,6 +14,7 @@ import {
 } from "../../context/AppointmentContext"
 import { fonts } from "../../theme"
 import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
+import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 
 const STEPS = [
     "Vehicle Info",
@@ -76,6 +78,7 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 export default function AppointmentScreen() {
     const router = useRouter()
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
+    const appointmentNotice = useAlphaNotice("appointment-alpha")
     const {
         currentStep,
         setCurrentStep,
@@ -423,11 +426,9 @@ export default function AppointmentScreen() {
                                 updateField("preferredTime", time)
                             }}
                         />
-                        {(!!errors.preferredDate ||
-                            !!errors.preferredTime) && (
+                        {(!!errors.preferredDate || !!errors.preferredTime) && (
                             <NText style={styles.stepErrorText}>
-                                {errors.preferredDate ||
-                                    errors.preferredTime}
+                                {errors.preferredDate || errors.preferredTime}
                             </NText>
                         )}
                     </View>
@@ -632,6 +633,22 @@ export default function AppointmentScreen() {
                     </NButton>
                 )}
             </View>
+
+            <NModal
+                visible={appointmentNotice.visible}
+                onDismiss={appointmentNotice.dismiss}
+                title="Scheduling Preview"
+            >
+                <NText style={styles.noticeText}>
+                    The appointment scheduling feature is in early testing.
+                    Submitted appointments are not yet connected to real service
+                    centers.
+                </NText>
+                <NText style={styles.noticeText}>
+                    During the Closed Alpha this helps test the booking flow and
+                    find bugs.
+                </NText>
+            </NModal>
         </View>
     )
 }
@@ -750,5 +767,11 @@ const styles = StyleSheet.create({
         color: "white",
         fontSize: 16,
         fontWeight: "600",
+    },
+    noticeText: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 10,
     },
 })

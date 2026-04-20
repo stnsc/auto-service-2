@@ -44,8 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 (err: Error | null, session: CognitoUserSession | null) => {
                     if (!err && session?.isValid()) {
                         setUser(currentUser)
-                        setUserEmail(currentUser.getUsername())
-                        setIsAuthenticated(true)
+                        // Fetch the email attribute instead of getUsername()
+                        // which may return an internal UUID
+                        currentUser.getUserAttributes(
+                            (attrErr, attributes) => {
+                                const email = attributes?.find(
+                                    (a) => a.getName() === "email",
+                                )
+                                setUserEmail(
+                                    email
+                                        ? email.getValue()
+                                        : currentUser.getUsername(),
+                                )
+                                setIsAuthenticated(true)
+                                setIsLoading(false)
+                            },
+                        )
+                        return
                     }
                     setIsLoading(false)
                 },

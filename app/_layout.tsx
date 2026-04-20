@@ -15,6 +15,9 @@ import maplibregl from "maplibre-gl"
 import { ChatProvider } from "../context/ChatContext"
 import { AppointmentProvider } from "../context/AppointmentContext"
 import { AuthProvider, useAuthContext } from "../context/AuthContext"
+import { NModal } from "../components/replacements/NModal"
+import { NText } from "../components/replacements/NText"
+import { useAlphaNotice } from "../hooks/useAlphaNotice"
 
 import {
     useFonts,
@@ -41,6 +44,7 @@ function AuthGatedLayout() {
     const { isAuthenticated, isLoading } = useAuthContext()
     const segments = useSegments()
     const router = useRouter()
+    const welcomeNotice = useAlphaNotice("alpha-welcome")
 
     // Auth guard — redirect based on auth state
     useEffect(() => {
@@ -202,6 +206,36 @@ function AuthGatedLayout() {
                             )}
                         </View>
                     </View>
+
+                    {isAuthenticated && !isAuth && (
+                        <NModal
+                            visible={welcomeNotice.visible}
+                            onDismiss={welcomeNotice.dismiss}
+                            title="Welcome to the Closed Alpha!"
+                        >
+                            <NText style={modalStyles.text}>
+                                Thank you for joining the AutoService Closed
+                                Alpha! Here are a few things to know:
+                            </NText>
+                            <NText style={modalStyles.text}>
+                                - All chatbot conversations are logged to help
+                                us improve the AI assistant.
+                            </NText>
+                            <NText style={modalStyles.text}>
+                                - Features may change or be removed as we
+                                iterate on the product.
+                            </NText>
+                            <NText style={modalStyles.text}>
+                                - If you encounter bugs or have feedback, please
+                                let us know by accessing the GitHub page found
+                                in the top right!
+                            </NText>
+                            <NText style={modalStyles.text}>
+                                - Your access can be revoked at any time during
+                                the alpha period.
+                            </NText>
+                        </NModal>
+                    )}
                 </GestureHandlerRootView>
             </AppointmentProvider>
         </ChatProvider>
@@ -252,5 +286,14 @@ const styles = StyleSheet.create({
     overlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: "rgba(0,0,0,0.4)",
+    },
+})
+
+const modalStyles = StyleSheet.create({
+    text: {
+        color: "rgba(255,255,255,0.8)",
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 10,
     },
 })
