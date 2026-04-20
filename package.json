@@ -15,6 +15,7 @@
     "@aws-sdk/client-dynamodb": "^3.1032.0",
     "@aws-sdk/lib-dynamodb": "^3.1032.0",
     "@expo-google-fonts/iosevka-charon": "^0.4.0",
+    "@expo/server": "^0.7.5",
     "@react-native-masked-view/masked-view": "0.3.2",
     "ai": "^6.0.141",
     "amazon-cognito-identity-js": "^6.3.16",
