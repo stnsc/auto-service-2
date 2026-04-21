@@ -22,7 +22,19 @@ interface ChatContextType {
     setVehicleInfo: (info: VehicleInfo) => void
     partQuery: string
     setPartQuery: (query: string) => void
+    conversationId: string
     clearChat: () => void
+}
+
+const generateConversationId = () =>
+    `conv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
+
+const defaultVehicleInfo: VehicleInfo = {
+    make: null,
+    model: null,
+    year: null,
+    mileage: null,
+    warningLights: null,
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -31,25 +43,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [messages, setMessages] = useState<Message[]>([])
     const [summary, setSummary] = useState("")
     const [partQuery, setPartQuery] = useState("")
-    const [vehicleInfo, setVehicleInfo] = useState<VehicleInfo>({
-        make: null,
-        model: null,
-        year: null,
-        mileage: null,
-        warningLights: null,
-    })
+    const [vehicleInfo, setVehicleInfo] =
+        useState<VehicleInfo>(defaultVehicleInfo)
+    const [conversationId, setConversationId] = useState(generateConversationId)
 
     const clearChat = () => {
         setMessages([])
         setSummary("")
         setPartQuery("")
-        setVehicleInfo({
-            make: null,
-            model: null,
-            year: null,
-            mileage: null,
-            warningLights: null,
-        })
+        setVehicleInfo(defaultVehicleInfo)
+        setConversationId(generateConversationId())
     }
 
     return (
@@ -63,6 +66,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 setVehicleInfo,
                 partQuery,
                 setPartQuery,
+                conversationId,
                 clearChat,
             }}
         >

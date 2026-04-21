@@ -50,6 +50,7 @@ export default function ChatScreen() {
         vehicleInfo,
         setVehicleInfo,
         setPartQuery,
+        conversationId,
         clearChat,
     } = useChatContext()
 
@@ -110,6 +111,7 @@ export default function ChatScreen() {
                     messages: newMessages,
                     vehicleInfo,
                     userId: userEmail,
+                    conversationId,
                 }),
             })
 
