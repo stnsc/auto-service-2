@@ -7,6 +7,8 @@ import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
+import { useGoogleAuth } from "../../hooks/useGoogleAuth"
+import { Ionicons } from "@expo/vector-icons"
 
 const VALIDATION_RULES = {
     email: [validators.required("Email"), validators.email()],
@@ -16,6 +18,12 @@ const VALIDATION_RULES = {
 export default function LoginScreen() {
     const router = useRouter()
     const { signIn } = useAuthContext()
+    const {
+        promptAsync,
+        loading: googleLoading,
+        error: googleError,
+        request,
+    } = useGoogleAuth()
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -89,18 +97,59 @@ export default function LoginScreen() {
                         {loading ? "Signing in..." : "Sign In"}
                     </NText>
                 </NButton>
+
+                <View style={styles.dividerRow}>
+                    <View style={styles.dividerLine} />
+                    <NText style={styles.dividerText}>or</NText>
+                    <View style={styles.dividerLine} />
+                </View>
+
+                <NButton
+                    color="rgba(255, 255, 255, 0.15)"
+                    onPress={() => promptAsync()}
+                    style={!request ? styles.buttonDisabled : undefined}
+                >
+                    <View style={styles.googleRow}>
+                        <Ionicons name="logo-google" size={18} color="#fff" />
+                        <NText style={styles.buttonText}>
+                            {googleLoading
+                                ? "Signing in..."
+                                : "Continue with Google"}
+                        </NText>
+                    </View>
+                </NButton>
+
+                {googleError && (
+                    <NText style={styles.errorText}>{googleError}</NText>
+                )}
             </View>
 
-            <NButton
-                color="rgba(255, 255, 255, 0.15)"
-                onPress={() => router.push("/(auth)/signup")}
-                style={styles.linkWrapper}
+            <View
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                }}
             >
-                <NText style={styles.linkText}>
-                    Don't have an account?{" "}
-                    <NText style={styles.linkBold}>Sign Up</NText>
-                </NText>
-            </NButton>
+                <NButton
+                    onPress={() => router.push("/(auth)/forgot-password")}
+                    style={styles.linkWrapper}
+                >
+                    <NText style={styles.linkText}>
+                        Forgot your password?{" "}
+                        <NText style={styles.linkBold}>Reset it</NText>
+                    </NText>
+                </NButton>
+
+                <NButton
+                    onPress={() => router.push("/(auth)/signup")}
+                    style={styles.linkWrapper}
+                >
+                    <NText style={styles.linkText}>
+                        Don't have an account?{" "}
+                        <NText style={styles.linkBold}>Sign Up</NText>
+                    </NText>
+                </NButton>
+            </View>
         </View>
     )
 }
@@ -135,6 +184,34 @@ const styles = StyleSheet.create({
         fontFamily: fonts.bold,
         color: "#fff",
         fontSize: 16,
+    },
+    googleRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+    },
+    dividerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        marginVertical: 2,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: "rgba(255,255,255,0.15)",
+    },
+    dividerText: {
+        color: "rgba(255,255,255,0.4)",
+        fontSize: 13,
+    },
+    errorText: {
+        color: "rgba(255, 80, 80, 0.9)",
+        fontSize: 13,
+        textAlign: "center",
+    },
+    buttonDisabled: {
+        opacity: 0.5,
     },
     linkWrapper: {
         marginTop: 24,

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react"
 import {
     Platform,
+    Pressable,
     StyleSheet,
     Text,
     TextInput,
@@ -8,6 +9,7 @@ import {
     View,
     ViewStyle,
 } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -27,6 +29,7 @@ interface NInputProps extends TextInputProps {
     containerStyle?: ViewStyle
     placeholder?: string
     color?: string
+    overlayColor?: string
     intensity?: number
     failed?: boolean
     failedText?: string
@@ -35,11 +38,15 @@ interface NInputProps extends TextInputProps {
 export const NInput = ({
     containerStyle,
     color = "rgba(255, 255, 255, 0.05)",
+    overlayColor,
     intensity = 30,
     failed = false,
     failedText = "Invalid input",
+    secureTextEntry,
     ...props
 }: NInputProps) => {
+    const [showPassword, setShowPassword] = useState(false)
+
     const focusValue = useSharedValue(0)
     const inputHeight = useSharedValue(MIN_HEIGHT)
 
@@ -111,23 +118,47 @@ export const NInput = ({
                             { backgroundColor: color },
                         ]}
                     >
+                        {overlayColor && (
+                            <View
+                                style={[
+                                    StyleSheet.absoluteFillObject,
+                                    { backgroundColor: overlayColor },
+                                ]}
+                                pointerEvents="none"
+                            />
+                        )}
                         <AnimatedTextInput
                             {...props}
                             style={[
                                 styles.input,
                                 { fontFamily: fonts.regular },
                                 animatedInputStyle,
+                                secureTextEntry && styles.inputWithEye,
                                 props.style,
                             ]}
                             placeholderTextColor="rgba(255,255,255,0.4)"
                             onFocus={onFocus}
                             onBlur={onBlur}
                             onChangeText={onChangeText}
-                            multiline={!props.secureTextEntry}
+                            secureTextEntry={secureTextEntry && !showPassword}
+                            multiline={!secureTextEntry}
                             textAlignVertical="top"
                             scrollEnabled={false}
                             placeholder={props.placeholder}
                         />
+                        {secureTextEntry && (
+                            <Pressable
+                                style={styles.eyeButton}
+                                onPress={() => setShowPassword((v) => !v)}
+                                hitSlop={8}
+                            >
+                                <Ionicons
+                                    name={showPassword ? "eye" : "eye-off"}
+                                    size={20}
+                                    color="rgba(255,255,255,0.6)"
+                                />
+                            </Pressable>
+                        )}
                         {/* Shadow Text: mirrors input value and fires onLayout on any size change,
                             including shrink — more reliable than onContentSizeChange cross-platform */}
                         <View
@@ -171,6 +202,18 @@ const styles = StyleSheet.create({
         ...(Platform.OS === "web"
             ? ({ outlineStyle: "none", overflow: "hidden" } as any)
             : {}),
+    },
+    inputWithEye: {
+        paddingRight: 50,
+    },
+    eyeButton: {
+        position: "absolute",
+        right: 16,
+        top: 0,
+        bottom: 0,
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1,
     },
     shadowContainer: {
         position: "absolute",

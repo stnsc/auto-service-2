@@ -54,8 +54,11 @@ function AuthGatedLayout() {
         if (isLoading) return
 
         const inAuthGroup = segments[0] === "(auth)"
+        // Let the OAuth callback page handle itself — it only lives briefly
+        // while expo-web-browser closes the popup.
+        const isOAuthCallback = segments[0] === "oauth-callback"
 
-        if (!isAuthenticated && !inAuthGroup) {
+        if (!isAuthenticated && !inAuthGroup && !isOAuthCallback) {
             router.replace("/(auth)/login")
         } else if (isAuthenticated && inAuthGroup) {
             router.replace("/")
@@ -117,9 +120,15 @@ function AuthGatedLayout() {
     }
 
     const isAdmin = pathname.startsWith("/admin")
-    const isAuth = ["/login", "/signup", "/verify", "/pending"].includes(
-        pathname,
-    )
+    const isAuth = [
+        "/login",
+        "/signup",
+        "/verify",
+        "/pending",
+        "/forgot-password",
+        "/reset-password",
+        "/oauth-callback",
+    ].includes(pathname)
     const showContainer = !isAdmin
     const showNav = !isAdmin && !isAuth
 
