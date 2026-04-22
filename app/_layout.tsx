@@ -139,6 +139,7 @@ function AuthGatedLayout() {
         "/appointment": "Schedule",
         "/shop": "Shop",
         "/map": "Map",
+        "/history": "Chat History",
         "/login": "Sign In",
         "/signup": "Sign Up",
         "/verify": "Verify Email",

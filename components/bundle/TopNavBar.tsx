@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, StyleSheet, Image, Linking } from "react-native"
+import { View, StyleSheet, Image, Linking } from "react-native"
 import { useRouter } from "expo-router"
 import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
@@ -13,6 +13,11 @@ export const TopNavBar = () => {
 
     const CONTEXT = [
         {
+            key: "history",
+            label: "Chat History",
+            icon: <Ionicons name="time-outline" size={18} color="white" />,
+        },
+        {
             key: "github",
             label: "Report Bug / Feedback",
             icon: <Ionicons name="bug-outline" size={18} color="white" />,
@@ -22,7 +27,6 @@ export const TopNavBar = () => {
             label: "Admin Panel",
             icon: <Ionicons name="shield-outline" size={18} color="white" />,
         },
-
         {
             key: "logout",
             label: "Logout",
@@ -32,6 +36,10 @@ export const TopNavBar = () => {
     ]
 
     const handleAction = (key: string) => {
+        if (key === "history") {
+            router.push("/history" as any)
+            return
+        }
         if (key === "github") {
             const url = "https://github.com/stnsc/auto-service-2/issues"
             Linking.openURL(url)

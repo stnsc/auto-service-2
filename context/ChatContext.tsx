@@ -5,6 +5,15 @@ interface Message {
     content: string
 }
 
+export interface ConversationRecord {
+    conversationId: string
+    summary: string
+    messages: { role: string; content: string }[]
+    vehicleInfo: Record<string, unknown>
+    updatedAt: string
+    createdAt: string
+}
+
 interface VehicleInfo {
     make: string | null
     model: string | null
@@ -24,6 +33,7 @@ interface ChatContextType {
     setPartQuery: (query: string) => void
     conversationId: string
     clearChat: () => void
+    loadConversation: (record: ConversationRecord) => void
 }
 
 const generateConversationId = () =>
@@ -55,6 +65,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setConversationId(generateConversationId())
     }
 
+    const loadConversation = (record: ConversationRecord) => {
+        setMessages(
+            record.messages.map((m) => ({
+                role: m.role as "user" | "assistant",
+                content: m.content,
+            })),
+        )
+        setSummary(record.summary)
+        setPartQuery("")
+        setVehicleInfo({
+            make: (record.vehicleInfo.make as string | null) ?? null,
+            model: (record.vehicleInfo.model as string | null) ?? null,
+            year: (record.vehicleInfo.year as number | null) ?? null,
+            mileage: (record.vehicleInfo.mileage as number | null) ?? null,
+            warningLights:
+                (record.vehicleInfo.warningLights as boolean | null) ?? null,
+        })
+        setConversationId(record.conversationId)
+    }
+
     return (
         <ChatContext.Provider
             value={{
@@ -68,6 +98,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 setPartQuery,
                 conversationId,
                 clearChat,
+                loadConversation,
             }}
         >
             {children}
