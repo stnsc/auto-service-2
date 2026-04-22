@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import {
     Platform,
     Pressable,
@@ -24,6 +24,11 @@ import { NText } from "./NText"
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 
 const MIN_HEIGHT = 50
+const GRADIENT_COLORS: [string, string] = [
+    "rgba(255,255,255,0.4)",
+    "rgba(255,255,255,0.05)",
+]
+const ERROR_TIMING = { duration: 250, easing: Easing.out(Easing.cubic) }
 
 interface NInputProps extends TextInputProps {
     containerStyle?: ViewStyle
@@ -36,7 +41,7 @@ interface NInputProps extends TextInputProps {
     highlightSegments?: { text: string; highlight: boolean }[]
 }
 
-export const NInput = ({
+export const NInput = React.memo(function NInput({
     containerStyle,
     color = "rgba(255, 255, 255, 0.05)",
     overlayColor,
@@ -46,7 +51,7 @@ export const NInput = ({
     secureTextEntry,
     highlightSegments,
     ...props
-}: NInputProps) => {
+}: NInputProps) {
     const [showPassword, setShowPassword] = useState(false)
 
     const focusValue = useSharedValue(0)
@@ -62,40 +67,44 @@ export const NInput = ({
         }
     }, [props.value])
 
-    const onChangeText = (text: string) => {
-        setShadowValue(text)
-        props.onChangeText?.(text)
-    }
+    const onChangeText = useCallback(
+        (text: string) => {
+            setShadowValue(text)
+            props.onChangeText?.(text)
+        },
+        [props.onChangeText],
+    )
 
-    const onShadowLayout = (e: any) => {
-        const h = Math.max(MIN_HEIGHT, e.nativeEvent.layout.height)
-        inputHeight.value = withTiming(h, {
-            duration: 300,
-            easing: Easing.out(Easing.ease),
-        })
-    }
+    const onShadowLayout = useCallback(
+        (e: any) => {
+            const h = Math.max(MIN_HEIGHT, e.nativeEvent.layout.height)
+            inputHeight.value = withTiming(h, {
+                duration: 300,
+                easing: Easing.out(Easing.ease),
+            })
+        },
+        [inputHeight],
+    )
 
-    const onFocus = () => {
+    const onFocus = useCallback(() => {
         focusValue.value = withTiming(1, { duration: 300 })
-    }
+    }, [focusValue])
 
-    const onBlur = () => {
+    const onBlur = useCallback(() => {
         focusValue.value = withTiming(0, { duration: 300 })
-    }
+    }, [focusValue])
 
     const animatedWrapperStyle = useAnimatedStyle(() => ({
         transform: [{ scale: withTiming(focusValue.value ? 1.02 : 1) }],
     }))
 
-    const errorTiming = { duration: 250, easing: Easing.out(Easing.cubic) }
-
     const errorAnimation = useAnimatedStyle(() => ({
         transform: [
             {
-                translateY: withTiming(failed ? 0 : -20, errorTiming),
+                translateY: withTiming(failed ? 0 : -20, ERROR_TIMING),
             },
         ],
-        opacity: withTiming(failed ? 1 : 0, errorTiming),
+        opacity: withTiming(failed ? 1 : 0, ERROR_TIMING),
         zIndex: -1,
     }))
 
@@ -109,7 +118,7 @@ export const NInput = ({
                 style={[styles.wrapper, animatedWrapperStyle, containerStyle]}
             >
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.4)", "rgba(255,255,255,0.05)"]}
+                    colors={GRADIENT_COLORS}
                     style={styles.gradientStroke}
                 >
                     <BlurView
@@ -234,7 +243,7 @@ export const NInput = ({
             </Animated.View>
         </>
     )
-}
+})
 
 const styles = StyleSheet.create({
     wrapper: {

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { View, StyleSheet, Pressable, Image } from "react-native"
+import { View, StyleSheet, Pressable, Image, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
@@ -62,94 +62,111 @@ export default function LoginScreen() {
 
     return (
         <View style={styles.container}>
-            <Image
-                source={require("../../assets/autoservice/logo.png")}
-                style={styles.logo}
-            />
-            <NText style={styles.title}>Welcome To The Closed Alpha!</NText>
-            <NText style={styles.subtitle}>Sign in to AutoService</NText>
-
-            <View style={styles.form}>
-                <NInput
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    failed={!!errors.email}
-                    failedText={errors.email || ""}
-                />
-
-                <NInput
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    autoCapitalize="none"
-                    autoComplete="password"
-                    failed={!!errors.password}
-                    failedText={errors.password || ""}
-                />
-
-                <NButton color="rgba(33, 168, 112, 0.51)" onPress={handleLogin}>
-                    <NText style={styles.buttonText}>
-                        {loading ? "Signing in..." : "Sign In"}
-                    </NText>
-                </NButton>
-
-                <View style={styles.dividerRow}>
-                    <View style={styles.dividerLine} />
-                    <NText style={styles.dividerText}>or</NText>
-                    <View style={styles.dividerLine} />
-                </View>
-
-                <NButton
-                    color="rgba(255, 255, 255, 0.15)"
-                    onPress={() => promptAsync()}
-                    style={!request ? styles.buttonDisabled : undefined}
-                >
-                    <View style={styles.googleRow}>
-                        <Ionicons name="logo-google" size={18} color="#fff" />
-                        <NText style={styles.buttonText}>
-                            {googleLoading
-                                ? "Signing in..."
-                                : "Continue with Google"}
-                        </NText>
-                    </View>
-                </NButton>
-
-                {googleError && (
-                    <NText style={styles.errorText}>{googleError}</NText>
-                )}
-            </View>
-
-            <View
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{
+                    width: "100%",
+                    alignSelf: "center",
+                    padding: 20,
+                    paddingBottom: 40,
                 }}
             >
-                <NButton
-                    onPress={() => router.push("/(auth)/forgot-password")}
-                    style={styles.linkWrapper}
-                >
-                    <NText style={styles.linkText}>
-                        Forgot your password?{" "}
-                        <NText style={styles.linkBold}>Reset it</NText>
-                    </NText>
-                </NButton>
+                <Image
+                    source={require("../../assets/autoservice/logo.png")}
+                    style={styles.logo}
+                />
+                <NText style={styles.title}>Welcome To The Closed Alpha!</NText>
+                <NText style={styles.subtitle}>Sign in to AutoService</NText>
 
-                <NButton
-                    onPress={() => router.push("/(auth)/signup")}
-                    style={styles.linkWrapper}
+                <View style={styles.form}>
+                    <NInput
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoComplete="email"
+                        failed={!!errors.email}
+                        failedText={errors.email || ""}
+                    />
+
+                    <NInput
+                        placeholder="Password"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry
+                        autoCapitalize="none"
+                        autoComplete="password"
+                        failed={!!errors.password}
+                        failedText={errors.password || ""}
+                    />
+
+                    <NButton
+                        color="rgba(33, 168, 112, 0.51)"
+                        onPress={handleLogin}
+                    >
+                        <NText style={styles.buttonText}>
+                            {loading ? "Signing in..." : "Sign In"}
+                        </NText>
+                    </NButton>
+
+                    <View style={styles.dividerRow}>
+                        <View style={styles.dividerLine} />
+                        <NText style={styles.dividerText}>or</NText>
+                        <View style={styles.dividerLine} />
+                    </View>
+
+                    <NButton
+                        color="rgba(255, 255, 255, 0.15)"
+                        onPress={() => promptAsync()}
+                        style={!request ? styles.buttonDisabled : undefined}
+                    >
+                        <View style={styles.googleRow}>
+                            <Ionicons
+                                name="logo-google"
+                                size={18}
+                                color="#fff"
+                            />
+                            <NText style={styles.buttonText}>
+                                {googleLoading
+                                    ? "Signing in..."
+                                    : "Continue with Google"}
+                            </NText>
+                        </View>
+                    </NButton>
+
+                    {googleError && (
+                        <NText style={styles.errorText}>{googleError}</NText>
+                    )}
+                </View>
+
+                <View
+                    style={{
+                        display: "flex",
+                        justifyContent: "center",
+                    }}
                 >
-                    <NText style={styles.linkText}>
-                        Don't have an account?{" "}
-                        <NText style={styles.linkBold}>Sign Up</NText>
-                    </NText>
-                </NButton>
-            </View>
+                    <NButton
+                        onPress={() => router.push("/(auth)/forgot-password")}
+                        style={styles.linkWrapper}
+                    >
+                        <NText style={styles.linkText}>
+                            Forgot your password?{" "}
+                            <NText style={styles.linkBold}>Reset it</NText>
+                        </NText>
+                    </NButton>
+
+                    <NButton
+                        onPress={() => router.push("/(auth)/signup")}
+                        style={styles.linkWrapper}
+                    >
+                        <NText style={styles.linkText}>
+                            Don't have an account?{" "}
+                            <NText style={styles.linkBold}>Sign Up</NText>
+                        </NText>
+                    </NButton>
+                </View>
+            </ScrollView>
         </View>
     )
 }
