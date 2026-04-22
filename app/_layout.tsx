@@ -198,24 +198,9 @@ function AuthGatedLayout() {
                         <View style={{ flex: 1 }}>
                             {showNav && (
                                 <>
-                                    {intensity > 0 ? (
-                                        <BlurView
-                                            style={[
-                                                styles.topNav,
-                                                windowWidth > 600 && {
-                                                    borderRadius: 20,
-                                                },
-                                            ]}
-                                            intensity={intensity}
-                                            tint="dark"
-                                        >
-                                            <TopNavBar />
-                                        </BlurView>
-                                    ) : (
-                                        <View style={styles.topNav}>
-                                            <TopNavBar />
-                                        </View>
-                                    )}
+                                    <View style={styles.topNav}>
+                                        <TopNavBar />
+                                    </View>
                                 </>
                             )}
 

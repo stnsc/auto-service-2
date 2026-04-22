@@ -33,6 +33,7 @@ interface NInputProps extends TextInputProps {
     intensity?: number
     failed?: boolean
     failedText?: string
+    highlightSegments?: { text: string; highlight: boolean }[]
 }
 
 export const NInput = ({
@@ -43,6 +44,7 @@ export const NInput = ({
     failed = false,
     failedText = "Invalid input",
     secureTextEntry,
+    highlightSegments,
     ...props
 }: NInputProps) => {
     const [showPassword, setShowPassword] = useState(false)
@@ -163,14 +165,66 @@ export const NInput = ({
                             including shrink — more reliable than onContentSizeChange cross-platform */}
                         <View
                             pointerEvents="none"
-                            style={styles.shadowContainer}
+                            style={[
+                                styles.shadowContainer,
+                                highlightSegments
+                                    ? styles.shadowVisible
+                                    : undefined,
+                            ]}
                         >
-                            <Text
-                                style={[styles.input, styles.shadowText]}
-                                onLayout={onShadowLayout}
-                            >
-                                {shadowValue || " "}
-                            </Text>
+                            {highlightSegments ? (
+                                <Text
+                                    style={[
+                                        styles.input,
+                                        styles.shadowText,
+                                        {
+                                            color: "transparent",
+                                            fontFamily: fonts.regular,
+                                        },
+                                    ]}
+                                    onLayout={onShadowLayout}
+                                >
+                                    {highlightSegments.map((seg, i) =>
+                                        seg.highlight ? (
+                                            <Text
+                                                key={i}
+                                                style={{
+                                                    textDecorationLine:
+                                                        "underline",
+                                                    textDecorationColor:
+                                                        "#21a870",
+                                                    textDecorationStyle:
+                                                        "solid",
+                                                    ...({
+                                                        textDecorationThickness: 3,
+                                                    } as any),
+                                                    color: "transparent",
+                                                    fontFamily: fonts.regular,
+                                                }}
+                                            >
+                                                {seg.text}
+                                            </Text>
+                                        ) : (
+                                            <Text
+                                                key={i}
+                                                style={{
+                                                    color: "transparent",
+                                                    fontFamily: fonts.regular,
+                                                }}
+                                            >
+                                                {seg.text}
+                                            </Text>
+                                        ),
+                                    )}
+                                </Text>
+                            ) : (
+                                <Text
+                                    style={[styles.input, styles.shadowText]}
+                                    onLayout={onShadowLayout}
+                                >
+                                    {shadowValue || " "}
+                                </Text>
+                            )}
                         </View>
                     </BlurView>
                 </LinearGradient>
@@ -221,6 +275,9 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         opacity: 0,
+    },
+    shadowVisible: {
+        opacity: 1,
     },
     shadowText: {
         height: undefined,

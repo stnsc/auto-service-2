@@ -7,6 +7,7 @@ import {
     Easing,
     Platform,
 } from "react-native"
+import { LinearGradient } from "expo-linear-gradient"
 import { NButton } from "../../components/replacements/NButton"
 import { NInput } from "../../components/replacements/NInput"
 import { NModal } from "../../components/replacements/NModal"
@@ -21,6 +22,80 @@ import { useAuthContext } from "../../context/AuthContext"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 
 const CHAT_API_URL = "/api/chat"
+
+const INTENT_KEYWORDS: Record<
+    string,
+    {
+        words: string[]
+        route: string
+        label: string
+        icon: "map" | "calendar" | "cart"
+    }
+> = {
+    shop: {
+        words: [
+            "buy",
+            "parts",
+            "shop",
+            "purchase",
+            "order",
+            "product",
+            "products",
+            "spare",
+            "component",
+            "components",
+        ],
+        route: "/(tabs)/shop",
+        label: "Go to Shop",
+        icon: "cart",
+    },
+    appointment: {
+        words: [
+            "appointment",
+            "book",
+            "booking",
+            "schedule",
+            "reserve",
+            "service",
+            "repair",
+            "fix",
+            "maintenance",
+        ],
+        route: "/(tabs)/appointment",
+        label: "Go to Appointment",
+        icon: "calendar",
+    },
+    map: {
+        words: [
+            "map",
+            "location",
+            "directions",
+            "nearby",
+            "garage",
+            "workshop",
+            "where",
+            "address",
+        ],
+        route: "/(tabs)/map",
+        label: "Go to Map",
+        icon: "map",
+    },
+}
+
+function getHighlightedSegments(
+    text: string,
+): { text: string; highlight: boolean }[] {
+    const allKeywords = Object.values(INTENT_KEYWORDS).flatMap((v) => v.words)
+    const segments: { text: string; highlight: boolean }[] = []
+    const parts = text.split(/(\b\w+\b)/)
+    for (const part of parts) {
+        segments.push({
+            text: part,
+            highlight: allKeywords.includes(part.toLowerCase()),
+        })
+    }
+    return segments
+}
 
 interface Message {
     role: "user" | "assistant"
@@ -39,6 +114,7 @@ export default function ChatScreen() {
     const [chatIntent, setChatIntent] = useState<string>("")
     const [chatConfidence, setChatConfidence] = useState<number>(0)
     const [hasIntentSuggestion, setHasIntentSuggestion] = useState(false)
+    const [suggestionsHeight, setSuggestionsHeight] = useState(0)
     const chatNotice = useAlphaNotice("chat-logging")
 
     // Use global chat context
@@ -81,6 +157,11 @@ export default function ChatScreen() {
             useNativeDriver: false,
         }).start()
     }, [hasIntentSuggestion])
+
+    // Re-scroll to end whenever suggestions change height (padding changes)
+    useEffect(() => {
+        scrollRef.current?.scrollToEnd({ animated: true })
+    }, [suggestionsHeight])
 
     const handleSubmit = async () => {
         const trimmed = query.trim()
@@ -181,7 +262,160 @@ export default function ChatScreen() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.chatArea}>
+            {chatStarted && (
+                <ScrollView
+                    ref={scrollRef}
+                    style={StyleSheet.absoluteFillObject}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                        styles.messageListContent,
+                        { paddingBottom: 140 + suggestionsHeight },
+                    ]}
+                    onContentSizeChange={() =>
+                        scrollRef.current?.scrollToEnd({ animated: true })
+                    }
+                >
+                    <Animated.View>
+                        {messages.map((msg, i) => {
+                            const isLastAssistant =
+                                msg.role === "assistant" &&
+                                i === messages.length - 1 &&
+                                !loading
+                            const showIntentRecommendation =
+                                isLastAssistant &&
+                                chatIntent &&
+                                chatIntent !== "chat" &&
+                                chatConfidence > 0.75
+
+                            const intentIcon =
+                                chatIntent === "map" ? (
+                                    <Ionicons
+                                        name="map"
+                                        size={16}
+                                        color="white"
+                                    />
+                                ) : chatIntent === "appointment" ? (
+                                    <Ionicons
+                                        name="calendar"
+                                        size={16}
+                                        color="white"
+                                    />
+                                ) : chatIntent === "shop" ? (
+                                    <Ionicons
+                                        name="cart"
+                                        size={16}
+                                        color="white"
+                                    />
+                                ) : null
+
+                            return (
+                                <View
+                                    key={i}
+                                    style={[
+                                        styles.bubble,
+                                        { alignSelf: "center" },
+                                    ]}
+                                >
+                                    {msg.role === "user" ? (
+                                        <>
+                                            <NText
+                                                style={{
+                                                    fontFamily: fonts.bold,
+                                                    color: "#fff",
+                                                    textAlign: "right",
+                                                }}
+                                            >
+                                                {displayName}
+                                            </NText>
+                                            <NButton color="rgba(33, 168, 112, 0.51)">
+                                                <NText
+                                                    style={{
+                                                        fontFamily: fonts.bold,
+                                                        color: "#fff",
+                                                    }}
+                                                >
+                                                    {msg.content}
+                                                </NText>
+                                            </NButton>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <NText
+                                                style={{
+                                                    fontFamily: fonts.regular,
+                                                    color: "#fff",
+                                                }}
+                                            >
+                                                AutoService Intelligence
+                                            </NText>
+                                            <NButton color="rgba(34, 34, 34, 0.51)">
+                                                <NText
+                                                    style={{
+                                                        fontFamily: fonts.light,
+                                                        color: "#fff",
+                                                    }}
+                                                >
+                                                    {msg.content}
+                                                </NText>
+                                            </NButton>
+                                            {showIntentRecommendation && (
+                                                <NButton
+                                                    color="rgba(33, 168, 112, 0.51)"
+                                                    onPress={() =>
+                                                        router.push(
+                                                            `/(tabs)/${chatIntent}` as any,
+                                                        )
+                                                    }
+                                                    style={{
+                                                        marginTop: 6,
+                                                        alignSelf: "flex-start",
+                                                    }}
+                                                >
+                                                    <View
+                                                        style={{
+                                                            flexDirection:
+                                                                "row",
+                                                            alignItems:
+                                                                "center",
+                                                            gap: 6,
+                                                        }}
+                                                    >
+                                                        {intentIcon}
+                                                        <NText
+                                                            style={{
+                                                                fontFamily:
+                                                                    fonts.bold,
+                                                                color: "#fff",
+                                                            }}
+                                                        >
+                                                            Go to{" "}
+                                                            {chatIntent
+                                                                .charAt(0)
+                                                                .toUpperCase() +
+                                                                chatIntent.slice(
+                                                                    1,
+                                                                )}
+                                                        </NText>
+                                                    </View>
+                                                </NButton>
+                                            )}
+                                        </>
+                                    )}
+                                </View>
+                            )
+                        })}
+                    </Animated.View>
+                    {loading && (
+                        <View
+                            style={[styles.bubble, { alignSelf: "flex-start" }]}
+                        >
+                            <ActivityIndicator size="small" color="#fff" />
+                        </View>
+                    )}
+                </ScrollView>
+            )}
+
+            <View style={styles.chatArea} pointerEvents="box-none">
                 {!chatStarted ? (
                     <View style={styles.centerContent}>
                         <NText
@@ -222,173 +456,15 @@ export default function ChatScreen() {
                                 </NText>
                             </View>
                         </NButton>
-
-                        <ScrollView
-                            ref={scrollRef}
-                            style={styles.messageList}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={styles.messageListContent}
-                            onContentSizeChange={() =>
-                                scrollRef.current?.scrollToEnd({
-                                    animated: true,
-                                })
-                            }
-                        >
-                            <Animated.View>
-                                {messages.map((msg, i) => {
-                                    const isLastAssistant =
-                                        msg.role === "assistant" &&
-                                        i === messages.length - 1 &&
-                                        !loading
-                                    const showIntentRecommendation =
-                                        isLastAssistant &&
-                                        chatIntent &&
-                                        chatIntent !== "chat" &&
-                                        chatConfidence > 0.75
-
-                                    const intentIcon =
-                                        chatIntent === "map" ? (
-                                            <Ionicons
-                                                name="map"
-                                                size={16}
-                                                color="white"
-                                            />
-                                        ) : chatIntent === "appointment" ? (
-                                            <Ionicons
-                                                name="calendar"
-                                                size={16}
-                                                color="white"
-                                            />
-                                        ) : chatIntent === "shop" ? (
-                                            <Ionicons
-                                                name="cart"
-                                                size={16}
-                                                color="white"
-                                            />
-                                        ) : null
-
-                                    return (
-                                        <View
-                                            key={i}
-                                            style={[
-                                                styles.bubble,
-                                                { alignSelf: "center" },
-                                            ]}
-                                        >
-                                            {msg.role === "user" ? (
-                                                <>
-                                                    <NText
-                                                        style={{
-                                                            fontFamily:
-                                                                fonts.bold,
-                                                            color: "#fff",
-                                                            textAlign: "right",
-                                                        }}
-                                                    >
-                                                        {displayName}
-                                                    </NText>
-                                                    <NButton color="rgba(33, 168, 112, 0.51)">
-                                                        <NText
-                                                            style={{
-                                                                fontFamily:
-                                                                    fonts.bold,
-                                                                color: "#fff",
-                                                            }}
-                                                        >
-                                                            {msg.content}
-                                                        </NText>
-                                                    </NButton>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <NText
-                                                        style={{
-                                                            fontFamily:
-                                                                fonts.regular,
-                                                            color: "#fff",
-                                                        }}
-                                                    >
-                                                        AutoService Intelligence
-                                                    </NText>
-                                                    <NButton color="rgba(34, 34, 34, 0.51)">
-                                                        <NText
-                                                            style={{
-                                                                fontFamily:
-                                                                    fonts.light,
-                                                                color: "#fff",
-                                                            }}
-                                                        >
-                                                            {msg.content}
-                                                        </NText>
-                                                    </NButton>
-                                                    {showIntentRecommendation && (
-                                                        <NButton
-                                                            color="rgba(33, 168, 112, 0.51)"
-                                                            onPress={() =>
-                                                                router.push(
-                                                                    `/(tabs)/${chatIntent}` as any,
-                                                                )
-                                                            }
-                                                            style={{
-                                                                marginTop: 6,
-                                                                alignSelf:
-                                                                    "flex-start",
-                                                            }}
-                                                        >
-                                                            <View
-                                                                style={{
-                                                                    flexDirection:
-                                                                        "row",
-                                                                    alignItems:
-                                                                        "center",
-                                                                    gap: 6,
-                                                                }}
-                                                            >
-                                                                {intentIcon}
-                                                                <NText
-                                                                    style={{
-                                                                        fontFamily:
-                                                                            fonts.bold,
-                                                                        color: "#fff",
-                                                                    }}
-                                                                >
-                                                                    Go to{" "}
-                                                                    {chatIntent
-                                                                        .charAt(
-                                                                            0,
-                                                                        )
-                                                                        .toUpperCase() +
-                                                                        chatIntent.slice(
-                                                                            1,
-                                                                        )}
-                                                                </NText>
-                                                            </View>
-                                                        </NButton>
-                                                    )}
-                                                </>
-                                            )}
-                                        </View>
-                                    )
-                                })}
-                            </Animated.View>
-                            {loading && (
-                                <View
-                                    style={[
-                                        styles.bubble,
-                                        { alignSelf: "flex-start" },
-                                    ]}
-                                >
-                                    <ActivityIndicator
-                                        size="small"
-                                        color="#fff"
-                                    />
-                                </View>
-                            )}
-                        </ScrollView>
                     </>
                 )}
 
-                <View style={{ width: "100%", overflow: "hidden" }}>
+                <View
+                    style={{ width: "100%", overflow: "hidden" }}
+                    onLayout={(e) =>
+                        setSuggestionsHeight(e.nativeEvent.layout.height)
+                    }
+                >
                     <Suggestions
                         query={query}
                         chatStarted={chatStarted}
@@ -411,6 +487,11 @@ export default function ChatScreen() {
                         value={query}
                         onSubmitEditing={handleSubmit}
                         placeholder="What's your question?"
+                        highlightSegments={
+                            query.trim().length > 0
+                                ? getHighlightedSegments(query)
+                                : undefined
+                        }
                     />
                     <View>
                         <NButton
@@ -423,6 +504,14 @@ export default function ChatScreen() {
                     </View>
                 </View>
             </View>
+
+            {chatStarted && (
+                <LinearGradient
+                    colors={["transparent", "rgba(0,0,0,0.92)"]}
+                    style={styles.bottomFade}
+                    pointerEvents="none"
+                />
+            )}
 
             <NModal
                 visible={chatNotice.visible}
@@ -452,6 +541,7 @@ const styles = StyleSheet.create({
         paddingLeft: 20,
         paddingRight: 20,
         justifyContent: "flex-end",
+        zIndex: 1,
     },
     newChatButton: {
         top: 0,
@@ -461,15 +551,20 @@ const styles = StyleSheet.create({
         position: "absolute",
         zIndex: 1,
     },
-    messageList: {
-        flex: 1,
-    },
     messageListContent: {
         paddingTop: "15%",
-        paddingHorizontal: 10,
+        paddingHorizontal: 30,
         gap: 10,
         flexGrow: 1,
         justifyContent: "flex-end",
+    },
+    bottomFade: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 180,
+        pointerEvents: "none",
     },
     bubble: {
         padding: 6,
