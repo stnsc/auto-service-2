@@ -1,35 +1,35 @@
 export type ValidationRule = (value: string) => string | null
 
 export const validators = {
-    required: (fieldName: string = "This field"): ValidationRule => (value) => {
-        return value.trim().length === 0 ? `${fieldName} is required` : null
+    required: (fieldName: string = "This field", suffix: string = "is required"): ValidationRule => (value) => {
+        return value.trim().length === 0 ? `${fieldName} ${suffix}` : null
     },
 
-    email: (): ValidationRule => (value) => {
+    email: (message = "Invalid email format"): ValidationRule => (value) => {
         if (value.trim().length === 0) return null
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        return !emailRegex.test(value) ? "Invalid email format" : null
+        return !emailRegex.test(value) ? message : null
     },
 
-    phone: (): ValidationRule => (value) => {
+    phone: (message = "Invalid phone number"): ValidationRule => (value) => {
         if (value.trim().length === 0) return null
         const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/
-        return !phoneRegex.test(value) ? "Invalid phone number" : null
+        return !phoneRegex.test(value) ? message : null
     },
 
-    minLength: (min: number): ValidationRule => (value) => {
+    minLength: (min: number, message?: string): ValidationRule => (value) => {
         return value.trim().length < min
-            ? `Must be at least ${min} characters`
+            ? (message ?? `Must be at least ${min} characters`)
             : null
     },
 
-    maxLength: (max: number): ValidationRule => (value) => {
+    maxLength: (max: number, message?: string): ValidationRule => (value) => {
         return value.length > max
-            ? `Cannot exceed ${max} characters`
+            ? (message ?? `Cannot exceed ${max} characters`)
             : null
     },
 
-    date: (format: "YYYY-MM-DD" | "MM/DD/YYYY" = "YYYY-MM-DD"): ValidationRule => (value) => {
+    date: (format: "YYYY-MM-DD" | "MM/DD/YYYY" = "YYYY-MM-DD", messages?: { invalidFormat?: string; invalid?: string }): ValidationRule => (value) => {
         if (value.trim().length === 0) return null
 
         let dateRegex: RegExp
@@ -40,14 +40,14 @@ export const validators = {
         }
 
         if (!dateRegex.test(value)) {
-            return `Date must be in ${format} format`
+            return messages?.invalidFormat ?? `Date must be in ${format} format`
         }
 
         const date = new Date(value)
-        return isNaN(date.getTime()) ? "Invalid date" : null
+        return isNaN(date.getTime()) ? (messages?.invalid ?? "Invalid date") : null
     },
 
-    time: (format: "HH:MM" | "HH:MM:SS" = "HH:MM"): ValidationRule => (value) => {
+    time: (format: "HH:MM" | "HH:MM:SS" = "HH:MM", message?: string): ValidationRule => (value) => {
         if (value.trim().length === 0) return null
 
         let timeRegex: RegExp
@@ -57,31 +57,33 @@ export const validators = {
             timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/
         }
 
-        return !timeRegex.test(value) ? `Time must be in ${format} format` : null
+        return !timeRegex.test(value) ? (message ?? `Time must be in ${format} format`) : null
     },
 
-    numeric: (): ValidationRule => (value) => {
+    numeric: (message = "Must be numeric"): ValidationRule => (value) => {
         return /^\d+$/.test(value) || value.trim().length === 0
             ? null
-            : "Must be numeric"
+            : message
     },
 
-    year: (): ValidationRule => (value) => {
+    year: (messages?: { invalid?: string; outOfRange?: (min: number, max: number) => string }): ValidationRule => (value) => {
         if (value.trim().length === 0) return null
         const year = parseInt(value, 10)
         const currentYear = new Date().getFullYear()
-        if (isNaN(year)) return "Must be a valid year"
+        if (isNaN(year)) return messages?.invalid ?? "Must be a valid year"
         if (year < 1900 || year > currentYear + 1)
-            return `Year must be between 1900 and ${currentYear + 1}`
+            return messages?.outOfRange
+                ? messages.outOfRange(1900, currentYear + 1)
+                : `Year must be between 1900 and ${currentYear + 1}`
         return null
     },
 
-    password: (): ValidationRule => (value) => {
+    password: (messages?: { minLength?: string; uppercase?: string; lowercase?: string; number?: string }): ValidationRule => (value) => {
         if (value.length === 0) return null
-        if (value.length < 8) return "Must be at least 8 characters"
-        if (!/[A-Z]/.test(value)) return "Must include an uppercase letter"
-        if (!/[a-z]/.test(value)) return "Must include a lowercase letter"
-        if (!/[0-9]/.test(value)) return "Must include a number"
+        if (value.length < 8) return messages?.minLength ?? "Must be at least 8 characters"
+        if (!/[A-Z]/.test(value)) return messages?.uppercase ?? "Must include an uppercase letter"
+        if (!/[a-z]/.test(value)) return messages?.lowercase ?? "Must include a lowercase letter"
+        if (!/[0-9]/.test(value)) return messages?.number ?? "Must include a number"
         return null
     },
 

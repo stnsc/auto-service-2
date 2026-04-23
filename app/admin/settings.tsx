@@ -6,8 +6,18 @@ import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../../components/replacements/NText"
 import { NInput } from "../../components/replacements/NInput"
 import { fonts } from "../../theme"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
-function FieldRow({ label, icon }: { label: string; icon: keyof typeof Ionicons.glyphMap }) {
+function FieldRow({
+    label,
+    icon,
+    placeholder,
+}: {
+    label: string
+    icon: keyof typeof Ionicons.glyphMap
+    placeholder: string
+}) {
     return (
         <View style={styles.fieldRow}>
             <View style={styles.fieldLabel}>
@@ -17,7 +27,7 @@ function FieldRow({ label, icon }: { label: string; icon: keyof typeof Ionicons.
                 </NText>
             </View>
             <NInput
-                placeholder="Not configured"
+                placeholder={placeholder}
                 editable={false}
                 style={styles.fieldInput}
             />
@@ -26,59 +36,116 @@ function FieldRow({ label, icon }: { label: string; icon: keyof typeof Ionicons.
 }
 
 export default function SettingsScreen() {
+    const { t } = useTranslation()
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+        >
             <NText style={[styles.sectionTitle, { fontFamily: fonts.medium }]}>
-                Service Profile
+                {t("settings.serviceProfile")}
             </NText>
             <NText style={styles.subtitle}>
-                Manage your service center information
+                {t("settings.serviceProfileDesc")}
             </NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]}
+                    colors={[
+                        "rgba(255,255,255,0.15)",
+                        "rgba(255,255,255,0.05)",
+                    ]}
                     style={styles.cardGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.cardInner}>
-                        <FieldRow label="Service Name" icon="business-outline" />
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.cardInner}
+                    >
+                        <FieldRow
+                            label={t("settings.serviceName")}
+                            icon="business-outline"
+                            placeholder={t("settings.notConfigured")}
+                        />
                         <View style={styles.separator} />
-                        <FieldRow label="Address" icon="location-outline" />
+                        <FieldRow
+                            label={t("settings.address")}
+                            icon="location-outline"
+                            placeholder={t("settings.notConfigured")}
+                        />
                         <View style={styles.separator} />
-                        <FieldRow label="Phone" icon="call-outline" />
+                        <FieldRow
+                            label={t("settings.phone")}
+                            icon="call-outline"
+                            placeholder={t("settings.notConfigured")}
+                        />
                         <View style={styles.separator} />
-                        <FieldRow label="Type" icon="construct-outline" />
+                        <FieldRow
+                            label={t("settings.type")}
+                            icon="construct-outline"
+                            placeholder={t("settings.notConfigured")}
+                        />
                     </BlurView>
                 </LinearGradient>
             </View>
 
-            <NText style={[styles.sectionTitle, { fontFamily: fonts.medium, marginTop: 32 }]}>
-                Location
+            <NText
+                style={[
+                    styles.sectionTitle,
+                    { fontFamily: fonts.medium, marginTop: 32 },
+                ]}
+            >
+                {t("settings.location")}
             </NText>
-            <NText style={styles.subtitle}>
-                Service center coordinates
-            </NText>
+            <NText style={styles.subtitle}>{t("settings.locationDesc")}</NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]}
+                    colors={[
+                        "rgba(255,255,255,0.15)",
+                        "rgba(255,255,255,0.05)",
+                    ]}
                     style={styles.cardGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.cardInner}>
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.cardInner}
+                    >
                         <View style={styles.coordRow}>
                             <View style={styles.coordItem}>
-                                <NText style={[styles.coordLabel, { fontFamily: fonts.light }]}>
-                                    Latitude
+                                <NText
+                                    style={[
+                                        styles.coordLabel,
+                                        { fontFamily: fonts.light },
+                                    ]}
+                                >
+                                    {t("settings.latitude")}
                                 </NText>
-                                <NText style={[styles.coordValue, { fontFamily: fonts.medium }]}>
+                                <NText
+                                    style={[
+                                        styles.coordValue,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
                                     —
                                 </NText>
                             </View>
                             <View style={styles.coordItem}>
-                                <NText style={[styles.coordLabel, { fontFamily: fonts.light }]}>
-                                    Longitude
+                                <NText
+                                    style={[
+                                        styles.coordLabel,
+                                        { fontFamily: fonts.light },
+                                    ]}
+                                >
+                                    {t("settings.longitude")}
                                 </NText>
-                                <NText style={[styles.coordValue, { fontFamily: fonts.medium }]}>
+                                <NText
+                                    style={[
+                                        styles.coordValue,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
                                     —
                                 </NText>
                             </View>
@@ -93,9 +160,18 @@ export default function SettingsScreen() {
                     colors={["rgba(33,168,112,0.4)", "rgba(33,168,112,0.15)"]}
                     style={styles.saveGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.saveInner}>
-                        <NText style={[styles.saveText, { fontFamily: fonts.medium }]}>
-                            Save Changes
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.saveInner}
+                    >
+                        <NText
+                            style={[
+                                styles.saveText,
+                                { fontFamily: fonts.medium },
+                            ]}
+                        >
+                            {t("settings.saveChanges")}
                         </NText>
                     </BlurView>
                 </LinearGradient>

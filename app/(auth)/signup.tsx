@@ -14,8 +14,11 @@ import {
     ValidationRule,
 } from "../../utils/validation"
 import { useGoogleAuth } from "../../hooks/useGoogleAuth"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function SignUpScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { signUp } = useAuthContext()
     const {
@@ -33,11 +36,34 @@ export default function SignUpScreen() {
 
     const handleSignUp = async () => {
         const validationRules: Record<string, ValidationRule[]> = {
-            email: [validators.required("Email"), validators.email()],
-            password: [validators.required("Password"), validators.password()],
+            email: [
+                validators.required(
+                    t("signup.emailField"),
+                    t("common.isRequired"),
+                ),
+                validators.email(t("validation.invalidEmail")),
+            ],
+            password: [
+                validators.required(
+                    t("signup.passwordField"),
+                    t("common.isRequired"),
+                ),
+                validators.password({
+                    minLength: t("validation.passwordMinLength"),
+                    uppercase: t("validation.passwordUppercase"),
+                    lowercase: t("validation.passwordLowercase"),
+                    number: t("validation.passwordNumber"),
+                }),
+            ],
             confirmPassword: [
-                validators.required("Confirm password"),
-                validators.matches(() => password, "Passwords do not match"),
+                validators.required(
+                    t("signup.confirmPasswordField"),
+                    t("common.isRequired"),
+                ),
+                validators.matches(
+                    () => password,
+                    t("signup.passwordsDoNotMatch"),
+                ),
             ],
         }
 
@@ -62,7 +88,7 @@ export default function SignUpScreen() {
         } catch (err: any) {
             setErrors((prev) => ({
                 ...prev,
-                email: err.message || "Sign up failed. Please try again.",
+                email: err.message || t("signup.signUpFailed"),
             }))
         } finally {
             setLoading(false)
@@ -77,14 +103,12 @@ export default function SignUpScreen() {
                 color="rgba(33, 168, 112, 0.8)"
                 style={styles.icon}
             />
-            <NText style={styles.title}>Create Account</NText>
-            <NText style={styles.subtitle}>
-                Join the AutoService closed alpha
-            </NText>
+            <NText style={styles.title}>{t("signup.title")}</NText>
+            <NText style={styles.subtitle}>{t("signup.subtitle")}</NText>
 
             <View style={styles.form}>
                 <NInput
-                    placeholder="Email"
+                    placeholder={t("signup.emailPlaceholder")}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -95,7 +119,7 @@ export default function SignUpScreen() {
                 />
 
                 <NInput
-                    placeholder="Password"
+                    placeholder={t("signup.passwordPlaceholder")}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -106,7 +130,7 @@ export default function SignUpScreen() {
                 />
 
                 <NInput
-                    placeholder="Confirm Password"
+                    placeholder={t("signup.confirmPasswordPlaceholder")}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry
@@ -121,13 +145,15 @@ export default function SignUpScreen() {
                     onPress={handleSignUp}
                 >
                     <NText style={styles.buttonText}>
-                        {loading ? "Creating account..." : "Create Account"}
+                        {loading
+                            ? t("signup.creatingAccount")
+                            : t("signup.createAccount")}
                     </NText>
                 </NButton>
 
                 <View style={styles.dividerRow}>
                     <View style={styles.dividerLine} />
-                    <NText style={styles.dividerText}>or</NText>
+                    <NText style={styles.dividerText}>{t("common.or")}</NText>
                     <View style={styles.dividerLine} />
                 </View>
 
@@ -140,8 +166,8 @@ export default function SignUpScreen() {
                         <Ionicons name="logo-google" size={18} color="#fff" />
                         <NText style={styles.buttonText}>
                             {googleLoading
-                                ? "Signing in..."
-                                : "Continue with Google"}
+                                ? t("common.signingIn")
+                                : t("common.continueWithGoogle")}
                         </NText>
                     </View>
                 </NButton>
@@ -156,8 +182,8 @@ export default function SignUpScreen() {
                 style={styles.linkWrapper}
             >
                 <NText style={styles.linkText}>
-                    Already have an account?{" "}
-                    <NText style={styles.linkBold}>Log In</NText>
+                    {t("signup.alreadyHaveAccount")}{" "}
+                    <NText style={styles.linkBold}>{t("signup.logIn")}</NText>
                 </NText>
             </NButton>
         </View>

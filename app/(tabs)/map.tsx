@@ -8,6 +8,8 @@ import { NModal } from "../../components/replacements/NModal"
 import { NText } from "../../components/replacements/NText"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 import { useCarServices } from "../../hooks/useCarServices"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 // Haversine distance in km between two lat/lng points
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -38,6 +40,7 @@ export default function MapScreen() {
         longitude?: string
     }>()
     const mapNotice = useAlphaNotice("map-alpha")
+    const { t } = useTranslation()
 
     const initialLatitude = useMemo(() => {
         const parsed = Number(params.latitude)
@@ -153,15 +156,10 @@ export default function MapScreen() {
             <NModal
                 visible={mapNotice.visible}
                 onDismiss={mapNotice.dismiss}
-                title="Map Preview"
+                title={t("map.modalTitle")}
             >
-                <NText style={noticeStyles.text}>
-                    Service center locations shown on the map are sample data
-                    for testing purposes during the Closed Alpha.
-                </NText>
-                <NText style={noticeStyles.text}>
-                    Real service center listings will be available later.
-                </NText>
+                <NText style={noticeStyles.text}>{t("map.modalLine1")}</NText>
+                <NText style={noticeStyles.text}>{t("map.modalLine2")}</NText>
             </NModal>
         </View>
     )

@@ -6,6 +6,8 @@ import { NText } from "../replacements/NText"
 import { NButton } from "../replacements/NButton"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 const API_URL = "/api/suggestions"
 
@@ -71,7 +73,13 @@ function SuggestionItem({
     )
 }
 
-export function Suggestions({ query, onSelect, chatStarted, onHasIntentSuggestion }: Props) {
+export function Suggestions({
+    query,
+    onSelect,
+    chatStarted,
+    onHasIntentSuggestion,
+}: Props) {
+    const { t } = useTranslation()
     const [suggestions, setSuggestions] = useState<string[]>([])
     const [intent, setIntent] = useState<string>("")
     const [confidence, setConfidence] = useState<number>(0)
@@ -137,7 +145,7 @@ export function Suggestions({ query, onSelect, chatStarted, onHasIntentSuggestio
                         fontSize: 14,
                     }}
                 >
-                    No suggestions available yet.
+                    {t("suggestions.noSuggestions")}
                 </NText>
             </View>
         )
@@ -148,7 +156,9 @@ export function Suggestions({ query, onSelect, chatStarted, onHasIntentSuggestio
             {intent != "chat" && confidence > 0.75 && (
                 <View>
                     <SuggestionItem
-                        text={`Go to ${intent}`}
+                        text={t("suggestions.goTo", {
+                            intent: t(`tabs.${intent}`),
+                        })}
                         index={0}
                         icon={
                             intent === "map" ? (

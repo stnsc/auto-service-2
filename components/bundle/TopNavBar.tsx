@@ -1,35 +1,50 @@
 import React from "react"
-import { View, StyleSheet, Image, Linking } from "react-native"
+import {
+    View,
+    StyleSheet,
+    Image,
+    Linking,
+    TouchableOpacity,
+} from "react-native"
 import { useRouter } from "expo-router"
 import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTranslation } from "react-i18next"
+import i18n from "../../i18n"
 
 export const TopNavBar = () => {
+    const { t, i18n: i18nInstance } = useTranslation()
     const router = useRouter()
     const { signOut } = useAuthContext()
+    const currentLang = i18nInstance.language
+
+    const toggleLanguage = () => {
+        const next = currentLang === "en" ? "ro" : "en"
+        i18n.changeLanguage(next)
+    }
 
     const CONTEXT = [
         {
             key: "history",
-            label: "Chat History",
+            label: t("topNav.chatHistory"),
             icon: <Ionicons name="time-outline" size={18} color="white" />,
         },
         {
             key: "github",
-            label: "Report Bug / Feedback",
+            label: t("topNav.reportBug"),
             icon: <Ionicons name="bug-outline" size={18} color="white" />,
         },
         {
             key: "admin",
-            label: "Admin Panel",
+            label: t("topNav.adminPanel"),
             icon: <Ionicons name="shield-outline" size={18} color="white" />,
         },
         {
             key: "logout",
-            label: "Logout",
+            label: t("topNav.logout"),
             icon: <Ionicons name="log-out-outline" size={18} color="white" />,
             destructive: true,
         },
@@ -64,13 +79,54 @@ export const TopNavBar = () => {
                 style={styles.logo}
             />
             <NText style={[styles.version, { fontFamily: fonts.light }]}>
-                CLOSED ALPHA
+                {t("common.closedAlpha")}
             </NText>
-            <NContextMenu
-                avatar={<Ionicons name="person" size={22} color="white" />}
-                onAction={handleAction}
-                actions={CONTEXT}
-            />
+            <View style={styles.right}>
+                <TouchableOpacity
+                    onPress={toggleLanguage}
+                    style={styles.langToggle}
+                    activeOpacity={0.7}
+                >
+                    <NText
+                        style={[
+                            styles.langOption,
+                            {
+                                fontFamily:
+                                    currentLang === "en"
+                                        ? fonts.bold
+                                        : fonts.light,
+                            },
+                            currentLang === "en" && styles.langOptionActive,
+                        ]}
+                    >
+                        EN
+                    </NText>
+                    <NText
+                        style={[styles.langSep, { fontFamily: fonts.light }]}
+                    >
+                        |
+                    </NText>
+                    <NText
+                        style={[
+                            styles.langOption,
+                            {
+                                fontFamily:
+                                    currentLang === "ro"
+                                        ? fonts.bold
+                                        : fonts.light,
+                            },
+                            currentLang === "ro" && styles.langOptionActive,
+                        ]}
+                    >
+                        RO
+                    </NText>
+                </TouchableOpacity>
+                <NContextMenu
+                    avatar={<Ionicons name="person" size={22} color="white" />}
+                    onAction={handleAction}
+                    actions={CONTEXT}
+                />
+            </View>
         </View>
     )
 }
@@ -93,5 +149,30 @@ const styles = StyleSheet.create({
         fontSize: 12,
         opacity: 0.5,
         left: 0,
+    },
+    right: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    langToggle: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 20,
+        backgroundColor: "rgba(255,255,255,0.08)",
+    },
+    langOption: {
+        color: "rgba(255,255,255,0.45)",
+        fontSize: 12,
+    },
+    langOptionActive: {
+        color: "#fff",
+    },
+    langSep: {
+        color: "rgba(255,255,255,0.2)",
+        fontSize: 11,
     },
 })

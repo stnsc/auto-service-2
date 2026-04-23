@@ -13,6 +13,8 @@ import { fonts } from "../theme"
 import { useChatContext, ConversationRecord } from "../context/ChatContext"
 import { useAuthContext } from "../context/AuthContext"
 import { NButton } from "../components/replacements/NButton"
+import { useTranslation } from "react-i18next"
+import "../i18n"
 
 const TRUNCATE_LENGTH = 110
 
@@ -34,6 +36,7 @@ function formatDate(iso: string) {
 }
 
 export default function HistoryScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { userEmail } = useAuthContext()
     const { loadConversation } = useChatContext()
@@ -85,7 +88,7 @@ export default function HistoryScreen() {
                     />
                 </NButton>
                 <NText style={[styles.title, { fontFamily: fonts.bold }]}>
-                    Chat History
+                    {t("history.title")}
                 </NText>
             </View>
 
@@ -96,7 +99,7 @@ export default function HistoryScreen() {
             ) : conversations.length === 0 ? (
                 <View style={styles.center}>
                     <NText style={[styles.empty, { fontFamily: fonts.light }]}>
-                        No past conversations yet.
+                        {t("history.empty")}
                     </NText>
                 </View>
             ) : (

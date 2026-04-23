@@ -23,6 +23,8 @@ import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { useTranslation } from "react-i18next"
+import "../i18n"
 
 import {
     useFonts,
@@ -46,6 +48,7 @@ export default function RootLayout() {
 }
 
 function AuthGatedLayout() {
+    const { t } = useTranslation()
     const { isAuthenticated, isLoading } = useAuthContext()
     const segments = useSegments()
     const router = useRouter()
@@ -92,22 +95,22 @@ function AuthGatedLayout() {
     const TABS = [
         {
             key: "chat",
-            label: "Chat",
+            label: t("tabs.chat"),
             icon: <Ionicons name="chatbubbles" size={22} color="white" />,
         },
         {
             key: "appointment",
-            label: "Schedule",
+            label: t("tabs.schedule"),
             icon: <Ionicons name="calendar" size={22} color="white" />,
         },
         {
             key: "shop",
-            label: "Shop",
+            label: t("tabs.shop"),
             icon: <Ionicons name="cart" size={22} color="white" />,
         },
         {
             key: "map",
-            label: "Map",
+            label: t("tabs.map"),
             icon: <Ionicons name="map" size={22} color="white" />,
         },
     ]
@@ -137,17 +140,17 @@ function AuthGatedLayout() {
     activeKey === "chat" ? (intensity = 30) : (intensity = 0)
 
     const PAGE_TITLES: Record<string, string> = {
-        "/": "Chat",
-        "/appointment": "Schedule",
-        "/shop": "Shop",
-        "/map": "Map",
-        "/history": "Chat History",
-        "/login": "Sign In",
-        "/signup": "Sign Up",
-        "/verify": "Verify Email",
-        "/pending": "Pending Approval",
+        "/": t("pageTitles.chat"),
+        "/appointment": t("pageTitles.appointment"),
+        "/shop": t("pageTitles.shop"),
+        "/map": t("pageTitles.map"),
+        "/history": t("pageTitles.history"),
+        "/login": t("pageTitles.login"),
+        "/signup": t("pageTitles.signup"),
+        "/verify": t("pageTitles.verify"),
+        "/pending": t("pageTitles.pending"),
     }
-    const pageTitle = `${PAGE_TITLES[pathname] || "Home"} - AutoService Closed Alpha ${process.env.EXPO_PUBLIC_APP_TYPE}`
+    const pageTitle = `${PAGE_TITLES[pathname] || t("pageTitles.home")} - AutoService Closed Alpha ${process.env.EXPO_PUBLIC_APP_TYPE}`
 
     const { width: windowWidth } = useWindowDimensions()
 
@@ -254,28 +257,22 @@ function AuthGatedLayout() {
                         <NModal
                             visible={welcomeNotice.visible}
                             onDismiss={welcomeNotice.dismiss}
-                            title="Welcome to the Closed Alpha!"
+                            title={t("welcome.title")}
                         >
                             <NText style={modalStyles.text}>
-                                Thank you for joining the AutoService Closed
-                                Alpha! Here are a few things to know:
+                                {t("welcome.line1")}
                             </NText>
                             <NText style={modalStyles.text}>
-                                - All chatbot conversations are logged to help
-                                improve the AI assistant.
+                                {t("welcome.line2")}
                             </NText>
                             <NText style={modalStyles.text}>
-                                - Features may change or be removed as the app
-                                evolves.
+                                {t("welcome.line3")}
                             </NText>
                             <NText style={modalStyles.text}>
-                                - If you encounter bugs or have feedback, please
-                                let me know by accessing the GitHub page found
-                                in the top right!
+                                {t("welcome.line4")}
                             </NText>
                             <NText style={modalStyles.text}>
-                                - Your access can be revoked at any time during
-                                the alpha period.
+                                {t("welcome.line5")}
                             </NText>
                         </NModal>
                     )}

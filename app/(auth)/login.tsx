@@ -9,13 +9,11 @@ import { useAuthContext } from "../../context/AuthContext"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useGoogleAuth } from "../../hooks/useGoogleAuth"
 import { Ionicons } from "@expo/vector-icons"
-
-const VALIDATION_RULES = {
-    email: [validators.required("Email"), validators.email()],
-    password: [validators.required("Password")],
-}
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function LoginScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { signIn } = useAuthContext()
     const {
@@ -31,8 +29,23 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false)
 
     const handleLogin = async () => {
+        const validationRules = {
+            email: [
+                validators.required(
+                    t("login.emailField"),
+                    t("common.isRequired"),
+                ),
+                validators.email(t("validation.invalidEmail")),
+            ],
+            password: [
+                validators.required(
+                    t("login.passwordField"),
+                    t("common.isRequired"),
+                ),
+            ],
+        }
         const formData = { email: email.trim(), password }
-        const newErrors = validateForm(formData, VALIDATION_RULES)
+        const newErrors = validateForm(formData, validationRules)
         setErrors(newErrors)
 
         if (hasErrors(newErrors)) return
@@ -52,7 +65,7 @@ export default function LoginScreen() {
             } else {
                 setErrors((prev) => ({
                     ...prev,
-                    password: err.message || "Login failed. Please try again.",
+                    password: err.message || t("login.loginFailed"),
                 }))
             }
         } finally {
@@ -75,12 +88,12 @@ export default function LoginScreen() {
                     source={require("../../assets/autoservice/logo.png")}
                     style={styles.logo}
                 />
-                <NText style={styles.title}>Welcome To The Closed Alpha!</NText>
-                <NText style={styles.subtitle}>Sign in to AutoService</NText>
+                <NText style={styles.title}>{t("login.title")}</NText>
+                <NText style={styles.subtitle}>{t("login.subtitle")}</NText>
 
                 <View style={styles.form}>
                     <NInput
-                        placeholder="Email"
+                        placeholder={t("login.emailPlaceholder")}
                         value={email}
                         onChangeText={setEmail}
                         keyboardType="email-address"
@@ -91,7 +104,7 @@ export default function LoginScreen() {
                     />
 
                     <NInput
-                        placeholder="Password"
+                        placeholder={t("login.passwordPlaceholder")}
                         value={password}
                         onChangeText={setPassword}
                         secureTextEntry
@@ -106,13 +119,15 @@ export default function LoginScreen() {
                         onPress={handleLogin}
                     >
                         <NText style={styles.buttonText}>
-                            {loading ? "Signing in..." : "Sign In"}
+                            {loading ? t("login.signingIn") : t("login.signIn")}
                         </NText>
                     </NButton>
 
                     <View style={styles.dividerRow}>
                         <View style={styles.dividerLine} />
-                        <NText style={styles.dividerText}>or</NText>
+                        <NText style={styles.dividerText}>
+                            {t("common.or")}
+                        </NText>
                         <View style={styles.dividerLine} />
                     </View>
 
@@ -129,8 +144,8 @@ export default function LoginScreen() {
                             />
                             <NText style={styles.buttonText}>
                                 {googleLoading
-                                    ? "Signing in..."
-                                    : "Continue with Google"}
+                                    ? t("common.signingIn")
+                                    : t("common.continueWithGoogle")}
                             </NText>
                         </View>
                     </NButton>
@@ -151,8 +166,10 @@ export default function LoginScreen() {
                         style={styles.linkWrapper}
                     >
                         <NText style={styles.linkText}>
-                            Forgot your password?{" "}
-                            <NText style={styles.linkBold}>Reset it</NText>
+                            {t("login.forgotPassword")}{" "}
+                            <NText style={styles.linkBold}>
+                                {t("login.resetIt")}
+                            </NText>
                         </NText>
                     </NButton>
 
@@ -161,8 +178,10 @@ export default function LoginScreen() {
                         style={styles.linkWrapper}
                     >
                         <NText style={styles.linkText}>
-                            Don't have an account?{" "}
-                            <NText style={styles.linkBold}>Sign Up</NText>
+                            {t("login.noAccount")}{" "}
+                            <NText style={styles.linkBold}>
+                                {t("login.signUp")}
+                            </NText>
                         </NText>
                     </NButton>
                 </View>

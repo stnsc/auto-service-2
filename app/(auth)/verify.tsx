@@ -8,15 +8,11 @@ import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
-
-const VALIDATION_RULES = {
-    code: [
-        validators.required("Verification code"),
-        validators.minLength(6),
-    ],
-}
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function VerifyScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { email } = useLocalSearchParams<{ email: string }>()
     const { confirmSignUp, resendConfirmationCode } = useAuthContext()
@@ -27,11 +23,20 @@ export default function VerifyScreen() {
     const [resent, setResent] = useState(false)
 
     const handleVerify = async () => {
+        const validationRules = {
+            code: [
+                validators.required(
+                    t("verify.codeField"),
+                    t("common.isRequired"),
+                ),
+                validators.minLength(6, t("validation.minLength", { min: 6 })),
+            ],
+        }
         const formData = { code: code.trim() }
-        const newErrors = validateForm(formData, VALIDATION_RULES)
+        const newErrors = validateForm(formData, validationRules)
 
         if (!email) {
-            newErrors.code = "Email not provided. Please go back and sign up again."
+            newErrors.code = t("verify.emailNotProvided")
         }
 
         setErrors(newErrors)
@@ -43,7 +48,7 @@ export default function VerifyScreen() {
             await confirmSignUp(email!, formData.code)
             router.replace("/(auth)/pending")
         } catch (err: any) {
-            setErrors({ code: err.message || "Verification failed. Please try again." })
+            setErrors({ code: err.message || t("verify.verificationFailed") })
         } finally {
             setLoading(false)
         }
@@ -56,7 +61,7 @@ export default function VerifyScreen() {
             setResent(true)
             setTimeout(() => setResent(false), 5000)
         } catch (err: any) {
-            setErrors({ code: err.message || "Failed to resend code" })
+            setErrors({ code: err.message || t("verify.failedToResend") })
         }
     }
 
@@ -68,15 +73,18 @@ export default function VerifyScreen() {
                 color="rgba(33, 168, 112, 0.8)"
                 style={styles.icon}
             />
-            <NText style={styles.title}>Verify Email</NText>
+            <NText style={styles.title}>{t("verify.title")}</NText>
             <NText style={styles.subtitle}>
-                We sent a 6-digit code to{"\n"}
-                <NText style={styles.emailText}>{email || "your email"}</NText>
+                {t("verify.subtitlePrefix")}
+                {"\n"}
+                <NText style={styles.emailText}>
+                    {email || t("verify.yourEmail")}
+                </NText>
             </NText>
 
             <View style={styles.form}>
                 <NInput
-                    placeholder="Verification Code"
+                    placeholder={t("verify.codePlaceholder")}
                     value={code}
                     onChangeText={setCode}
                     keyboardType="number-pad"
@@ -90,7 +98,7 @@ export default function VerifyScreen() {
                     onPress={handleVerify}
                 >
                     <NText style={styles.buttonText}>
-                        {loading ? "Verifying..." : "Verify"}
+                        {loading ? t("verify.verifying") : t("verify.verify")}
                     </NText>
                 </NButton>
             </View>
@@ -99,12 +107,14 @@ export default function VerifyScreen() {
                 <NText style={styles.linkText}>
                     {resent ? (
                         <NText style={styles.linkBold}>
-                            Code resent! Check your inbox.
+                            {t("verify.codeResent")}
                         </NText>
                     ) : (
                         <>
-                            Didn't receive the code?{" "}
-                            <NText style={styles.linkBold}>Resend</NText>
+                            {t("verify.didntReceive")}{" "}
+                            <NText style={styles.linkBold}>
+                                {t("verify.resend")}
+                            </NText>
                         </>
                     )}
                 </NText>

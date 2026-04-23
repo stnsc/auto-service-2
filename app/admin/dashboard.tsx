@@ -5,6 +5,8 @@ import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 function StatCard({
     icon,
@@ -24,11 +26,20 @@ function StatCard({
                 style={styles.statGradient}
             >
                 <BlurView intensity={30} tint="dark" style={styles.statInner}>
-                    <Ionicons name={icon} size={24} color="white" style={{ opacity: 0.8 }} />
-                    <NText style={[styles.statValue, { fontFamily: fonts.bold }]}>
+                    <Ionicons
+                        name={icon}
+                        size={24}
+                        color="white"
+                        style={{ opacity: 0.8 }}
+                    />
+                    <NText
+                        style={[styles.statValue, { fontFamily: fonts.bold }]}
+                    >
                         {value}
                     </NText>
-                    <NText style={[styles.statLabel, { fontFamily: fonts.light }]}>
+                    <NText
+                        style={[styles.statLabel, { fontFamily: fonts.light }]}
+                    >
                         {label}
                     </NText>
                 </BlurView>
@@ -38,46 +49,71 @@ function StatCard({
 }
 
 export default function DashboardScreen() {
+    const { t } = useTranslation()
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+        >
             <NText style={[styles.sectionTitle, { fontFamily: fonts.medium }]}>
-                Service Overview
+                {t("dashboard.serviceOverview")}
             </NText>
 
             <View style={styles.statsRow}>
                 <StatCard
                     icon="calendar"
-                    label="Today's Bookings"
+                    label={t("dashboard.todaysBookings")}
                     value="—"
                     color="rgba(33,168,112,0.3)"
                 />
                 <StatCard
                     icon="star"
-                    label="Rating"
+                    label={t("dashboard.rating")}
                     value="—"
                     color="rgba(59,130,246,0.3)"
                 />
                 <StatCard
                     icon="time"
-                    label="Status"
+                    label={t("dashboard.status")}
                     value="—"
                     color="rgba(245,158,11,0.3)"
                 />
             </View>
 
-            <NText style={[styles.sectionTitle, { fontFamily: fonts.medium, marginTop: 32 }]}>
-                Recent Bookings
+            <NText
+                style={[
+                    styles.sectionTitle,
+                    { fontFamily: fonts.medium, marginTop: 32 },
+                ]}
+            >
+                {t("dashboard.recentBookings")}
             </NText>
 
             <View style={styles.emptyState}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]}
+                    colors={[
+                        "rgba(255,255,255,0.15)",
+                        "rgba(255,255,255,0.05)",
+                    ]}
                     style={styles.emptyGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.emptyInner}>
-                        <Ionicons name="calendar-outline" size={32} color="rgba(255,255,255,0.3)" />
-                        <NText style={[styles.emptyText, { fontFamily: fonts.light }]}>
-                            No bookings yet
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.emptyInner}
+                    >
+                        <Ionicons
+                            name="calendar-outline"
+                            size={32}
+                            color="rgba(255,255,255,0.3)"
+                        />
+                        <NText
+                            style={[
+                                styles.emptyText,
+                                { fontFamily: fonts.light },
+                            ]}
+                        >
+                            {t("bookings.noBookings")}
                         </NText>
                     </BlurView>
                 </LinearGradient>

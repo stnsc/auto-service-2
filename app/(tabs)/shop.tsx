@@ -14,6 +14,8 @@ import { useChatContext } from "../../context/ChatContext"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 interface ShopResult {
     title: string
@@ -29,13 +31,8 @@ interface ShopResult {
 
 type SortMode = "price_asc" | "price_desc" | "rating"
 
-const SORT_OPTIONS: { key: SortMode; label: string }[] = [
-    { key: "price_asc", label: "Price: Low-High" },
-    { key: "price_desc", label: "Price: High-Low" },
-    { key: "rating", label: "Rating" },
-]
-
 export default function ShopScreen() {
+    const { t } = useTranslation()
     const { partQuery } = useChatContext()
     const shopNotice = useAlphaNotice("shop-alpha")
 
@@ -65,7 +62,7 @@ export default function ShopScreen() {
             if (data.error) setError(data.error)
         } catch (err) {
             console.error("Shop search error:", err)
-            setError("Failed to search. Please try again.")
+            setError(t("shop.searchFailed"))
         } finally {
             setLoading(false)
         }
@@ -111,13 +108,13 @@ export default function ShopScreen() {
                 style={styles.container}
                 contentContainerStyle={styles.contentContainer}
             >
-                <NText style={styles.heading}>Parts & Accessories</NText>
+                <NText style={styles.heading}>{t("shop.title")}</NText>
 
                 {/* Search Row */}
                 <View style={styles.searchRow}>
                     <View style={{ flex: 1 }}>
                         <NInput
-                            placeholder="Search for a car part..."
+                            placeholder={t("shop.searchPlaceholder")}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             onSubmitEditing={() => performSearch(searchQuery)}
@@ -135,7 +132,20 @@ export default function ShopScreen() {
                 {/* Sort Controls */}
                 {results.length > 0 && (
                     <View style={styles.sortRow}>
-                        {SORT_OPTIONS.map((opt) => (
+                        {[
+                            {
+                                key: "price_asc" as SortMode,
+                                label: t("shop.sortPriceLow"),
+                            },
+                            {
+                                key: "price_desc" as SortMode,
+                                label: t("shop.sortPriceHigh"),
+                            },
+                            {
+                                key: "rating" as SortMode,
+                                label: t("shop.sortRating"),
+                            },
+                        ].map((opt) => (
                             <NButton
                                 key={opt.key}
                                 color={
@@ -163,8 +173,7 @@ export default function ShopScreen() {
                 {/* Results Count */}
                 {hasSearched && !loading && results.length > 0 && (
                     <NText style={styles.resultCount}>
-                        {results.length} result{results.length !== 1 ? "s" : ""}{" "}
-                        found
+                        {t("shop.resultsFound", { count: results.length })}
                     </NText>
                 )}
 
@@ -173,7 +182,7 @@ export default function ShopScreen() {
                     <View style={styles.centerBox}>
                         <ActivityIndicator size="large" color="#fff" />
                         <NText style={styles.loadingText}>
-                            Searching marketplaces...
+                            {t("shop.searching")}
                         </NText>
                     </View>
                 )}
@@ -186,7 +195,7 @@ export default function ShopScreen() {
                 {/* Empty state */}
                 {!loading && hasSearched && results.length === 0 && !error && (
                     <NText style={styles.emptyText}>
-                        No results found. Try a different search term.
+                        {t("shop.noResults")}
                     </NText>
                 )}
 
@@ -199,8 +208,7 @@ export default function ShopScreen() {
                             color="rgba(255,255,255,0.3)"
                         />
                         <NText style={styles.emptyText}>
-                            Search for auto parts above, or chat about a car
-                            problem and we'll find parts for you.
+                            {t("shop.initialHint")}
                         </NText>
                     </View>
                 )}
@@ -263,19 +271,11 @@ export default function ShopScreen() {
             <NModal
                 visible={shopNotice.visible}
                 onDismiss={shopNotice.dismiss}
-                title="Shop Preview"
+                title={t("shop.modalTitle")}
             >
-                <NText style={styles.noticeText}>
-                    The parts shop is a preview feature during the Closed Alpha.
-                    Prices and availability shown may not be accurate.
-                </NText>
-                <NText style={styles.noticeText}>
-                    This feature is here for testing and feedback purposes.
-                </NText>
-                <NText style={styles.noticeText}>
-                    Note that the number is API requests is very limited during
-                    the alpha, so please be mindful with your searches.
-                </NText>
+                <NText style={styles.noticeText}>{t("shop.modalLine1")}</NText>
+                <NText style={styles.noticeText}>{t("shop.modalLine2")}</NText>
+                <NText style={styles.noticeText}>{t("shop.modalLine3")}</NText>
             </NModal>
         </View>
     )

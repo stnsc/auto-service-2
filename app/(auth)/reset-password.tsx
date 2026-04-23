@@ -8,14 +8,11 @@ import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
-
-const VALIDATION_RULES = {
-    code: [validators.required("Reset code"), validators.minLength(6)],
-    password: [validators.required("Password"), validators.password()],
-    confirmPassword: [validators.required("Confirm password")],
-}
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function ResetPasswordScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { email } = useLocalSearchParams<{ email: string }>()
     const { confirmNewPassword } = useAuthContext()
@@ -27,19 +24,46 @@ export default function ResetPasswordScreen() {
     const [loading, setLoading] = useState(false)
 
     const handleReset = async () => {
+        const validationRules = {
+            code: [
+                validators.required(
+                    t("resetPassword.codeField"),
+                    t("common.isRequired"),
+                ),
+                validators.minLength(6, t("validation.minLength", { min: 6 })),
+            ],
+            password: [
+                validators.required(
+                    t("resetPassword.passwordField"),
+                    t("common.isRequired"),
+                ),
+                validators.password({
+                    minLength: t("validation.passwordMinLength"),
+                    uppercase: t("validation.passwordUppercase"),
+                    lowercase: t("validation.passwordLowercase"),
+                    number: t("validation.passwordNumber"),
+                }),
+            ],
+            confirmPassword: [
+                validators.required(
+                    t("resetPassword.confirmPasswordField"),
+                    t("common.isRequired"),
+                ),
+            ],
+        }
         const formData = {
             code: code.trim(),
             password,
             confirmPassword,
         }
-        const newErrors = validateForm(formData, VALIDATION_RULES)
+        const newErrors = validateForm(formData, validationRules)
 
         if (!newErrors.confirmPassword && password !== confirmPassword) {
-            newErrors.confirmPassword = "Passwords do not match"
+            newErrors.confirmPassword = t("resetPassword.passwordsDoNotMatch")
         }
 
         if (!email) {
-            newErrors.code = "Email not provided. Please start over."
+            newErrors.code = t("resetPassword.emailNotProvided")
         }
 
         setErrors(newErrors)
@@ -51,7 +75,7 @@ export default function ResetPasswordScreen() {
             router.replace("/(auth)/login")
         } catch (err: any) {
             setErrors({
-                code: err.message || "Reset failed. Please try again.",
+                code: err.message || t("resetPassword.resetFailed"),
             })
         } finally {
             setLoading(false)
@@ -66,15 +90,18 @@ export default function ResetPasswordScreen() {
                 color="rgba(33, 168, 112, 0.8)"
                 style={styles.icon}
             />
-            <NText style={styles.title}>Reset Password</NText>
+            <NText style={styles.title}>{t("resetPassword.title")}</NText>
             <NText style={styles.subtitle}>
-                Enter the code sent to{"\n"}
-                <NText style={styles.emailText}>{email || "your email"}</NText>
+                {t("resetPassword.subtitlePrefix")}
+                {"\n"}
+                <NText style={styles.emailText}>
+                    {email || t("resetPassword.yourEmail")}
+                </NText>
             </NText>
 
             <View style={styles.form}>
                 <NInput
-                    placeholder="Reset Code"
+                    placeholder={t("resetPassword.codePlaceholder")}
                     value={code}
                     onChangeText={setCode}
                     keyboardType="number-pad"
@@ -86,12 +113,14 @@ export default function ResetPasswordScreen() {
 
                 <View style={styles.divider}>
                     <View style={styles.dividerLine} />
-                    <NText style={styles.dividerLabel}>New Password</NText>
+                    <NText style={styles.dividerLabel}>
+                        {t("resetPassword.newPasswordDivider")}
+                    </NText>
                     <View style={styles.dividerLine} />
                 </View>
 
                 <NInput
-                    placeholder="New Password"
+                    placeholder={t("resetPassword.newPasswordPlaceholder")}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
@@ -102,7 +131,9 @@ export default function ResetPasswordScreen() {
                 />
 
                 <NInput
-                    placeholder="Confirm New Password"
+                    placeholder={t(
+                        "resetPassword.confirmNewPasswordPlaceholder",
+                    )}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry
@@ -114,7 +145,9 @@ export default function ResetPasswordScreen() {
 
                 <NButton color="rgba(33, 168, 112, 0.51)" onPress={handleReset}>
                     <NText style={styles.buttonText}>
-                        {loading ? "Resetting..." : "Reset Password"}
+                        {loading
+                            ? t("resetPassword.resetting")
+                            : t("resetPassword.resetPasswordBtn")}
                     </NText>
                 </NButton>
             </View>
@@ -124,7 +157,10 @@ export default function ResetPasswordScreen() {
                 style={styles.linkWrapper}
             >
                 <NText style={styles.linkText}>
-                    Back to <NText style={styles.linkBold}>Sign In</NText>
+                    {t("resetPassword.backTo")}{" "}
+                    <NText style={styles.linkBold}>
+                        {t("resetPassword.signIn")}
+                    </NText>
                 </NText>
             </NButton>
         </View>

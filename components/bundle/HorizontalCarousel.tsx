@@ -21,6 +21,8 @@ import { CarService } from "../../app/types/CarService"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useRouter } from "expo-router"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 interface HorizontalCarouselProps {
     services: CarService[]
@@ -37,6 +39,7 @@ export default function HorizontalCarousel({
     onIndexChange,
 }: HorizontalCarouselProps) {
     const router = useRouter()
+    const { t } = useTranslation()
 
     const [containerWidth, setContainerWidth] = useState(
         Dimensions.get("window").width,
@@ -229,7 +232,9 @@ export default function HorizontalCarousel({
                                                                     fontSize: 12,
                                                                 }}
                                                             >
-                                                                Get Directions
+                                                                {t(
+                                                                    "carousel.getDirections",
+                                                                )}
                                                             </NText>
                                                         </Pressable>
                                                         <NText
@@ -240,7 +245,9 @@ export default function HorizontalCarousel({
                                                             }}
                                                         >
                                                             {service.rating}{" "}
-                                                            stars
+                                                            {t(
+                                                                "carousel.stars",
+                                                            )}
                                                         </NText>
                                                     </View>
                                                     <NText
@@ -265,7 +272,7 @@ export default function HorizontalCarousel({
                                                         {service.distance?.toFixed(
                                                             1,
                                                         )}{" "}
-                                                        km away
+                                                        {t("carousel.kmAway")}
                                                     </NText>
 
                                                     <View
@@ -294,7 +301,9 @@ export default function HorizontalCarousel({
                                                                     color: "#fff",
                                                                 }}
                                                             >
-                                                                Schedule
+                                                                {t(
+                                                                    "carousel.schedule",
+                                                                )}
                                                             </NText>
                                                         </NButton>
                                                         <NButton color={"#333"}>

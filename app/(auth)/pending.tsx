@@ -4,8 +4,11 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function PendingScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
 
     return (
@@ -16,20 +19,12 @@ export default function PendingScreen() {
                 color="rgba(33, 168, 112, 0.8)"
                 style={styles.icon}
             />
-            <NText style={styles.title}>Application Received</NText>
-            <NText style={styles.subtitle}>
-                Thank you for signing up for AutoService!
-            </NText>
+            <NText style={styles.title}>{t("pending.title")}</NText>
+            <NText style={styles.subtitle}>{t("pending.subtitle")}</NText>
 
             <NButton style={{ marginBottom: 16 }}>
-                <NText style={styles.message}>
-                    Your account is currently under review. We're running a
-                    closed alpha and manually approving new users.
-                </NText>
-                <NText style={styles.message}>
-                    Check back soon! Once you are approved, you'll be able to
-                    log in and use the full app.
-                </NText>
+                <NText style={styles.message}>{t("pending.message1")}</NText>
+                <NText style={styles.message}>{t("pending.message2")}</NText>
             </NButton>
 
             <NButton
@@ -38,7 +33,9 @@ export default function PendingScreen() {
             >
                 <View style={styles.backRow}>
                     <Ionicons name="arrow-back" size={18} color="white" />
-                    <NText style={styles.buttonText}>Back to Login</NText>
+                    <NText style={styles.buttonText}>
+                        {t("pending.backToLogin")}
+                    </NText>
                 </View>
             </NButton>
         </View>

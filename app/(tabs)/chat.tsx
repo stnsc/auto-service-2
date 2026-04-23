@@ -20,6 +20,8 @@ import { useRouter } from "expo-router"
 import { useChatContext } from "../../context/ChatContext"
 import { useAuthContext } from "../../context/AuthContext"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 const CHAT_API_URL = "/api/chat"
 
@@ -105,6 +107,7 @@ interface Message {
 export default function ChatScreen() {
     // enabling router
     const router = useRouter()
+    const { t } = useTranslation()
 
     const [user] = useState("<user>")
     const { userEmail } = useAuthContext()
@@ -346,7 +349,7 @@ export default function ChatScreen() {
                                                     color: "#fff",
                                                 }}
                                             >
-                                                AutoService Intelligence
+                                                {t("chat.assistantLabel")}
                                             </NText>
                                             <NButton color="rgba(34, 34, 34, 0.51)">
                                                 <NText
@@ -388,13 +391,11 @@ export default function ChatScreen() {
                                                                 color: "#fff",
                                                             }}
                                                         >
-                                                            Go to{" "}
-                                                            {chatIntent
-                                                                .charAt(0)
-                                                                .toUpperCase() +
-                                                                chatIntent.slice(
-                                                                    1,
-                                                                )}
+                                                            {t("chat.goTo", {
+                                                                intent: t(
+                                                                    `tabs.${chatIntent}`,
+                                                                ),
+                                                            })}
                                                         </NText>
                                                     </View>
                                                 </NButton>
@@ -424,8 +425,7 @@ export default function ChatScreen() {
                                 { fontFamily: fonts.regular },
                             ]}
                         >
-                            Hello, {displayName}! {"\n"}
-                            How can I help?
+                            {t("chat.greeting", { name: displayName })}
                         </NText>
                     </View>
                 ) : (
@@ -452,7 +452,7 @@ export default function ChatScreen() {
                                         marginLeft: 6,
                                     }}
                                 >
-                                    New Chat
+                                    {t("chat.newChat")}
                                 </NText>
                             </View>
                         </NButton>
@@ -486,7 +486,7 @@ export default function ChatScreen() {
                         onChangeText={setQuery}
                         value={query}
                         onSubmitEditing={handleSubmit}
-                        placeholder="What's your question?"
+                        placeholder={t("chat.inputPlaceholder")}
                         highlightSegments={
                             query.trim().length > 0
                                 ? getHighlightedSegments(query)
@@ -516,16 +516,10 @@ export default function ChatScreen() {
             <NModal
                 visible={chatNotice.visible}
                 onDismiss={chatNotice.dismiss}
-                title="Chat Preview"
+                title={t("chat.modalTitle")}
             >
-                <NText style={styles.noticeText}>
-                    During the Closed Alpha, all conversations with the AI
-                    chatbot are being logged to help improve the service.
-                </NText>
-                <NText style={styles.noticeText}>
-                    Please avoid sharing personal or sensitive information in
-                    your messages.
-                </NText>
+                <NText style={styles.noticeText}>{t("chat.modalLine1")}</NText>
+                <NText style={styles.noticeText}>{t("chat.modalLine2")}</NText>
             </NModal>
         </View>
     )

@@ -15,51 +15,17 @@ import {
 import { fonts } from "../../theme"
 import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
-const STEPS = [
-    "Vehicle Info",
-    "Problem Description",
-    "Service Center",
-    "Appointment Details",
-    "Contact & Additional Info",
-    "Confirmation",
-]
-
-const VALIDATION_RULES = {
-    // Step 1: Vehicle Info
-    vehicleYear: [validators.required("Year"), validators.year()],
-    vehicleMake: [validators.required("Make")],
-    vehicleModel: [validators.required("Model")],
-    vehiclePlate: [
-        validators.required("License Plate"),
-        validators.minLength(3),
-    ],
-
-    // Step 2: Problem Description
-    problemDescription: [
-        validators.required("Problem description"),
-        validators.minLength(10),
-    ],
-
-    // Step 3: Service Center
-    serviceCenterId: [validators.required("Service center")],
-
-    // Step 4: Appointment Details
-    preferredDate: [
-        validators.required("Preferred date"),
-        validators.date("YYYY-MM-DD"),
-    ],
-    preferredTime: [
-        validators.required("Preferred time"),
-        validators.time("HH:MM"),
-    ],
-
-    // Step 5: Contact & Additional Info
-    customerName: [validators.required("Full name")],
-    customerPhone: [validators.required("Phone number"), validators.phone()],
-    customerEmail: [validators.required("Email"), validators.email()],
-    additionalNotes: [],
-}
+const STEPS_KEYS = [
+    "vehicleInfo",
+    "problemDescription",
+    "serviceCenter",
+    "appointmentDetails",
+    "contactInfo",
+    "confirmation",
+] as const
 
 const DEFAULT_CENTER = { latitude: 45.6427, longitude: 25.5887 }
 
@@ -76,6 +42,58 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 }
 
 export default function AppointmentScreen() {
+    const { t } = useTranslation()
+    const STEPS = t("appointment.steps", { returnObjects: true }) as string[]
+    const req = t("common.isRequired")
+    const VALIDATION_RULES = {
+        vehicleYear: [
+            validators.required(t("appointment.year"), req),
+            validators.year({
+                invalid: t("validation.invalidYear"),
+                outOfRange: (min, max) =>
+                    t("validation.yearRange", { min, max }),
+            }),
+        ],
+        vehicleMake: [validators.required(t("appointment.make"), req)],
+        vehicleModel: [validators.required(t("appointment.model"), req)],
+        vehiclePlate: [
+            validators.required(t("appointment.plate"), req),
+            validators.minLength(3, t("validation.minLength", { min: 3 })),
+        ],
+        problemDescription: [
+            validators.required(t("appointment.problemField"), req),
+            validators.minLength(10, t("validation.minLength", { min: 10 })),
+        ],
+        serviceCenterId: [
+            validators.required(t("appointment.centerField"), req),
+        ],
+        preferredDate: [
+            validators.required(t("appointment.dateField"), req),
+            validators.date("YYYY-MM-DD", {
+                invalidFormat: t("validation.invalidDateFormat", {
+                    format: "YYYY-MM-DD",
+                }),
+                invalid: t("validation.invalidDate"),
+            }),
+        ],
+        preferredTime: [
+            validators.required(t("appointment.timeField"), req),
+            validators.time(
+                "HH:MM",
+                t("validation.invalidTimeFormat", { format: "HH:MM" }),
+            ),
+        ],
+        customerName: [validators.required(t("appointment.nameField"), req)],
+        customerPhone: [
+            validators.required(t("appointment.phoneField"), req),
+            validators.phone(t("validation.invalidPhone")),
+        ],
+        customerEmail: [
+            validators.required(t("appointment.emailField"), req),
+            validators.email(t("validation.invalidEmail")),
+        ],
+        additionalNotes: [] as any[],
+    }
     const router = useRouter()
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
     const { services } = useCarServices()
@@ -223,7 +241,7 @@ export default function AppointmentScreen() {
                 return (
                     <View>
                         <NInput
-                            placeholder="Year"
+                            placeholder={t("appointment.year")}
                             value={formData.vehicleYear}
                             onChangeText={(text) =>
                                 updateField("vehicleYear", text)
@@ -233,7 +251,7 @@ export default function AppointmentScreen() {
                             failedText={errors.vehicleYear || ""}
                         />
                         <NInput
-                            placeholder="Make"
+                            placeholder={t("appointment.make")}
                             value={formData.vehicleMake}
                             onChangeText={(text) =>
                                 updateField("vehicleMake", text)
@@ -243,7 +261,7 @@ export default function AppointmentScreen() {
                             failedText={errors.vehicleMake || ""}
                         />
                         <NInput
-                            placeholder="Model"
+                            placeholder={t("appointment.model")}
                             value={formData.vehicleModel}
                             onChangeText={(text) =>
                                 updateField("vehicleModel", text)
@@ -253,7 +271,7 @@ export default function AppointmentScreen() {
                             failedText={errors.vehicleModel || ""}
                         />
                         <NInput
-                            placeholder="License Plate"
+                            placeholder={t("appointment.plate")}
                             value={formData.vehiclePlate}
                             onChangeText={(text) =>
                                 updateField("vehiclePlate", text)
@@ -269,7 +287,7 @@ export default function AppointmentScreen() {
                 return (
                     <View>
                         <NInput
-                            placeholder="Describe the issue with your vehicle"
+                            placeholder={t("appointment.problemPlaceholder")}
                             value={formData.problemDescription}
                             onChangeText={(text) =>
                                 updateField("problemDescription", text)
@@ -286,7 +304,7 @@ export default function AppointmentScreen() {
                 return (
                     <View>
                         <NText style={styles.stepTitle}>
-                            Choose where you want to schedule your service
+                            {t("appointment.chooseServiceCenter")}
                         </NText>
                         <View style={{ marginBottom: 15 }}>
                             <NButton
@@ -310,7 +328,7 @@ export default function AppointmentScreen() {
                                         color: "white",
                                     }}
                                 >
-                                    Open Map for the the selected center
+                                    {t("appointment.openMap")}
                                 </NText>
                             </NButton>
                         </View>
@@ -359,7 +377,7 @@ export default function AppointmentScreen() {
                                                         color: "rgb(30, 212, 157)",
                                                     }}
                                                 >
-                                                    Nearest to you
+                                                    {t("appointment.nearest")}
                                                 </NText>
                                             )}
                                         </View>
@@ -379,7 +397,7 @@ export default function AppointmentScreen() {
                                                 <NText
                                                     style={styles.serviceMeta}
                                                 >
-                                                    Rating:{" "}
+                                                    {t("appointment.rating")}:{" "}
                                                     {service.rating.toFixed(1)}
                                                 </NText>
                                             </View>
@@ -391,7 +409,7 @@ export default function AppointmentScreen() {
                                                 <NText
                                                     style={styles.serviceMeta}
                                                 >
-                                                    Distance:{" "}
+                                                    {t("appointment.distance")}:{" "}
                                                     {distanceKm(
                                                         userLocation.latitude,
                                                         userLocation.longitude,
@@ -439,7 +457,7 @@ export default function AppointmentScreen() {
                 return (
                     <View>
                         <NInput
-                            placeholder="Full Name"
+                            placeholder={t("appointment.fullName")}
                             value={formData.customerName}
                             onChangeText={(text) =>
                                 updateField("customerName", text)
@@ -449,7 +467,7 @@ export default function AppointmentScreen() {
                             failedText={errors.customerName || ""}
                         />
                         <NInput
-                            placeholder="Phone Number"
+                            placeholder={t("appointment.phone")}
                             value={formData.customerPhone}
                             onChangeText={(text) =>
                                 updateField("customerPhone", text)
@@ -459,7 +477,7 @@ export default function AppointmentScreen() {
                             failedText={errors.customerPhone || ""}
                         />
                         <NInput
-                            placeholder="Email Address"
+                            placeholder={t("appointment.email")}
                             value={formData.customerEmail}
                             onChangeText={(text) =>
                                 updateField("customerEmail", text)
@@ -469,7 +487,7 @@ export default function AppointmentScreen() {
                             failedText={errors.customerEmail || ""}
                         />
                         <NInput
-                            placeholder="Additional Notes"
+                            placeholder={t("appointment.additionalNotes")}
                             value={formData.additionalNotes}
                             onChangeText={(text) =>
                                 updateField("additionalNotes", text)
@@ -497,7 +515,7 @@ export default function AppointmentScreen() {
                                 }}
                             >
                                 <NText style={styles.confirmLabel}>
-                                    Vehicle:
+                                    {t("appointment.confirmVehicle")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {formData.vehicleYear}{" "}
@@ -506,25 +524,25 @@ export default function AppointmentScreen() {
                                 </NText>
 
                                 <NText style={styles.confirmLabel}>
-                                    Problem:
+                                    {t("appointment.confirmProblem")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {formData.problemDescription}
                                 </NText>
 
                                 <NText style={styles.confirmLabel}>
-                                    Service Center:
+                                    {t("appointment.confirmServiceCenter")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {selectedServiceCenter?.name ||
-                                        "Not selected"}
+                                        t("appointment.notSelected")}
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {selectedServiceCenter?.address || ""}
                                 </NText>
 
                                 <NText style={styles.confirmLabel}>
-                                    Appointment:
+                                    {t("appointment.confirmAppointment")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {formData.preferredDate} at{" "}
@@ -532,7 +550,7 @@ export default function AppointmentScreen() {
                                 </NText>
 
                                 <NText style={styles.confirmLabel}>
-                                    Contact:
+                                    {t("appointment.confirmContact")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {formData.customerName}
@@ -596,8 +614,11 @@ export default function AppointmentScreen() {
 
                 {/* Step Title */}
                 <NText style={styles.currentStep}>
-                    Step {currentStep + 1} of {STEPS.length}:{" "}
-                    {STEPS[currentStep]}
+                    {t("appointment.stepProgress", {
+                        current: currentStep + 1,
+                        total: STEPS.length,
+                        name: STEPS[currentStep],
+                    })}
                 </NText>
 
                 {/* Step Content */}
@@ -613,7 +634,9 @@ export default function AppointmentScreen() {
                         currentStep === 0 && styles.buttonDisabled,
                     ])}
                 >
-                    <NText style={styles.buttonText}>Previous</NText>
+                    <NText style={styles.buttonText}>
+                        {t("appointment.previous")}
+                    </NText>
                 </NButton>
 
                 {currentStep === STEPS.length - 1 ? (
@@ -622,7 +645,9 @@ export default function AppointmentScreen() {
                         style={styles.button}
                         color="rgba(33, 168, 112, 0.51)"
                     >
-                        <NText style={styles.buttonText}>Submit</NText>
+                        <NText style={styles.buttonText}>
+                            {t("appointment.submit")}
+                        </NText>
                     </NButton>
                 ) : (
                     <NButton
@@ -630,7 +655,9 @@ export default function AppointmentScreen() {
                         style={styles.button}
                         color="rgba(33, 168, 112, 0.51)"
                     >
-                        <NText style={styles.buttonText}>Next</NText>
+                        <NText style={styles.buttonText}>
+                            {t("appointment.next")}
+                        </NText>
                     </NButton>
                 )}
             </View>
@@ -638,16 +665,13 @@ export default function AppointmentScreen() {
             <NModal
                 visible={appointmentNotice.visible}
                 onDismiss={appointmentNotice.dismiss}
-                title="Scheduling Preview"
+                title={t("appointment.modalTitle")}
             >
                 <NText style={styles.noticeText}>
-                    The appointment scheduling feature is in early testing.
-                    Submitted appointments are not yet connected to real service
-                    centers.
+                    {t("appointment.modalLine1")}
                 </NText>
                 <NText style={styles.noticeText}>
-                    During the Closed Alpha this helps test the booking flow and
-                    find bugs.
+                    {t("appointment.modalLine2")}
                 </NText>
             </NModal>
         </View>

@@ -9,22 +9,8 @@ import {
     formatDateStr,
     TimeSlot,
 } from "../../data/serviceAvailability"
-
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-const MONTH_NAMES = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-]
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 function getMonday(date: Date): Date {
     const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -51,11 +37,7 @@ function isSameDay(a: Date, b: Date): boolean {
 }
 
 function isDayPast(day: Date, today: Date): boolean {
-    const dayStart = new Date(
-        day.getFullYear(),
-        day.getMonth(),
-        day.getDate(),
-    )
+    const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate())
     const todayStart = new Date(
         today.getFullYear(),
         today.getMonth(),
@@ -77,6 +59,13 @@ export function WeeklyCalendar({
     selectedTime,
     onSelectSlot,
 }: WeeklyCalendarProps) {
+    const { t } = useTranslation()
+    const DAY_LABELS = t("calendar.dayLabels", {
+        returnObjects: true,
+    }) as string[]
+    const MONTH_NAMES = t("calendar.monthNames", {
+        returnObjects: true,
+    }) as string[]
     const today = useMemo(() => new Date(), [])
     const todayMonday = useMemo(() => getMonday(today), [today])
 
@@ -142,10 +131,7 @@ export function WeeklyCalendar({
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={[
-                    "rgba(255,255,255,0.3)",
-                    "rgba(255,255,255,0.05)",
-                ]}
+                colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.05)"]}
                 style={styles.gradientStroke}
             >
                 <BlurView
@@ -166,10 +152,7 @@ export function WeeklyCalendar({
                             <NText style={styles.navArrowText}>{"<"}</NText>
                         </Pressable>
                         <NText style={styles.weekLabel}>{weekLabel}</NText>
-                        <Pressable
-                            onPress={nextWeek}
-                            style={styles.navArrow}
-                        >
+                        <Pressable onPress={nextWeek} style={styles.navArrow}>
                             <NText style={styles.navArrowText}>{">"}</NText>
                         </Pressable>
                     </View>
@@ -220,9 +203,7 @@ export function WeeklyCalendar({
                                             <View style={styles.todayDot} />
                                         )}
                                         {hasSelection && !isActive && (
-                                            <View
-                                                style={styles.selectionDot}
-                                            />
+                                            <View style={styles.selectionDot} />
                                         )}
                                     </View>
                                 </Pressable>
@@ -234,7 +215,7 @@ export function WeeklyCalendar({
                     {slots.length === 0 ? (
                         <View style={styles.closedContainer}>
                             <NText style={styles.closedText}>
-                                Closed on this day
+                                {t("calendar.closed")}
                             </NText>
                         </View>
                     ) : (
@@ -264,7 +245,10 @@ export function WeeklyCalendar({
                     {selectedDate !== "" && selectedTime !== "" && (
                         <View style={styles.selectionSummary}>
                             <NText style={styles.selectionText}>
-                                Selected: {selectedDate} at {selectedTime}
+                                {t("calendar.selected", {
+                                    date: selectedDate,
+                                    time: selectedTime,
+                                })}
                             </NText>
                         </View>
                     )}

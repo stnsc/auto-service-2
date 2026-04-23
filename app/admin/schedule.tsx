@@ -5,34 +5,56 @@ import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
-
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function ScheduleScreen() {
+    const { t } = useTranslation()
+    const DAYS = t("schedule.days", { returnObjects: true }) as string[]
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+        >
             <NText style={[styles.sectionTitle, { fontFamily: fonts.medium }]}>
-                Operating Hours
+                {t("schedule.operatingHours")}
             </NText>
             <NText style={styles.subtitle}>
-                Manage your weekly schedule and availability
+                {t("schedule.operatingHoursDesc")}
             </NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]}
+                    colors={[
+                        "rgba(255,255,255,0.15)",
+                        "rgba(255,255,255,0.05)",
+                    ]}
                     style={styles.cardGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.cardInner}>
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.cardInner}
+                    >
                         {DAYS.map((day, index) => (
                             <React.Fragment key={day}>
                                 <View style={styles.scheduleRow}>
-                                    <NText style={[styles.dayName, { fontFamily: fonts.medium }]}>
+                                    <NText
+                                        style={[
+                                            styles.dayName,
+                                            { fontFamily: fonts.medium },
+                                        ]}
+                                    >
                                         {day}
                                     </NText>
                                     <View style={styles.hoursSection}>
-                                        <NText style={[styles.notSet, { fontFamily: fonts.light }]}>
-                                            Not configured
+                                        <NText
+                                            style={[
+                                                styles.notSet,
+                                                { fontFamily: fonts.light },
+                                            ]}
+                                        >
+                                            {t("schedule.notConfigured")}
                                         </NText>
                                     </View>
                                     <Ionicons
@@ -42,37 +64,61 @@ export default function ScheduleScreen() {
                                         style={styles.editIcon}
                                     />
                                 </View>
-                                {index < DAYS.length - 1 && <View style={styles.separator} />}
+                                {index < DAYS.length - 1 && (
+                                    <View style={styles.separator} />
+                                )}
                             </React.Fragment>
                         ))}
                     </BlurView>
                 </LinearGradient>
             </View>
 
-            <NText style={[styles.sectionTitle, { fontFamily: fonts.medium, marginTop: 32 }]}>
-                Slot Configuration
+            <NText
+                style={[
+                    styles.sectionTitle,
+                    { fontFamily: fonts.medium, marginTop: 32 },
+                ]}
+            >
+                {t("schedule.slotConfiguration")}
             </NText>
             <NText style={styles.subtitle}>
-                Configure appointment slot duration and booking window
+                {t("schedule.slotConfigurationDesc")}
             </NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]}
+                    colors={[
+                        "rgba(255,255,255,0.15)",
+                        "rgba(255,255,255,0.05)",
+                    ]}
                     style={styles.cardGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.cardInner}>
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.cardInner}
+                    >
                         <View style={styles.configRow}>
                             <View>
-                                <NText style={[styles.configLabel, { fontFamily: fonts.medium }]}>
-                                    Slot Duration
+                                <NText
+                                    style={[
+                                        styles.configLabel,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
+                                    {t("schedule.slotDuration")}
                                 </NText>
                                 <NText style={styles.configDesc}>
-                                    Length of each appointment slot
+                                    {t("schedule.slotDurationDesc")}
                                 </NText>
                             </View>
                             <View style={styles.configValue}>
-                                <NText style={[styles.configValueText, { fontFamily: fonts.medium }]}>
+                                <NText
+                                    style={[
+                                        styles.configValueText,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
                                     30 min
                                 </NText>
                             </View>
@@ -80,15 +126,25 @@ export default function ScheduleScreen() {
                         <View style={styles.separator} />
                         <View style={styles.configRow}>
                             <View>
-                                <NText style={[styles.configLabel, { fontFamily: fonts.medium }]}>
-                                    Booking Window
+                                <NText
+                                    style={[
+                                        styles.configLabel,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
+                                    {t("schedule.bookingWindow")}
                                 </NText>
                                 <NText style={styles.configDesc}>
-                                    How far in advance customers can book
+                                    {t("schedule.bookingWindowDesc")}
                                 </NText>
                             </View>
                             <View style={styles.configValue}>
-                                <NText style={[styles.configValueText, { fontFamily: fonts.medium }]}>
+                                <NText
+                                    style={[
+                                        styles.configValueText,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
                                     8 weeks
                                 </NText>
                             </View>

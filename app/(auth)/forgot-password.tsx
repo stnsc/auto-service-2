@@ -8,12 +8,11 @@ import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
-
-const VALIDATION_RULES = {
-    email: [validators.required("Email"), validators.email()],
-}
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 export default function ForgotPasswordScreen() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { forgotPassword } = useAuthContext()
 
@@ -22,8 +21,17 @@ export default function ForgotPasswordScreen() {
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async () => {
+        const validationRules = {
+            email: [
+                validators.required(
+                    t("forgotPassword.emailField"),
+                    t("common.isRequired"),
+                ),
+                validators.email(t("validation.invalidEmail")),
+            ],
+        }
         const formData = { email: email.trim() }
-        const newErrors = validateForm(formData, VALIDATION_RULES)
+        const newErrors = validateForm(formData, validationRules)
         setErrors(newErrors)
         if (hasErrors(newErrors)) return
 
@@ -36,9 +44,7 @@ export default function ForgotPasswordScreen() {
             })
         } catch (err: any) {
             setErrors({
-                email:
-                    err.message ||
-                    "Failed to send reset code. Please try again.",
+                email: err.message || t("forgotPassword.sendFailed"),
             })
         } finally {
             setLoading(false)
@@ -53,15 +59,14 @@ export default function ForgotPasswordScreen() {
                 color="rgba(33, 168, 112, 0.8)"
                 style={styles.icon}
             />
-            <NText style={styles.title}>Forgot Password?</NText>
+            <NText style={styles.title}>{t("forgotPassword.title")}</NText>
             <NText style={styles.subtitle}>
-                Enter your email and we'll send you a code to reset your
-                password.
+                {t("forgotPassword.subtitle")}
             </NText>
 
             <View style={styles.form}>
                 <NInput
-                    placeholder="Email"
+                    placeholder={t("forgotPassword.emailPlaceholder")}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -76,15 +81,19 @@ export default function ForgotPasswordScreen() {
                     onPress={handleSubmit}
                 >
                     <NText style={styles.buttonText}>
-                        {loading ? "Sending..." : "Send Reset Code"}
+                        {loading
+                            ? t("forgotPassword.sending")
+                            : t("forgotPassword.sendResetCode")}
                     </NText>
                 </NButton>
             </View>
 
             <NButton onPress={() => router.back()} style={styles.linkWrapper}>
                 <NText style={styles.linkText}>
-                    Remember your password?{" "}
-                    <NText style={styles.linkBold}>Sign In</NText>
+                    {t("forgotPassword.rememberPassword")}{" "}
+                    <NText style={styles.linkBold}>
+                        {t("forgotPassword.signIn")}
+                    </NText>
                 </NText>
             </NButton>
         </View>

@@ -5,36 +5,44 @@ import { NText } from "../replacements/NText"
 import { NContextMenu, MenuAction } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
 import { fonts } from "../../theme"
-
-const PAGE_TITLES: Record<string, string> = {
-    "/admin/dashboard": "Dashboard",
-    "/admin/bookings": "Bookings",
-    "/admin/schedule": "Schedule",
-    "/admin/settings": "Settings",
-}
-
-const ADMIN_CONTEXT: MenuAction[] = [
-    {
-        key: "profile",
-        label: "Service Profile",
-        icon: <Ionicons name="business-outline" size={18} color="white" />,
-    },
-    {
-        key: "customer",
-        label: "Customer View",
-        icon: (
-            <Ionicons name="swap-horizontal-outline" size={18} color="white" />
-        ),
-    },
-]
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 interface AdminTopBarProps {
     onAction?: (key: string) => void
 }
 
 export function AdminTopBar({ onAction }: AdminTopBarProps) {
+    const { t } = useTranslation()
     const pathname = usePathname()
-    const title = PAGE_TITLES[pathname] ?? "Admin"
+
+    const PAGE_TITLES: Record<string, string> = {
+        "/admin/dashboard": t("adminNav.dashboard"),
+        "/admin/bookings": t("adminNav.bookings"),
+        "/admin/schedule": t("adminNav.schedule"),
+        "/admin/settings": t("adminNav.settings"),
+    }
+
+    const ADMIN_CONTEXT: MenuAction[] = [
+        {
+            key: "profile",
+            label: t("adminNav.serviceProfile"),
+            icon: <Ionicons name="business-outline" size={18} color="white" />,
+        },
+        {
+            key: "customer",
+            label: t("adminNav.customerView"),
+            icon: (
+                <Ionicons
+                    name="swap-horizontal-outline"
+                    size={18}
+                    color="white"
+                />
+            ),
+        },
+    ]
+
+    const title = PAGE_TITLES[pathname] ?? t("adminNav.dashboard")
 
     return (
         <View style={styles.container}>
@@ -44,7 +52,7 @@ export function AdminTopBar({ onAction }: AdminTopBarProps) {
 
             <View style={styles.right}>
                 <NText style={[styles.badge, { fontFamily: fonts.light }]}>
-                    ADMIN
+                    {t("adminNav.adminBadge")}
                 </NText>
                 <NContextMenu
                     avatar={<Ionicons name="person" size={22} color="white" />}

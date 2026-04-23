@@ -62,7 +62,7 @@ function NTab({
 
     // Label width — collapses for inactive tabs
     const labelStyle = useAnimatedStyle(() => ({
-        maxWidth: interpolate(active.value, [0, 1], [0, 72]),
+        maxWidth: interpolate(active.value, [0, 1], [0, 100]),
         opacity: active.value,
         marginLeft: interpolate(active.value, [0, 1], [0, 6]),
     }))
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
         opacity: 1,
     },
     tabLabel: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: "600",
         color: "rgba(255,255,255,0.55)",
         overflow: "hidden",

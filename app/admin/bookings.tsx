@@ -5,21 +5,26 @@ import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
+import { useTranslation } from "react-i18next"
+import "../../i18n"
 
 type FilterKey = "all" | "today" | "upcoming" | "past"
 
-const FILTERS: { key: FilterKey; label: string }[] = [
-    { key: "all", label: "All" },
-    { key: "today", label: "Today" },
-    { key: "upcoming", label: "Upcoming" },
-    { key: "past", label: "Past" },
-]
-
 export default function BookingsScreen() {
+    const { t } = useTranslation()
+    const FILTERS: { key: FilterKey; label: string }[] = [
+        { key: "all", label: t("bookings.filterAll") },
+        { key: "today", label: t("bookings.filterToday") },
+        { key: "upcoming", label: t("bookings.filterUpcoming") },
+        { key: "past", label: t("bookings.filterPast") },
+    ]
     const [activeFilter, setActiveFilter] = useState<FilterKey>("all")
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+        >
             {/* Filter pills */}
             <View style={styles.filterRow}>
                 {FILTERS.map((f) => (
@@ -34,8 +39,14 @@ export default function BookingsScreen() {
                         <NText
                             style={[
                                 styles.filterText,
-                                activeFilter === f.key && styles.filterTextActive,
-                                { fontFamily: activeFilter === f.key ? fonts.medium : fonts.regular },
+                                activeFilter === f.key &&
+                                    styles.filterTextActive,
+                                {
+                                    fontFamily:
+                                        activeFilter === f.key
+                                            ? fonts.medium
+                                            : fonts.regular,
+                                },
                             ]}
                         >
                             {f.label}
@@ -47,13 +58,29 @@ export default function BookingsScreen() {
             {/* Empty state */}
             <View style={styles.emptyState}>
                 <LinearGradient
-                    colors={["rgba(255,255,255,0.15)", "rgba(255,255,255,0.05)"]}
+                    colors={[
+                        "rgba(255,255,255,0.15)",
+                        "rgba(255,255,255,0.05)",
+                    ]}
                     style={styles.emptyGradient}
                 >
-                    <BlurView intensity={20} tint="dark" style={styles.emptyInner}>
-                        <Ionicons name="calendar-outline" size={32} color="rgba(255,255,255,0.3)" />
-                        <NText style={[styles.emptyText, { fontFamily: fonts.light }]}>
-                            No bookings yet
+                    <BlurView
+                        intensity={20}
+                        tint="dark"
+                        style={styles.emptyInner}
+                    >
+                        <Ionicons
+                            name="calendar-outline"
+                            size={32}
+                            color="rgba(255,255,255,0.3)"
+                        />
+                        <NText
+                            style={[
+                                styles.emptyText,
+                                { fontFamily: fonts.light },
+                            ]}
+                        >
+                            {t("bookings.noBookings")}
                         </NText>
                     </BlurView>
                 </LinearGradient>
