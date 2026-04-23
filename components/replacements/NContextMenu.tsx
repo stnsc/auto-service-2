@@ -79,7 +79,11 @@ function AnimatedMenuItem({
                     <NText
                         style={[
                             styles.menuItemLabel,
-                            { color: action.destructive ? theme.error : theme.text },
+                            {
+                                color: action.destructive
+                                    ? theme.error
+                                    : theme.text,
+                            },
                             { fontFamily: fonts.light },
                         ]}
                     >
@@ -89,7 +93,13 @@ function AnimatedMenuItem({
             </Animated.View>
 
             {index < total - 1 && (
-                <Animated.View style={[styles.separator, { backgroundColor: theme.surfaceHigh }, itemStyle]} />
+                <Animated.View
+                    style={[
+                        styles.separator,
+                        { backgroundColor: theme.surfaceHigh },
+                        itemStyle,
+                    ]}
+                />
             )}
         </>
     )
@@ -130,7 +140,11 @@ export function NContextMenu({
     // The whole pill grows from circle → rectangle
     const containerStyle = useAnimatedStyle(() => ({
         width: interpolate(openProgress.value, [0, 1], [42, 230]),
-        height: interpolate(openProgress.value, [0, 1], [42, 42 + actions.length * 38]),
+        height: interpolate(
+            openProgress.value,
+            [0, 1],
+            [42, 42 + actions.length * 38],
+        ),
         borderRadius: interpolate(openProgress.value, [0, 1], [21, 32]),
     }))
 
