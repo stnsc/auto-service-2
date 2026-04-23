@@ -14,6 +14,7 @@ import { useChatContext, ConversationRecord } from "../context/ChatContext"
 import { useAuthContext } from "../context/AuthContext"
 import { NButton } from "../components/replacements/NButton"
 import { useTranslation } from "react-i18next"
+import { useTheme } from "../context/ThemeContext"
 import "../i18n"
 
 const TRUNCATE_LENGTH = 110
@@ -37,6 +38,7 @@ function formatDate(iso: string) {
 
 export default function HistoryScreen() {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const router = useRouter()
     const { userEmail } = useAuthContext()
     const { loadConversation } = useChatContext()
@@ -80,11 +82,11 @@ export default function HistoryScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <NButton onPress={() => router.back()} color="rgb(0, 0, 0)">
+                <NButton onPress={() => router.back()}>
                     <Ionicons
                         name="chevron-back"
                         size={25}
-                        color="rgba(255,255,255,0.7)"
+                        color={theme.iconMuted}
                     />
                 </NButton>
                 <NText style={[styles.title, { fontFamily: fonts.bold }]}>
@@ -94,7 +96,7 @@ export default function HistoryScreen() {
 
             {loading ? (
                 <View style={styles.center}>
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={theme.text} />
                 </View>
             ) : conversations.length === 0 ? (
                 <View style={styles.center}>
@@ -126,7 +128,7 @@ export default function HistoryScreen() {
                                     <Ionicons
                                         name="chevron-forward"
                                         size={14}
-                                        color="rgba(255,255,255,0.3)"
+                                        color={theme.textSubtle}
                                     />
                                 </View>
                                 {conv.summary ? (
@@ -174,7 +176,6 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     title: {
-        color: "#fff",
         fontSize: 20,
     },
     center: {
@@ -183,7 +184,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     empty: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 14,
     },
     list: {
@@ -197,16 +197,13 @@ const styles = StyleSheet.create({
         alignItems: "flex-start",
     },
     timestamp: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 11,
     },
     summary: {
-        color: "#fff",
         fontSize: 14,
         lineHeight: 20,
     },
     lastMsg: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 12,
         lineHeight: 17,
     },

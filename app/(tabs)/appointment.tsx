@@ -16,6 +16,7 @@ import { fonts } from "../../theme"
 import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 import { useTranslation } from "react-i18next"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
 const STEPS_KEYS = [
@@ -45,6 +46,7 @@ export default function AppointmentScreen() {
     const { t } = useTranslation()
     const STEPS = t("appointment.steps", { returnObjects: true }) as string[]
     const req = t("common.isRequired")
+    const { theme } = useTheme()
     const VALIDATION_RULES = {
         vehicleYear: [
             validators.required(t("appointment.year"), req),
@@ -303,7 +305,12 @@ export default function AppointmentScreen() {
             case 2: // Service Center
                 return (
                     <View>
-                        <NText style={styles.stepTitle}>
+                        <NText
+                            style={[
+                                styles.stepTitle,
+                                { color: theme.textMuted },
+                            ]}
+                        >
                             {t("appointment.chooseServiceCenter")}
                         </NText>
                         <View style={{ marginBottom: 15 }}>
@@ -325,7 +332,6 @@ export default function AppointmentScreen() {
                                 <NText
                                     style={{
                                         fontFamily: fonts.bold,
-                                        color: "white",
                                     }}
                                 >
                                     {t("appointment.openMap")}
@@ -363,7 +369,6 @@ export default function AppointmentScreen() {
                                                 style={{
                                                     fontFamily: fonts.bold,
                                                     fontSize: 20,
-                                                    color: "white",
                                                     marginBottom: 5,
                                                 }}
                                             >
@@ -390,12 +395,22 @@ export default function AppointmentScreen() {
                                         >
                                             <View>
                                                 <NText
-                                                    style={styles.serviceMeta}
+                                                    style={[
+                                                        styles.serviceMeta,
+                                                        {
+                                                            color: theme.textMuted,
+                                                        },
+                                                    ]}
                                                 >
                                                     {service.address}
                                                 </NText>
                                                 <NText
-                                                    style={styles.serviceMeta}
+                                                    style={[
+                                                        styles.serviceMeta,
+                                                        {
+                                                            color: theme.textMuted,
+                                                        },
+                                                    ]}
                                                 >
                                                     {t("appointment.rating")}:{" "}
                                                     {service.rating.toFixed(1)}
@@ -407,7 +422,12 @@ export default function AppointmentScreen() {
                                                 }}
                                             >
                                                 <NText
-                                                    style={styles.serviceMeta}
+                                                    style={[
+                                                        styles.serviceMeta,
+                                                        {
+                                                            color: theme.textMuted,
+                                                        },
+                                                    ]}
                                                 >
                                                     {t("appointment.distance")}:{" "}
                                                     {distanceKm(
@@ -426,7 +446,12 @@ export default function AppointmentScreen() {
                         })}
 
                         {!!errors.serviceCenterId && (
-                            <NText style={styles.stepErrorText}>
+                            <NText
+                                style={[
+                                    styles.stepErrorText,
+                                    { color: theme.error },
+                                ]}
+                            >
                                 {errors.serviceCenterId}
                             </NText>
                         )}
@@ -446,7 +471,12 @@ export default function AppointmentScreen() {
                             }}
                         />
                         {(!!errors.preferredDate || !!errors.preferredTime) && (
-                            <NText style={styles.stepErrorText}>
+                            <NText
+                                style={[
+                                    styles.stepErrorText,
+                                    { color: theme.error },
+                                ]}
+                            >
                                 {errors.preferredDate || errors.preferredTime}
                             </NText>
                         )}
@@ -506,7 +536,7 @@ export default function AppointmentScreen() {
                                 width: "100%",
                                 justifyContent: "flex-start",
                             }}
-                            color="rgba(255, 255, 255, 0.05)"
+                            color={theme.surface}
                         >
                             <View
                                 style={{
@@ -514,7 +544,12 @@ export default function AppointmentScreen() {
                                     alignItems: "flex-start",
                                 }}
                             >
-                                <NText style={styles.confirmLabel}>
+                                <NText
+                                    style={[
+                                        styles.confirmLabel,
+                                        { color: theme.textSubtle },
+                                    ]}
+                                >
                                     {t("appointment.confirmVehicle")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
@@ -523,14 +558,24 @@ export default function AppointmentScreen() {
                                     {formData.vehicleModel}
                                 </NText>
 
-                                <NText style={styles.confirmLabel}>
+                                <NText
+                                    style={[
+                                        styles.confirmLabel,
+                                        { color: theme.textSubtle },
+                                    ]}
+                                >
                                     {t("appointment.confirmProblem")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
                                     {formData.problemDescription}
                                 </NText>
 
-                                <NText style={styles.confirmLabel}>
+                                <NText
+                                    style={[
+                                        styles.confirmLabel,
+                                        { color: theme.textSubtle },
+                                    ]}
+                                >
                                     {t("appointment.confirmServiceCenter")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
@@ -541,7 +586,12 @@ export default function AppointmentScreen() {
                                     {selectedServiceCenter?.address || ""}
                                 </NText>
 
-                                <NText style={styles.confirmLabel}>
+                                <NText
+                                    style={[
+                                        styles.confirmLabel,
+                                        { color: theme.textSubtle },
+                                    ]}
+                                >
                                     {t("appointment.confirmAppointment")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
@@ -549,7 +599,12 @@ export default function AppointmentScreen() {
                                     {formData.preferredTime}
                                 </NText>
 
-                                <NText style={styles.confirmLabel}>
+                                <NText
+                                    style={[
+                                        styles.confirmLabel,
+                                        { color: theme.textSubtle },
+                                    ]}
+                                >
                                     {t("appointment.confirmContact")}:
                                 </NText>
                                 <NText style={styles.confirmValue}>
@@ -591,11 +646,18 @@ export default function AppointmentScreen() {
                             <View
                                 style={[
                                     styles.progressDot,
-                                    index <= currentStep &&
-                                        styles.progressDotActive,
+                                    { backgroundColor: theme.surfaceMid },
+                                    index <= currentStep && {
+                                        backgroundColor: theme.surfaceHigh,
+                                    },
                                 ]}
                             >
-                                <NText style={styles.progressNumber}>
+                                <NText
+                                    style={[
+                                        styles.progressNumber,
+                                        { color: theme.textMuted },
+                                    ]}
+                                >
                                     {index + 1}
                                 </NText>
                             </View>
@@ -603,8 +665,10 @@ export default function AppointmentScreen() {
                                 <View
                                     style={[
                                         styles.progressLine,
-                                        index < currentStep &&
-                                            styles.progressLineActive,
+                                        { backgroundColor: theme.surfaceMid },
+                                        index < currentStep && {
+                                            backgroundColor: theme.surfaceHigh,
+                                        },
                                     ]}
                                 />
                             )}
@@ -613,7 +677,7 @@ export default function AppointmentScreen() {
                 </View>
 
                 {/* Step Title */}
-                <NText style={styles.currentStep}>
+                <NText style={[styles.currentStep, { color: theme.text }]}>
                     {t("appointment.stepProgress", {
                         current: currentStep + 1,
                         total: STEPS.length,
@@ -626,7 +690,12 @@ export default function AppointmentScreen() {
             </ScrollView>
 
             {/* Navigation Buttons - fixed above tab bar */}
-            <View style={styles.buttonContainer}>
+            <View
+                style={[
+                    styles.buttonContainer,
+                    { backgroundColor: theme.surface },
+                ]}
+            >
                 <NButton
                     onPress={handlePrev}
                     style={StyleSheet.flatten([
@@ -708,60 +777,46 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
         justifyContent: "center",
         alignItems: "center",
         zIndex: 1,
     },
-    progressDotActive: {
-        backgroundColor: "rgba(255, 255, 255, 0.3)",
-    },
+    progressDotActive: {},
     progressNumber: {
-        color: "rgba(255, 255, 255, 0.6)",
         fontSize: 14,
         fontWeight: "600",
     },
     progressLine: {
         flex: 1,
         height: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
         marginHorizontal: 4,
     },
-    progressLineActive: {
-        backgroundColor: "rgba(255, 255, 255, 0.3)",
-    },
+    progressLineActive: {},
     currentStep: {
-        color: "white",
         fontSize: 18,
         fontWeight: "600",
         marginBottom: 20,
     },
     stepTitle: {
-        color: "rgba(255, 255, 255, 0.7)",
         fontSize: 16,
         fontWeight: "600",
         marginBottom: 20,
     },
     stepErrorText: {
-        color: "rgba(255, 0, 0, 0.8)",
         marginTop: 10,
     },
     serviceMeta: {
         fontFamily: fonts.light,
-        color: "rgba(255,255,255,0.7)",
     },
     input: {
         marginBottom: 15,
     },
     confirmationBox: {
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
         borderRadius: 20,
         padding: 20,
         borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
     },
     confirmLabel: {
-        color: "rgba(255, 255, 255, 0.6)",
         fontSize: 12,
         fontWeight: "600",
         marginTop: 12,
@@ -769,12 +824,10 @@ const styles = StyleSheet.create({
         textTransform: "uppercase",
     },
     confirmValue: {
-        color: "white",
         fontSize: 14,
         marginBottom: 4,
     },
     buttonContainer: {
-        backgroundColor: "rgba(0, 0, 0, 0.2)",
         padding: 15,
         marginHorizontal: 20,
         marginBottom: 100,
@@ -789,12 +842,10 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
     buttonText: {
-        color: "white",
         fontSize: 16,
         fontWeight: "600",
     },
     noticeText: {
-        color: "rgba(255,255,255,0.8)",
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,

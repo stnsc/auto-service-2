@@ -10,6 +10,7 @@ import {
     TimeSlot,
 } from "../../data/serviceAvailability"
 import { useTranslation } from "react-i18next"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
 function getMonday(date: Date): Date {
@@ -60,6 +61,7 @@ export function WeeklyCalendar({
     onSelectSlot,
 }: WeeklyCalendarProps) {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const DAY_LABELS = t("calendar.dayLabels", {
         returnObjects: true,
     }) as string[]
@@ -131,13 +133,16 @@ export function WeeklyCalendar({
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={["rgba(255,255,255,0.3)", "rgba(255,255,255,0.05)"]}
+                colors={[theme.borderStart, theme.borderEnd]}
                 style={styles.gradientStroke}
             >
                 <BlurView
                     intensity={30}
-                    tint="dark"
-                    style={styles.innerContainer}
+                    tint={theme.blurTint}
+                    style={[
+                        styles.innerContainer,
+                        { backgroundColor: theme.surface },
+                    ]}
                 >
                     {/* Week Navigation */}
                     <View style={styles.weekNavRow}>
@@ -149,11 +154,25 @@ export function WeeklyCalendar({
                             ]}
                             disabled={isCurrentWeek}
                         >
-                            <NText style={styles.navArrowText}>{"<"}</NText>
+                            <NText
+                                style={[
+                                    styles.navArrowText,
+                                    { color: theme.textMuted },
+                                ]}
+                            >
+                                {"<"}
+                            </NText>
                         </Pressable>
                         <NText style={styles.weekLabel}>{weekLabel}</NText>
                         <Pressable onPress={nextWeek} style={styles.navArrow}>
-                            <NText style={styles.navArrowText}>{">"}</NText>
+                            <NText
+                                style={[
+                                    styles.navArrowText,
+                                    { color: theme.textMuted },
+                                ]}
+                            >
+                                {">"}
+                            </NText>
                         </Pressable>
                     </View>
 
@@ -177,15 +196,23 @@ export function WeeklyCalendar({
                                     <View
                                         style={[
                                             styles.dayPill,
-                                            isActive && styles.dayPillActive,
+                                            {
+                                                backgroundColor:
+                                                    theme.surfaceMid,
+                                            },
+                                            isActive && {
+                                                backgroundColor: theme.accent,
+                                            },
                                             past && styles.dayPillPast,
                                         ]}
                                     >
                                         <NText
                                             style={[
                                                 styles.dayName,
-                                                isActive &&
-                                                    styles.dayNameActive,
+                                                { color: theme.textMuted },
+                                                isActive && {
+                                                    color: theme.text,
+                                                },
                                             ]}
                                         >
                                             {DAY_LABELS[index]}
@@ -200,10 +227,26 @@ export function WeeklyCalendar({
                                             {day.getDate()}
                                         </NText>
                                         {isToday && (
-                                            <View style={styles.todayDot} />
+                                            <View
+                                                style={[
+                                                    styles.todayDot,
+                                                    {
+                                                        backgroundColor:
+                                                            theme.accentSolid,
+                                                    },
+                                                ]}
+                                            />
                                         )}
                                         {hasSelection && !isActive && (
-                                            <View style={styles.selectionDot} />
+                                            <View
+                                                style={[
+                                                    styles.selectionDot,
+                                                    {
+                                                        backgroundColor:
+                                                            theme.textMuted,
+                                                    },
+                                                ]}
+                                            />
                                         )}
                                     </View>
                                 </Pressable>
@@ -214,7 +257,12 @@ export function WeeklyCalendar({
                     {/* Time Slots */}
                     {slots.length === 0 ? (
                         <View style={styles.closedContainer}>
-                            <NText style={styles.closedText}>
+                            <NText
+                                style={[
+                                    styles.closedText,
+                                    { color: theme.textSubtle },
+                                ]}
+                            >
                                 {t("calendar.closed")}
                             </NText>
                         </View>
@@ -243,8 +291,18 @@ export function WeeklyCalendar({
 
                     {/* Selection Summary */}
                     {selectedDate !== "" && selectedTime !== "" && (
-                        <View style={styles.selectionSummary}>
-                            <NText style={styles.selectionText}>
+                        <View
+                            style={[
+                                styles.selectionSummary,
+                                { borderTopColor: theme.surfaceHigh },
+                            ]}
+                        >
+                            <NText
+                                style={[
+                                    styles.selectionText,
+                                    { color: theme.accentSolid },
+                                ]}
+                            >
                                 {t("calendar.selected", {
                                     date: selectedDate,
                                     time: selectedTime,
@@ -267,6 +325,7 @@ function SlotChip({
     isSelected: boolean
     onPress: () => void
 }) {
+    const { theme } = useTheme()
     return (
         <Pressable
             onPress={onPress}
@@ -276,21 +335,28 @@ function SlotChip({
             <View
                 style={[
                     styles.slotChip,
+                    { backgroundColor: theme.surfaceMid },
                     !slot.available && styles.slotChipDisabled,
-                    isSelected && styles.slotChipSelected,
+                    isSelected && { backgroundColor: theme.accent },
                 ]}
             >
                 <NText
                     style={[
                         styles.slotText,
-                        !slot.available && styles.slotTextDisabled,
-                        isSelected && styles.slotTextSelected,
+                        !slot.available && { color: theme.textMuted },
                     ]}
                 >
                     {slot.time}
                 </NText>
                 {slot.isBooked && (
-                    <NText style={styles.bookedLabel}>Booked</NText>
+                    <NText
+                        style={[
+                            styles.bookedLabel,
+                            { color: theme.textSubtle },
+                        ]}
+                    >
+                        Booked
+                    </NText>
                 )}
             </View>
         </Pressable>
@@ -310,7 +376,6 @@ const styles = StyleSheet.create({
         borderRadius: 23,
         overflow: "hidden",
         padding: 16,
-        backgroundColor: "rgba(255,255,255,0.05)",
     },
 
     // Week navigation
@@ -329,12 +394,10 @@ const styles = StyleSheet.create({
     navArrowText: {
         fontFamily: fonts.bold,
         fontSize: 18,
-        color: "rgba(255,255,255,0.7)",
     },
     weekLabel: {
         fontFamily: fonts.bold,
         fontSize: 14,
-        color: "white",
     },
 
     // Day selector
@@ -351,44 +414,33 @@ const styles = StyleSheet.create({
         width: 44,
         height: 64,
         borderRadius: 22,
-        backgroundColor: "rgba(255,255,255,0.08)",
         alignItems: "center",
         justifyContent: "center",
         gap: 2,
     },
-    dayPillActive: {
-        backgroundColor: "rgba(30, 212, 157, 0.35)",
-    },
+    dayPillActive: {},
     dayPillPast: {
         opacity: 0.35,
     },
     dayName: {
         fontFamily: fonts.light,
         fontSize: 10,
-        color: "rgba(255,255,255,0.6)",
     },
-    dayNameActive: {
-        color: "rgba(255,255,255,0.9)",
-    },
+    dayNameActive: {},
     dayNumber: {
         fontFamily: fonts.bold,
         fontSize: 16,
-        color: "white",
     },
-    dayNumberActive: {
-        color: "white",
-    },
+    dayNumberActive: {},
     todayDot: {
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: "rgb(30, 212, 157)",
     },
     selectionDot: {
         width: 4,
         height: 4,
         borderRadius: 2,
-        backgroundColor: "rgba(255, 255, 255, 0.5)",
     },
 
     // Closed message
@@ -399,7 +451,6 @@ const styles = StyleSheet.create({
     closedText: {
         fontFamily: fonts.regular,
         fontSize: 14,
-        color: "rgba(255,255,255,0.4)",
     },
 
     // Time slots grid
@@ -416,32 +467,23 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 8,
         borderRadius: 16,
-        backgroundColor: "rgba(255,255,255,0.1)",
         alignItems: "center",
     },
     slotChipDisabled: {
-        backgroundColor: "rgba(255,255,255,0.03)",
         opacity: 0.5,
     },
-    slotChipSelected: {
-        backgroundColor: "rgba(33, 168, 112, 0.51)",
-    },
+    slotChipSelected: {},
     slotText: {
         fontFamily: fonts.regular,
         fontSize: 14,
-        color: "white",
     },
-    slotTextDisabled: {
-        color: "rgba(255,255,255,0.5)",
-    },
+    slotTextDisabled: {},
     slotTextSelected: {
         fontFamily: fonts.bold,
-        color: "white",
     },
     bookedLabel: {
         fontFamily: fonts.light,
         fontSize: 9,
-        color: "rgba(255,255,255,0.4)",
         marginTop: 2,
     },
 
@@ -456,6 +498,5 @@ const styles = StyleSheet.create({
     selectionText: {
         fontFamily: fonts.regular,
         fontSize: 13,
-        color: "rgba(30, 212, 157, 0.9)",
     },
 })

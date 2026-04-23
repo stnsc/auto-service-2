@@ -22,6 +22,7 @@ import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
 interface HorizontalCarouselProps {
@@ -40,6 +41,7 @@ export default function HorizontalCarousel({
 }: HorizontalCarouselProps) {
     const router = useRouter()
     const { t } = useTranslation()
+    const { theme } = useTheme()
 
     const [containerWidth, setContainerWidth] = useState(
         Dimensions.get("window").width,
@@ -184,7 +186,6 @@ export default function HorizontalCarousel({
                                         >
                                             <NText
                                                 style={{
-                                                    color: "#fff",
                                                     fontSize: 14,
                                                     fontWeight: "bold",
                                                     textAlign: "center",
@@ -194,7 +195,7 @@ export default function HorizontalCarousel({
                                             >
                                                 {service.type}
                                             </NText>
-                                            <NButton color={"#22222284"}>
+                                            <NButton color={theme.overlayBg}>
                                                 <View
                                                     style={{
                                                         flex: 1,
@@ -228,7 +229,6 @@ export default function HorizontalCarousel({
                                                         >
                                                             <NText
                                                                 style={{
-                                                                    color: "#fff",
                                                                     fontSize: 12,
                                                                 }}
                                                             >
@@ -241,7 +241,6 @@ export default function HorizontalCarousel({
                                                             style={{
                                                                 fontFamily:
                                                                     fonts.bold,
-                                                                color: "#fff",
                                                             }}
                                                         >
                                                             {service.rating}{" "}
@@ -254,7 +253,6 @@ export default function HorizontalCarousel({
                                                         style={{
                                                             fontFamily:
                                                                 fonts.bold,
-                                                            color: "#fff",
                                                             fontSize: 22,
                                                         }}
                                                     >
@@ -264,7 +262,7 @@ export default function HorizontalCarousel({
                                                         style={{
                                                             fontFamily:
                                                                 fonts.light,
-                                                            color: "#aaa",
+                                                            color: theme.textMuted,
                                                             fontSize: 14,
                                                         }}
                                                     >
@@ -287,26 +285,24 @@ export default function HorizontalCarousel({
                                                         }}
                                                     >
                                                         <NButton
-                                                            color={
-                                                                "rgba(33, 168, 112, 0.51)"
-                                                            }
+                                                            color={theme.accent}
                                                             onPress={() => {
                                                                 router.push(
                                                                     `/appointment/`,
                                                                 )
                                                             }}
                                                         >
-                                                            <NText
-                                                                style={{
-                                                                    color: "#fff",
-                                                                }}
-                                                            >
+                                                            <NText style={{}}>
                                                                 {t(
                                                                     "carousel.schedule",
                                                                 )}
                                                             </NText>
                                                         </NButton>
-                                                        <NButton color={"#333"}>
+                                                        <NButton
+                                                            color={
+                                                                theme.surfaceMid
+                                                            }
+                                                        >
                                                             <View
                                                                 style={{
                                                                     flexDirection:
@@ -320,9 +316,7 @@ export default function HorizontalCarousel({
                                                                     color="#fff"
                                                                 />
                                                                 <NText
-                                                                    style={{
-                                                                        color: "#fff",
-                                                                    }}
+                                                                    style={{}}
                                                                 >
                                                                     {
                                                                         service.phone
@@ -355,7 +349,6 @@ const styles = StyleSheet.create({
         paddingVertical: 40,
     },
     title: {
-        color: "#ffffff",
         fontSize: 28,
         fontWeight: "700",
         letterSpacing: 1,
@@ -377,7 +370,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     cardSub: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 13,
         marginTop: 6,
         letterSpacing: 0.3,

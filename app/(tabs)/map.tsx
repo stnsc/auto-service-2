@@ -167,7 +167,6 @@ export default function MapScreen() {
 
 const noticeStyles = StyleSheet.create({
     text: {
-        color: "rgba(255,255,255,0.8)",
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,

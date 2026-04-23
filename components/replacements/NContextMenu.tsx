@@ -18,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { NText } from "./NText"
 import { fonts } from "../../theme"
+import { useTheme } from "../../context/ThemeContext"
 
 export interface MenuAction {
     key: string
@@ -50,6 +51,7 @@ function AnimatedMenuItem({
     openProgress: SharedValue<number>
     onPress: () => void
 }) {
+    const { theme } = useTheme()
     const staggerStart = index * 0.07
 
     const itemStyle = useAnimatedStyle(() => {
@@ -77,7 +79,7 @@ function AnimatedMenuItem({
                     <NText
                         style={[
                             styles.menuItemLabel,
-                            action.destructive && styles.destructiveLabel,
+                            { color: action.destructive ? theme.error : theme.text },
                             { fontFamily: fonts.light },
                         ]}
                     >
@@ -87,7 +89,7 @@ function AnimatedMenuItem({
             </Animated.View>
 
             {index < total - 1 && (
-                <Animated.View style={[styles.separator, itemStyle]} />
+                <Animated.View style={[styles.separator, { backgroundColor: theme.surfaceHigh }, itemStyle]} />
             )}
         </>
     )
@@ -105,6 +107,7 @@ export function NContextMenu({
 }: NContextMenuProps) {
     const [isOpen, setIsOpen] = useState(false)
     const openProgress = useSharedValue(0)
+    const { theme } = useTheme()
 
     const toggle = () => {
         const next = !isOpen
@@ -146,12 +149,12 @@ export function NContextMenu({
     return (
         <Animated.View style={[styles.wrapper, containerStyle, style]}>
             <LinearGradient
-                colors={["rgba(255,255,255,0.35)", "rgba(255,255,255,0.06)"]}
+                colors={[theme.borderStart, theme.borderEnd]}
                 style={styles.gradientStroke}
             >
                 <BlurView
                     intensity={intensity}
-                    tint="dark"
+                    tint={theme.blurTint}
                     style={[styles.container, { backgroundColor: color }]}
                 >
                     {/* Avatar — the trigger */}
@@ -239,17 +242,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     menuItemLabel: {
-        color: "rgba(255,255,255,0.9)",
         fontSize: 13,
         fontWeight: "500",
         flexShrink: 1,
     },
-    destructiveLabel: {
-        color: "#ff453a",
-    },
+    destructiveLabel: {},
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "rgba(255,255,255,0.18)",
         marginHorizontal: 4,
     },
 })

@@ -14,13 +14,18 @@ import { Asset } from "expo-asset"
 import { View, StyleSheet, ActivityIndicator } from "react-native"
 
 const TYPE_ICONS: Record<string, string> = {
-    mechanic: Asset.fromModule(require("../assets/autoservice/mechanic_icon.png")).uri,
-    tire_shop: Asset.fromModule(require("../assets/autoservice/tire_shop_icon.png")).uri,
+    mechanic: Asset.fromModule(
+        require("../assets/autoservice/mechanic_icon.png"),
+    ).uri,
+    tire_shop: Asset.fromModule(
+        require("../assets/autoservice/tire_shop_icon.png"),
+    ).uri,
 }
 import { NText } from "./replacements/NText"
 import { fonts } from "../theme"
 import { NButton } from "./replacements/NButton"
 import { BlurView } from "expo-blur"
+import { useTheme } from "../context/ThemeContext"
 
 interface MapProps {
     latitude?: number
@@ -52,6 +57,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     const mapRef = useRef<maplibregl.Map | null>(null)
     const markersRef = useRef<maplibregl.Marker[]>([])
     const [mapLoaded, setMapLoaded] = useState(false)
+    const { theme } = useTheme()
 
     // Always-current refs so event listeners never capture stale callbacks
     const onServicePressRef = useRef(onServicePress)
@@ -203,7 +209,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
                                 Loading map...
                             </NText>
                             <ActivityIndicator
-                                color="#ffffff"
+                                color={theme.text}
                                 style={{ marginTop: 10 }}
                             />
                         </NButton>
@@ -223,7 +229,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     loadingText: {
-        color: "#ffffff",
         fontFamily: fonts.bold,
     },
 })

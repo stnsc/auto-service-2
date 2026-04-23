@@ -4,12 +4,14 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
+import { useTheme } from "../../context/ThemeContext"
 import { useTranslation } from "react-i18next"
 import "../../i18n"
 
 export default function PendingScreen() {
     const { t } = useTranslation()
     const router = useRouter()
+    const { theme } = useTheme()
 
     return (
         <View style={styles.container}>
@@ -20,7 +22,9 @@ export default function PendingScreen() {
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("pending.title")}</NText>
-            <NText style={styles.subtitle}>{t("pending.subtitle")}</NText>
+            <NText style={[styles.subtitle, { color: theme.textMuted }]}>
+                {t("pending.subtitle")}
+            </NText>
 
             <NButton style={{ marginBottom: 16 }}>
                 <NText style={styles.message}>{t("pending.message1")}</NText>
@@ -32,7 +36,7 @@ export default function PendingScreen() {
                 onPress={() => router.replace("/(auth)/login")}
             >
                 <View style={styles.backRow}>
-                    <Ionicons name="arrow-back" size={18} color="white" />
+                    <Ionicons name="arrow-back" size={18} color={theme.icon} />
                     <NText style={styles.buttonText}>
                         {t("pending.backToLogin")}
                     </NText>
@@ -55,20 +59,17 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 28,
-        color: "#fff",
         textAlign: "center",
     },
     subtitle: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: "rgba(255,255,255,0.6)",
         textAlign: "center",
         marginBottom: 24,
     },
     message: {
         fontFamily: fonts.regular,
         fontSize: 15,
-        color: "rgba(255,255,255,0.8)",
         textAlign: "center",
         lineHeight: 22,
     },
@@ -79,7 +80,6 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 16,
     },
 })

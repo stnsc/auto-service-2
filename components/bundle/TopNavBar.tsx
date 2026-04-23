@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { useTranslation } from "react-i18next"
 import i18n from "../../i18n"
 
@@ -19,6 +20,7 @@ export const TopNavBar = () => {
     const { t, i18n: i18nInstance } = useTranslation()
     const router = useRouter()
     const { signOut } = useAuthContext()
+    const { theme, colorScheme, toggleTheme } = useTheme()
     const currentLang = i18nInstance.language
 
     const toggleLanguage = () => {
@@ -30,22 +32,26 @@ export const TopNavBar = () => {
         {
             key: "history",
             label: t("topNav.chatHistory"),
-            icon: <Ionicons name="time-outline" size={18} color="white" />,
+            icon: <Ionicons name="time-outline" size={18} color={theme.icon} />,
         },
         {
             key: "github",
             label: t("topNav.reportBug"),
-            icon: <Ionicons name="bug-outline" size={18} color="white" />,
+            icon: <Ionicons name="bug-outline" size={18} color={theme.icon} />,
         },
         {
             key: "admin",
             label: t("topNav.adminPanel"),
-            icon: <Ionicons name="shield-outline" size={18} color="white" />,
+            icon: (
+                <Ionicons name="shield-outline" size={18} color={theme.icon} />
+            ),
         },
         {
             key: "logout",
             label: t("topNav.logout"),
-            icon: <Ionicons name="log-out-outline" size={18} color="white" />,
+            icon: (
+                <Ionicons name="log-out-outline" size={18} color={theme.icon} />
+            ),
             destructive: true,
         },
     ]
@@ -83,46 +89,73 @@ export const TopNavBar = () => {
             </NText>
             <View style={styles.right}>
                 <TouchableOpacity
+                    onPress={toggleTheme}
+                    style={[
+                        styles.themeToggle,
+                        { backgroundColor: theme.surfaceMid },
+                    ]}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons
+                        name={colorScheme === "dark" ? "sunny" : "moon"}
+                        size={16}
+                        color={theme.icon}
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity
                     onPress={toggleLanguage}
-                    style={styles.langToggle}
+                    style={[
+                        styles.langToggle,
+                        { backgroundColor: theme.surfaceMid },
+                    ]}
                     activeOpacity={0.7}
                 >
                     <NText
                         style={[
                             styles.langOption,
+                            { color: theme.textSubtle },
                             {
                                 fontFamily:
                                     currentLang === "en"
                                         ? fonts.bold
                                         : fonts.light,
                             },
-                            currentLang === "en" && styles.langOptionActive,
+                            currentLang === "en" && { color: theme.text },
                         ]}
                     >
                         EN
                     </NText>
                     <NText
-                        style={[styles.langSep, { fontFamily: fonts.light }]}
+                        style={[
+                            styles.langSep,
+                            {
+                                fontFamily: fonts.light,
+                                color: theme.textSubtle,
+                            },
+                        ]}
                     >
                         |
                     </NText>
                     <NText
                         style={[
                             styles.langOption,
+                            { color: theme.textSubtle },
                             {
                                 fontFamily:
                                     currentLang === "ro"
                                         ? fonts.bold
                                         : fonts.light,
                             },
-                            currentLang === "ro" && styles.langOptionActive,
+                            currentLang === "ro" && { color: theme.text },
                         ]}
                     >
                         RO
                     </NText>
                 </TouchableOpacity>
                 <NContextMenu
-                    avatar={<Ionicons name="person" size={22} color="white" />}
+                    avatar={
+                        <Ionicons name="person" size={22} color={theme.icon} />
+                    }
                     onAction={handleAction}
                     actions={CONTEXT}
                 />
@@ -145,7 +178,6 @@ const styles = StyleSheet.create({
     },
     version: {
         flex: 1,
-        color: "white",
         fontSize: 12,
         opacity: 0.5,
         left: 0,
@@ -155,6 +187,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
         gap: 12,
     },
+    themeToggle: {
+        padding: 6,
+        borderRadius: 20,
+        justifyContent: "center",
+        alignItems: "center",
+    },
     langToggle: {
         flexDirection: "row",
         alignItems: "center",
@@ -162,17 +200,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.08)",
     },
     langOption: {
-        color: "rgba(255,255,255,0.45)",
         fontSize: 12,
     },
-    langOptionActive: {
-        color: "#fff",
-    },
+    langOptionActive: {},
     langSep: {
-        color: "rgba(255,255,255,0.2)",
         fontSize: 11,
     },
 })

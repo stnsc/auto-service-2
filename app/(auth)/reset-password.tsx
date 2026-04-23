@@ -6,6 +6,7 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { Ionicons } from "@expo/vector-icons"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useTranslation } from "react-i18next"
@@ -16,6 +17,7 @@ export default function ResetPasswordScreen() {
     const router = useRouter()
     const { email } = useLocalSearchParams<{ email: string }>()
     const { confirmNewPassword } = useAuthContext()
+    const { theme } = useTheme()
 
     const [code, setCode] = useState("")
     const [password, setPassword] = useState("")
@@ -91,7 +93,7 @@ export default function ResetPasswordScreen() {
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("resetPassword.title")}</NText>
-            <NText style={styles.subtitle}>
+            <NText style={[styles.subtitle, { color: theme.textMuted }]}>
                 {t("resetPassword.subtitlePrefix")}
                 {"\n"}
                 <NText style={styles.emailText}>
@@ -112,11 +114,26 @@ export default function ResetPasswordScreen() {
                 />
 
                 <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
-                    <NText style={styles.dividerLabel}>
+                    <View
+                        style={[
+                            styles.dividerLine,
+                            { backgroundColor: theme.surfaceHigh },
+                        ]}
+                    />
+                    <NText
+                        style={[
+                            styles.dividerLabel,
+                            { color: theme.textSubtle },
+                        ]}
+                    >
                         {t("resetPassword.newPasswordDivider")}
                     </NText>
-                    <View style={styles.dividerLine} />
+                    <View
+                        style={[
+                            styles.dividerLine,
+                            { backgroundColor: theme.surfaceHigh },
+                        ]}
+                    />
                 </View>
 
                 <NInput
@@ -156,7 +173,7 @@ export default function ResetPasswordScreen() {
                 onPress={() => router.replace("/(auth)/login")}
                 style={styles.linkWrapper}
             >
-                <NText style={styles.linkText}>
+                <NText style={[styles.linkText, { color: theme.textMuted }]}>
                     {t("resetPassword.backTo")}{" "}
                     <NText style={styles.linkBold}>
                         {t("resetPassword.signIn")}
@@ -180,19 +197,16 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 28,
-        color: "#fff",
         textAlign: "center",
     },
     subtitle: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: "rgba(255,255,255,0.6)",
         textAlign: "center",
         marginBottom: 32,
     },
     emailText: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
     form: {
         gap: 12,
@@ -206,16 +220,13 @@ const styles = StyleSheet.create({
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: "rgba(255,255,255,0.15)",
     },
     dividerLabel: {
         fontSize: 12,
-        color: "rgba(255,255,255,0.4)",
         fontFamily: fonts.regular,
     },
     buttonText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 16,
     },
     linkWrapper: {
@@ -223,11 +234,9 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     linkText: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 14,
     },
     linkBold: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
 })

@@ -6,6 +6,7 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useGoogleAuth } from "../../hooks/useGoogleAuth"
 import { Ionicons } from "@expo/vector-icons"
@@ -16,6 +17,7 @@ export default function LoginScreen() {
     const { t } = useTranslation()
     const router = useRouter()
     const { signIn } = useAuthContext()
+    const { theme } = useTheme()
     const {
         promptAsync,
         loading: googleLoading,
@@ -89,7 +91,9 @@ export default function LoginScreen() {
                     style={styles.logo}
                 />
                 <NText style={styles.title}>{t("login.title")}</NText>
-                <NText style={styles.subtitle}>{t("login.subtitle")}</NText>
+                <NText style={[styles.subtitle, { color: theme.textMuted }]}>
+                    {t("login.subtitle")}
+                </NText>
 
                 <View style={styles.form}>
                     <NInput
@@ -124,11 +128,26 @@ export default function LoginScreen() {
                     </NButton>
 
                     <View style={styles.dividerRow}>
-                        <View style={styles.dividerLine} />
-                        <NText style={styles.dividerText}>
+                        <View
+                            style={[
+                                styles.dividerLine,
+                                { backgroundColor: theme.surfaceHigh },
+                            ]}
+                        />
+                        <NText
+                            style={[
+                                styles.dividerText,
+                                { color: theme.textSubtle },
+                            ]}
+                        >
                             {t("common.or")}
                         </NText>
-                        <View style={styles.dividerLine} />
+                        <View
+                            style={[
+                                styles.dividerLine,
+                                { backgroundColor: theme.surfaceHigh },
+                            ]}
+                        />
                     </View>
 
                     <NButton
@@ -140,7 +159,7 @@ export default function LoginScreen() {
                             <Ionicons
                                 name="logo-google"
                                 size={18}
-                                color="#fff"
+                                color={theme.icon}
                             />
                             <NText style={styles.buttonText}>
                                 {googleLoading
@@ -151,7 +170,11 @@ export default function LoginScreen() {
                     </NButton>
 
                     {googleError && (
-                        <NText style={styles.errorText}>{googleError}</NText>
+                        <NText
+                            style={[styles.errorText, { color: theme.error }]}
+                        >
+                            {googleError}
+                        </NText>
                     )}
                 </View>
 
@@ -165,7 +188,12 @@ export default function LoginScreen() {
                         onPress={() => router.push("/(auth)/forgot-password")}
                         style={styles.linkWrapper}
                     >
-                        <NText style={styles.linkText}>
+                        <NText
+                            style={[
+                                styles.linkText,
+                                { color: theme.textMuted },
+                            ]}
+                        >
                             {t("login.forgotPassword")}{" "}
                             <NText style={styles.linkBold}>
                                 {t("login.resetIt")}
@@ -177,7 +205,12 @@ export default function LoginScreen() {
                         onPress={() => router.push("/(auth)/signup")}
                         style={styles.linkWrapper}
                     >
-                        <NText style={styles.linkText}>
+                        <NText
+                            style={[
+                                styles.linkText,
+                                { color: theme.textMuted },
+                            ]}
+                        >
                             {t("login.noAccount")}{" "}
                             <NText style={styles.linkBold}>
                                 {t("login.signUp")}
@@ -203,13 +236,11 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 28,
-        color: "#fff",
         textAlign: "center",
     },
     subtitle: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: "rgba(255,255,255,0.6)",
         textAlign: "center",
         marginBottom: 32,
     },
@@ -218,7 +249,6 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 16,
     },
     googleRow: {
@@ -235,14 +265,11 @@ const styles = StyleSheet.create({
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: "rgba(255,255,255,0.15)",
     },
     dividerText: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 13,
     },
     errorText: {
-        color: "rgba(255, 80, 80, 0.9)",
         fontSize: 13,
         textAlign: "center",
     },
@@ -254,12 +281,10 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     linkText: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 14,
     },
     linkBold: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
     logo: {
         transform: [{ scale: 0.35 }],

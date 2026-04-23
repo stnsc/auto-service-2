@@ -6,6 +6,7 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { Ionicons } from "@expo/vector-icons"
 import {
     validators,
@@ -21,6 +22,7 @@ export default function SignUpScreen() {
     const { t } = useTranslation()
     const router = useRouter()
     const { signUp } = useAuthContext()
+    const { theme } = useTheme()
     const {
         promptAsync,
         loading: googleLoading,
@@ -104,7 +106,9 @@ export default function SignUpScreen() {
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("signup.title")}</NText>
-            <NText style={styles.subtitle}>{t("signup.subtitle")}</NText>
+            <NText style={[styles.subtitle, { color: theme.textMuted }]}>
+                {t("signup.subtitle")}
+            </NText>
 
             <View style={styles.form}>
                 <NInput
@@ -152,9 +156,26 @@ export default function SignUpScreen() {
                 </NButton>
 
                 <View style={styles.dividerRow}>
-                    <View style={styles.dividerLine} />
-                    <NText style={styles.dividerText}>{t("common.or")}</NText>
-                    <View style={styles.dividerLine} />
+                    <View
+                        style={[
+                            styles.dividerLine,
+                            { backgroundColor: theme.surfaceHigh },
+                        ]}
+                    />
+                    <NText
+                        style={[
+                            styles.dividerText,
+                            { color: theme.textSubtle },
+                        ]}
+                    >
+                        {t("common.or")}
+                    </NText>
+                    <View
+                        style={[
+                            styles.dividerLine,
+                            { backgroundColor: theme.surfaceHigh },
+                        ]}
+                    />
                 </View>
 
                 <NButton
@@ -163,7 +184,11 @@ export default function SignUpScreen() {
                     style={!request ? styles.buttonDisabled : undefined}
                 >
                     <View style={styles.googleRow}>
-                        <Ionicons name="logo-google" size={18} color="#fff" />
+                        <Ionicons
+                            name="logo-google"
+                            size={18}
+                            color={theme.icon}
+                        />
                         <NText style={styles.buttonText}>
                             {googleLoading
                                 ? t("common.signingIn")
@@ -173,7 +198,9 @@ export default function SignUpScreen() {
                 </NButton>
 
                 {googleError && (
-                    <NText style={styles.errorText}>{googleError}</NText>
+                    <NText style={[styles.errorText, { color: theme.error }]}>
+                        {googleError}
+                    </NText>
                 )}
             </View>
 
@@ -181,7 +208,7 @@ export default function SignUpScreen() {
                 onPress={() => router.push("/(auth)/login")}
                 style={styles.linkWrapper}
             >
-                <NText style={styles.linkText}>
+                <NText style={[styles.linkText, { color: theme.textMuted }]}>
                     {t("signup.alreadyHaveAccount")}{" "}
                     <NText style={styles.linkBold}>{t("signup.logIn")}</NText>
                 </NText>
@@ -203,13 +230,11 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 28,
-        color: "#fff",
         textAlign: "center",
     },
     subtitle: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: "rgba(255,255,255,0.6)",
         textAlign: "center",
         marginBottom: 32,
     },
@@ -218,7 +243,6 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 16,
     },
     googleRow: {
@@ -235,14 +259,11 @@ const styles = StyleSheet.create({
     dividerLine: {
         flex: 1,
         height: 1,
-        backgroundColor: "rgba(255,255,255,0.15)",
     },
     dividerText: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 13,
     },
     errorText: {
-        color: "rgba(255, 80, 80, 0.9)",
         fontSize: 13,
         textAlign: "center",
     },
@@ -254,11 +275,9 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     linkText: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 14,
     },
     linkBold: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
 })

@@ -6,6 +6,7 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { Ionicons } from "@expo/vector-icons"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useTranslation } from "react-i18next"
@@ -15,6 +16,7 @@ export default function ForgotPasswordScreen() {
     const { t } = useTranslation()
     const router = useRouter()
     const { forgotPassword } = useAuthContext()
+    const { theme } = useTheme()
 
     const [email, setEmail] = useState("")
     const [errors, setErrors] = useState<Record<string, string | null>>({})
@@ -60,7 +62,7 @@ export default function ForgotPasswordScreen() {
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("forgotPassword.title")}</NText>
-            <NText style={styles.subtitle}>
+            <NText style={[styles.subtitle, { color: theme.textMuted }]}>
                 {t("forgotPassword.subtitle")}
             </NText>
 
@@ -89,7 +91,7 @@ export default function ForgotPasswordScreen() {
             </View>
 
             <NButton onPress={() => router.back()} style={styles.linkWrapper}>
-                <NText style={styles.linkText}>
+                <NText style={[styles.linkText, { color: theme.textMuted }]}>
                     {t("forgotPassword.rememberPassword")}{" "}
                     <NText style={styles.linkBold}>
                         {t("forgotPassword.signIn")}
@@ -113,13 +115,11 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 28,
-        color: "#fff",
         textAlign: "center",
     },
     subtitle: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: "rgba(255,255,255,0.6)",
         textAlign: "center",
         marginBottom: 32,
     },
@@ -128,7 +128,6 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 16,
     },
     linkWrapper: {
@@ -136,11 +135,9 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     linkText: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 14,
     },
     linkBold: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
 })

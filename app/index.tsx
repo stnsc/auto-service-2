@@ -1,9 +1,11 @@
 import { Redirect } from "expo-router"
 import { useAuthContext } from "../context/AuthContext"
+import { useTheme } from "../context/ThemeContext"
 import { ActivityIndicator, View } from "react-native"
 
 export default function Root() {
     const { isAuthenticated, isLoading } = useAuthContext()
+    const { theme } = useTheme()
 
     if (isLoading) {
         return (
@@ -14,7 +16,7 @@ export default function Root() {
                     alignItems: "center",
                 }}
             >
-                <ActivityIndicator color="#fff" size="large" />
+                <ActivityIndicator color={theme.text} size="large" />
             </View>
         )
     }

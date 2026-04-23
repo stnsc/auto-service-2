@@ -11,6 +11,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { useCarouselGesture } from "../../context/GestureContext"
+import { useTheme } from "../../context/ThemeContext"
 
 interface NButtonProps {
     onPress?: () => void
@@ -28,6 +29,7 @@ export function NButton({
     style,
 }: NButtonProps) {
     const carouselPanRef = useCarouselGesture()
+    const { theme } = useTheme()
 
     const isPressed = useSharedValue(false)
     const translateX = useSharedValue(0)
@@ -87,7 +89,7 @@ export function NButton({
                 >
                     <BlurView
                         intensity={intensity}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={[styles.innerButton]}
                     >
                         <Animated.View

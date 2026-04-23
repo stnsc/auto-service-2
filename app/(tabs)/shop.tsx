@@ -15,6 +15,7 @@ import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 import { useTranslation } from "react-i18next"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
 interface ShopResult {
@@ -35,6 +36,7 @@ export default function ShopScreen() {
     const { t } = useTranslation()
     const { partQuery } = useChatContext()
     const shopNotice = useAlphaNotice("shop-alpha")
+    const { theme } = useTheme()
 
     const [searchQuery, setSearchQuery] = useState("")
     const [results, setResults] = useState<ShopResult[]>([])
@@ -125,7 +127,7 @@ export default function ShopScreen() {
                         onPress={() => performSearch(searchQuery)}
                         style={styles.searchButton}
                     >
-                        <Ionicons name="search" size={22} color="white" />
+                        <Ionicons name="search" size={22} color={theme.icon} />
                     </NButton>
                 </View>
 
@@ -180,7 +182,7 @@ export default function ShopScreen() {
                 {/* Loading */}
                 {loading && (
                     <View style={styles.centerBox}>
-                        <ActivityIndicator size="large" color="#fff" />
+                        <ActivityIndicator size="large" color={theme.text} />
                         <NText style={styles.loadingText}>
                             {t("shop.searching")}
                         </NText>
@@ -205,7 +207,7 @@ export default function ShopScreen() {
                         <Ionicons
                             name="cart-outline"
                             size={48}
-                            color="rgba(255,255,255,0.3)"
+                            color={theme.textSubtle}
                         />
                         <NText style={styles.emptyText}>
                             {t("shop.initialHint")}
@@ -294,7 +296,6 @@ const styles = StyleSheet.create({
         paddingBottom: 120,
     },
     heading: {
-        color: "#fff",
         fontSize: 22,
         fontFamily: fonts.bold,
         marginBottom: 20,
@@ -328,14 +329,12 @@ const styles = StyleSheet.create({
     },
     sortTextActive: {
         fontFamily: fonts.bold,
-        color: "white",
     },
 
     // Results
     resultCount: {
         fontFamily: fonts.light,
         fontSize: 13,
-        color: "rgba(255,255,255,0.5)",
         marginBottom: 12,
     },
     resultCard: {
@@ -358,7 +357,6 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 14,
         marginBottom: 4,
     },
@@ -381,7 +379,6 @@ const styles = StyleSheet.create({
     },
     sourceText: {
         fontFamily: fonts.regular,
-        color: "rgba(255,255,255,0.7)",
         fontSize: 11,
     },
     cardMetaRow: {
@@ -408,13 +405,11 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         fontFamily: fonts.regular,
-        color: "rgba(255,255,255,0.5)",
         fontSize: 14,
         marginTop: 8,
     },
     emptyText: {
         fontFamily: fonts.regular,
-        color: "rgba(255,255,255,0.5)",
         fontSize: 14,
         textAlign: "center",
         marginTop: 8,
@@ -422,12 +417,10 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontFamily: fonts.regular,
-        color: "rgba(255, 0, 0, 0.8)",
         marginTop: 10,
         textAlign: "center",
     },
     noticeText: {
-        color: "rgba(255,255,255,0.8)",
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,

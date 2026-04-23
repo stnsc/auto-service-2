@@ -18,6 +18,7 @@ import maplibregl from "maplibre-gl"
 import { ChatProvider } from "../context/ChatContext"
 import { AppointmentProvider } from "../context/AppointmentContext"
 import { AuthProvider, useAuthContext } from "../context/AuthContext"
+import { ThemeProvider, useTheme } from "../context/ThemeContext"
 import { NModal } from "../components/replacements/NModal"
 import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
@@ -41,15 +42,18 @@ let intensity = 0
 
 export default function RootLayout() {
     return (
-        <AuthProvider>
-            <AuthGatedLayout />
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <AuthGatedLayout />
+            </AuthProvider>
+        </ThemeProvider>
     )
 }
 
 function AuthGatedLayout() {
     const { t } = useTranslation()
     const { isAuthenticated, isLoading } = useAuthContext()
+    const { theme } = useTheme()
     const segments = useSegments()
     const router = useRouter()
     const welcomeNotice = useAlphaNotice("alpha-welcome")
@@ -96,22 +100,22 @@ function AuthGatedLayout() {
         {
             key: "chat",
             label: t("tabs.chat"),
-            icon: <Ionicons name="chatbubbles" size={22} color="white" />,
+            icon: <Ionicons name="chatbubbles" size={22} color={theme.icon} />,
         },
         {
             key: "appointment",
             label: t("tabs.schedule"),
-            icon: <Ionicons name="calendar" size={22} color="white" />,
+            icon: <Ionicons name="calendar" size={22} color={theme.icon} />,
         },
         {
             key: "shop",
             label: t("tabs.shop"),
-            icon: <Ionicons name="cart" size={22} color="white" />,
+            icon: <Ionicons name="cart" size={22} color={theme.icon} />,
         },
         {
             key: "map",
             label: t("tabs.map"),
-            icon: <Ionicons name="map" size={22} color="white" />,
+            icon: <Ionicons name="map" size={22} color={theme.icon} />,
         },
     ]
 
@@ -219,7 +223,12 @@ function AuthGatedLayout() {
                                 ]}
                                 resizeMode="cover"
                             />
-                            <View style={styles.overlay} />
+                            <View
+                                style={[
+                                    styles.overlay,
+                                    { backgroundColor: theme.overlayBg },
+                                ]}
+                            />
                         </View>
 
                         <View style={{ flex: 1 }}>
@@ -327,13 +336,12 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: "rgba(0,0,0,0.4)",
     },
 })
 
 const modalStyles = StyleSheet.create({
     text: {
-        color: "rgba(255,255,255,0.8)",
+        color: "rgba(255,255,255,0.8)" as string,
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,

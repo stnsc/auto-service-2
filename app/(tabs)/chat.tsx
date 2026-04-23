@@ -19,6 +19,7 @@ import { fonts } from "../../theme"
 import { useRouter } from "expo-router"
 import { useChatContext } from "../../context/ChatContext"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 import { useTranslation } from "react-i18next"
 import "../../i18n"
@@ -108,6 +109,7 @@ export default function ChatScreen() {
     // enabling router
     const router = useRouter()
     const { t } = useTranslation()
+    const { theme, colorScheme } = useTheme()
 
     const [user] = useState("<user>")
     const { userEmail } = useAuthContext()
@@ -295,21 +297,21 @@ export default function ChatScreen() {
                                     <Ionicons
                                         name="map"
                                         size={16}
-                                        color="white"
+                                        color={theme.icon}
                                     />
                                 ) : chatIntent === "appointment" ? (
                                     <Ionicons
                                         name="calendar"
                                         size={16}
-                                        color="white"
+                                        color={theme.icon}
                                     />
                                 ) : chatIntent === "shop" ? (
                                     <Ionicons
                                         name="cart"
                                         size={16}
-                                        color="white"
+                                        color={theme.icon}
                                     />
-                                ) : null
+                                ) : undefined
 
                             return (
                                 <View
@@ -324,7 +326,6 @@ export default function ChatScreen() {
                                             <NText
                                                 style={{
                                                     fontFamily: fonts.bold,
-                                                    color: "#fff",
                                                     textAlign: "right",
                                                 }}
                                             >
@@ -334,7 +335,6 @@ export default function ChatScreen() {
                                                 <NText
                                                     style={{
                                                         fontFamily: fonts.bold,
-                                                        color: "#fff",
                                                     }}
                                                 >
                                                     {msg.content}
@@ -346,7 +346,6 @@ export default function ChatScreen() {
                                             <NText
                                                 style={{
                                                     fontFamily: fonts.regular,
-                                                    color: "#fff",
                                                 }}
                                             >
                                                 {t("chat.assistantLabel")}
@@ -355,7 +354,6 @@ export default function ChatScreen() {
                                                 <NText
                                                     style={{
                                                         fontFamily: fonts.light,
-                                                        color: "#fff",
                                                     }}
                                                 >
                                                     {msg.content}
@@ -388,7 +386,6 @@ export default function ChatScreen() {
                                                             style={{
                                                                 fontFamily:
                                                                     fonts.bold,
-                                                                color: "#fff",
                                                             }}
                                                         >
                                                             {t("chat.goTo", {
@@ -410,7 +407,10 @@ export default function ChatScreen() {
                         <View
                             style={[styles.bubble, { alignSelf: "flex-start" }]}
                         >
-                            <ActivityIndicator size="small" color="#fff" />
+                            <ActivityIndicator
+                                size="small"
+                                color={theme.text}
+                            />
                         </View>
                     )}
                 </ScrollView>
@@ -443,12 +443,11 @@ export default function ChatScreen() {
                                 <Ionicons
                                     name="refresh"
                                     size={18}
-                                    color="white"
+                                    color={theme.icon}
                                 />
                                 <NText
                                     style={{
                                         fontFamily: fonts.bold,
-                                        color: "#fff",
                                         marginLeft: 6,
                                     }}
                                 >
@@ -499,7 +498,11 @@ export default function ChatScreen() {
                             onPress={handleSubmit}
                             style={{ paddingLeft: 10 }}
                         >
-                            <Ionicons name="send" size={19} color="white" />
+                            <Ionicons
+                                name="send"
+                                size={19}
+                                color={theme.icon}
+                            />
                         </NButton>
                     </View>
                 </View>
@@ -507,7 +510,14 @@ export default function ChatScreen() {
 
             {chatStarted && (
                 <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.92)"]}
+                    colors={
+                        [
+                            "transparent",
+                            colorScheme === "dark"
+                                ? "rgba(0,0,0,0.92)"
+                                : "rgba(255,255,255,0.92)",
+                        ] as [string, string]
+                    }
                     style={styles.bottomFade}
                     pointerEvents="none"
                 />
@@ -574,13 +584,11 @@ const styles = StyleSheet.create({
         paddingBottom: 80,
     },
     greeting: {
-        color: "#fff",
         fontSize: 24,
         fontWeight: "100",
         padding: 20,
     },
     noticeText: {
-        color: "rgba(255,255,255,0.8)",
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,

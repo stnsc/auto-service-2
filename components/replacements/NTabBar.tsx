@@ -11,6 +11,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { NText } from "./NText"
+import { useTheme } from "../../context/ThemeContext"
 
 const AnimatedNText = Animated.createAnimatedComponent(NText)
 
@@ -41,6 +42,7 @@ function NTab({
     onPress: () => void
     intensity: number
 }) {
+    const { theme } = useTheme()
     const pressed = useSharedValue(false)
     const active = useSharedValue(isActive ? 1 : 0)
 
@@ -106,7 +108,8 @@ function NTab({
                     numberOfLines={1}
                     style={[
                         styles.tabLabel,
-                        isActive && styles.tabLabelActive,
+                        { color: theme.textMuted },
+                        isActive && { color: theme.text },
                         labelStyle,
                     ]}
                 >
@@ -127,15 +130,16 @@ export function NTabBar({
     intensity = 40,
     style,
 }: NTabBarProps) {
+    const { theme } = useTheme()
     return (
         <View style={[styles.wrapper, style]}>
             <LinearGradient
-                colors={["rgba(255,255,255,0.35)", "rgba(255,255,255,0.06)"]}
+                colors={[theme.borderStart, theme.borderEnd]}
                 style={styles.gradientStroke}
             >
                 <BlurView
                     intensity={intensity}
-                    tint="dark"
+                    tint={theme.blurTint}
                     style={[styles.bar, { backgroundColor: color }]}
                 >
                     {tabs.map((tab) => (
@@ -199,10 +203,7 @@ const styles = StyleSheet.create({
     tabLabel: {
         fontSize: 13,
         fontWeight: "600",
-        color: "rgba(255,255,255,0.55)",
         overflow: "hidden",
     },
-    tabLabelActive: {
-        color: "#ffffff",
-    },
+    tabLabelActive: {},
 })

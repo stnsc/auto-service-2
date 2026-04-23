@@ -7,6 +7,7 @@ import { NButton } from "../replacements/NButton"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
 const API_URL = "/api/suggestions"
@@ -33,6 +34,7 @@ function SuggestionItem({
 }) {
     const opacity = useRef(new Animated.Value(0)).current
     const translateY = useRef(new Animated.Value(16)).current
+    const { theme } = useTheme()
 
     useEffect(() => {
         Animated.parallel([
@@ -64,9 +66,7 @@ function SuggestionItem({
                     }}
                 >
                     {icon}
-                    <NText style={{ fontFamily: fonts.regular, color: "#fff" }}>
-                        {text}
-                    </NText>
+                    <NText style={{ fontFamily: fonts.regular }}>{text}</NText>
                 </View>
             </NButton>
         </Animated.View>
@@ -80,6 +80,7 @@ export function Suggestions({
     onHasIntentSuggestion,
 }: Props) {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const [suggestions, setSuggestions] = useState<string[]>([])
     const [intent, setIntent] = useState<string>("")
     const [confidence, setConfidence] = useState<number>(0)
@@ -141,7 +142,6 @@ export function Suggestions({
                 <NText
                     style={{
                         fontFamily: fonts.light,
-                        color: "rgba(255,255,255,0.5)",
                         fontSize: 14,
                     }}
                 >
@@ -162,15 +162,23 @@ export function Suggestions({
                         index={0}
                         icon={
                             intent === "map" ? (
-                                <Ionicons name="map" size={22} color="white" />
+                                <Ionicons
+                                    name="map"
+                                    size={22}
+                                    color={theme.icon}
+                                />
                             ) : intent === "appointment" ? (
                                 <Ionicons
                                     name="calendar"
                                     size={22}
-                                    color="white"
+                                    color={theme.icon}
                                 />
                             ) : intent === "shop" ? (
-                                <Ionicons name="cart" size={22} color="white" />
+                                <Ionicons
+                                    name="cart"
+                                    size={22}
+                                    color={theme.icon}
+                                />
                             ) : undefined
                         }
                         onPress={() => onSelect(`/(tabs)/${intent}`)}

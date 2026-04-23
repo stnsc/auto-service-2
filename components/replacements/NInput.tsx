@@ -20,6 +20,7 @@ import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { fonts } from "../../theme"
 import { NText } from "./NText"
+import { useTheme } from "../../context/ThemeContext"
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 
@@ -53,6 +54,7 @@ export const NInput = React.memo(function NInput({
     ...props
 }: NInputProps) {
     const [showPassword, setShowPassword] = useState(false)
+    const { theme } = useTheme()
 
     const focusValue = useSharedValue(0)
     const inputHeight = useSharedValue(MIN_HEIGHT)
@@ -123,7 +125,7 @@ export const NInput = React.memo(function NInput({
                 >
                     <BlurView
                         intensity={intensity}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={[
                             styles.innerInputContainer,
                             { backgroundColor: color },
@@ -142,12 +144,15 @@ export const NInput = React.memo(function NInput({
                             {...props}
                             style={[
                                 styles.input,
-                                { fontFamily: fonts.regular },
+                                {
+                                    fontFamily: fonts.regular,
+                                    color: theme.text,
+                                },
                                 animatedInputStyle,
                                 secureTextEntry && styles.inputWithEye,
                                 props.style,
                             ]}
-                            placeholderTextColor="rgba(255,255,255,0.4)"
+                            placeholderTextColor={theme.inputPlaceholder}
                             onFocus={onFocus}
                             onBlur={onBlur}
                             onChangeText={onChangeText}
@@ -166,7 +171,7 @@ export const NInput = React.memo(function NInput({
                                 <Ionicons
                                     name={showPassword ? "eye" : "eye-off"}
                                     size={20}
-                                    color="rgba(255,255,255,0.6)"
+                                    color={theme.iconMuted}
                                 />
                             </Pressable>
                         )}
@@ -261,7 +266,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 15,
         fontSize: 16,
-        color: "#fff",
         ...(Platform.OS === "web"
             ? ({ outlineStyle: "none", overflow: "hidden" } as any)
             : {}),

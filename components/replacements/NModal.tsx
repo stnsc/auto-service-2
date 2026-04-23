@@ -1,19 +1,12 @@
 import React, { ReactNode } from "react"
-import {
-    StyleSheet,
-    View,
-    Pressable,
-    ScrollView,
-} from "react-native"
-import Animated, {
-    FadeIn,
-    FadeOut,
-} from "react-native-reanimated"
+import { StyleSheet, View, Pressable, ScrollView } from "react-native"
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { NText } from "./NText"
 import { NButton } from "./NButton"
 import { fonts } from "../../theme"
+import { useTheme } from "../../context/ThemeContext"
 
 interface NModalProps {
     visible: boolean
@@ -32,10 +25,11 @@ export function NModal({
     dismissLabel = "Got it",
     color = "rgba(255, 255, 255, 0.15)",
 }: NModalProps) {
+    const { theme } = useTheme()
     if (!visible) return null
 
     return (
-        <View style={styles.backdrop}>
+        <View style={[styles.backdrop, { backgroundColor: theme.backdrop }]}>
             <Pressable style={styles.backdropPress} onPress={onDismiss} />
 
             <Animated.View
@@ -47,7 +41,11 @@ export function NModal({
                     colors={[color, "rgba(255,255,255,0.05)"]}
                     style={styles.gradientStroke}
                 >
-                    <BlurView intensity={40} tint="dark" style={styles.card}>
+                    <BlurView
+                        intensity={40}
+                        tint={theme.blurTint}
+                        style={styles.card}
+                    >
                         {title && <NText style={styles.title}>{title}</NText>}
 
                         <ScrollView
@@ -79,7 +77,6 @@ const styles = StyleSheet.create({
         zIndex: 9999,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "rgba(0,0,0,0.6)",
     },
     backdropPress: {
         ...StyleSheet.absoluteFillObject,
@@ -101,7 +98,6 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 20,
-        color: "#fff",
         marginBottom: 16,
         textAlign: "center",
     },
@@ -113,7 +109,6 @@ const styles = StyleSheet.create({
     },
     dismissText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 15,
         textAlign: "center",
     },

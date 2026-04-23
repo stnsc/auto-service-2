@@ -6,6 +6,7 @@ import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { fonts } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
+import { useTheme } from "../../context/ThemeContext"
 import { Ionicons } from "@expo/vector-icons"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useTranslation } from "react-i18next"
@@ -16,6 +17,7 @@ export default function VerifyScreen() {
     const router = useRouter()
     const { email } = useLocalSearchParams<{ email: string }>()
     const { confirmSignUp, resendConfirmationCode } = useAuthContext()
+    const { theme } = useTheme()
 
     const [code, setCode] = useState("")
     const [errors, setErrors] = useState<Record<string, string | null>>({})
@@ -74,7 +76,7 @@ export default function VerifyScreen() {
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("verify.title")}</NText>
-            <NText style={styles.subtitle}>
+            <NText style={[styles.subtitle, { color: theme.textMuted }]}>
                 {t("verify.subtitlePrefix")}
                 {"\n"}
                 <NText style={styles.emailText}>
@@ -104,7 +106,7 @@ export default function VerifyScreen() {
             </View>
 
             <Pressable onPress={handleResend} style={styles.linkWrapper}>
-                <NText style={styles.linkText}>
+                <NText style={[styles.linkText, { color: theme.textMuted }]}>
                     {resent ? (
                         <NText style={styles.linkBold}>
                             {t("verify.codeResent")}
@@ -136,26 +138,22 @@ const styles = StyleSheet.create({
     title: {
         fontFamily: fonts.bold,
         fontSize: 28,
-        color: "#fff",
         textAlign: "center",
     },
     subtitle: {
         fontFamily: fonts.regular,
         fontSize: 16,
-        color: "rgba(255,255,255,0.6)",
         textAlign: "center",
         marginBottom: 32,
     },
     emailText: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
     form: {
         gap: 12,
     },
     buttonText: {
         fontFamily: fonts.bold,
-        color: "#fff",
         fontSize: 16,
     },
     linkWrapper: {
@@ -163,11 +161,9 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     linkText: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 14,
     },
     linkBold: {
         fontFamily: fonts.bold,
-        color: "#fff",
     },
 })
