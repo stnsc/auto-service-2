@@ -1,6 +1,5 @@
 import { StyleSheet, View } from "react-native"
 import Map, { MapHandle } from "../../components/Map.web"
-import { CAR_SERVICES } from "../../data/carServicesMock"
 import HorizontalCarousel from "../../components/bundle/HorizontalCarousel"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { CarService } from "../../app/types/CarService"
@@ -8,6 +7,7 @@ import { useLocalSearchParams } from "expo-router"
 import { NModal } from "../../components/replacements/NModal"
 import { NText } from "../../components/replacements/NText"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useCarServices } from "../../hooks/useCarServices"
 
 // Haversine distance in km between two lat/lng points
 function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
@@ -49,6 +49,12 @@ export default function MapScreen() {
         return Number.isFinite(parsed) ? parsed : 25.5887 //fallback, set to a random spot in Brasov
     }, [params.longitude])
 
+    const { services } = useCarServices()
+    const servicesRef = useRef<CarService[]>(services)
+    useEffect(() => {
+        servicesRef.current = services
+    }, [services])
+
     const mapRef = useRef<MapHandle>(null)
     const isFlyingRef = useRef(false) // Track if a flyTo animation is in progress
     const shouldFlyRef = useRef(false) // Track if we should fly to the active service after sorting
@@ -56,16 +62,16 @@ export default function MapScreen() {
 
     const [sortedServices, setSortedServices] = useState<CarService[]>(
         // Initial sort uses route coordinates when provided.
-        sortByDistance(initialLatitude, initialLongitude, CAR_SERVICES),
+        sortByDistance(initialLatitude, initialLongitude, services),
     )
     const [activeIndex, setActiveIndex] = useState(0)
 
     useEffect(() => {
         setSortedServices(
-            sortByDistance(initialLatitude, initialLongitude, CAR_SERVICES),
+            sortByDistance(initialLatitude, initialLongitude, services),
         )
         hasAppliedRouteFocusRef.current = false
-    }, [initialLatitude, initialLongitude])
+    }, [initialLatitude, initialLongitude, services])
 
     useEffect(() => {
         if (hasAppliedRouteFocusRef.current) return
@@ -91,7 +97,7 @@ export default function MapScreen() {
         }
         // User panned the map manually — re-sort but do NOT fly
         // shouldFlyRef is intentionally NOT set here
-        setSortedServices(sortByDistance(lat, lon, CAR_SERVICES))
+        setSortedServices(sortByDistance(lat, lon, servicesRef.current))
         setActiveIndex(0)
     }, [])
 
@@ -131,7 +137,7 @@ export default function MapScreen() {
                     latitude={initialLatitude}
                     longitude={initialLongitude}
                     zoom={14}
-                    carServices={CAR_SERVICES}
+                    carServices={services}
                     onServicePress={handleServicePress}
                     onCenterChange={handleCenterChange}
                 />

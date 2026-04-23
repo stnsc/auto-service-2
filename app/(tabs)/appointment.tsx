@@ -6,7 +6,7 @@ import { NText } from "../../components/replacements/NText"
 import { NModal } from "../../components/replacements/NModal"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useChatContext } from "../../context/ChatContext"
-import { CAR_SERVICES } from "../../data/carServicesMock"
+import { useCarServices } from "../../hooks/useCarServices"
 import { useRouter } from "expo-router"
 import {
     useAppointmentContext,
@@ -78,6 +78,7 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 export default function AppointmentScreen() {
     const router = useRouter()
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
+    const { services } = useCarServices()
     const appointmentNotice = useAlphaNotice("appointment-alpha")
     const {
         currentStep,
@@ -128,7 +129,7 @@ export default function AppointmentScreen() {
     }, [])
 
     const servicesByDistance = useMemo(() => {
-        return [...CAR_SERVICES].sort((a, b) => {
+        return [...services].sort((a, b) => {
             const aDistance = distanceKm(
                 userLocation.latitude,
                 userLocation.longitude,
@@ -143,7 +144,7 @@ export default function AppointmentScreen() {
             )
             return aDistance - bDistance
         })
-    }, [userLocation.latitude, userLocation.longitude])
+    }, [userLocation.latitude, userLocation.longitude, services])
 
     const updateField = (field: keyof AppointmentFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
@@ -209,12 +210,12 @@ export default function AppointmentScreen() {
         console.log("Form submitted:", formData)
     }
 
-    const selectedServiceCenter = CAR_SERVICES.find(
+    const selectedServiceCenter = services.find(
         (service) => service.id === formData.serviceCenterId,
     )
 
     const mapTargetService =
-        selectedServiceCenter ?? servicesByDistance[0] ?? CAR_SERVICES[0]
+        selectedServiceCenter ?? servicesByDistance[0] ?? services[0]
 
     const renderStepContent = () => {
         switch (currentStep) {

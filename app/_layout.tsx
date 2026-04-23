@@ -4,8 +4,10 @@ import {
     View,
     StyleSheet,
     useWindowDimensions,
+    Animated,
+    Easing,
 } from "react-native"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter, useSegments } from "expo-router"
 import Head from "expo-router/head"
@@ -152,6 +154,28 @@ function AuthGatedLayout() {
     const [hue, setHue] = useState(80)
     const [sat, setSat] = useState(70)
 
+    const fadeAnim = useRef(new Animated.Value(1)).current
+    const slideAnim = useRef(new Animated.Value(0)).current
+
+    useEffect(() => {
+        fadeAnim.setValue(0)
+        slideAnim.setValue(18)
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 220,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 220,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: true,
+            }),
+        ]).start()
+    }, [pathname])
+
     if (!fontsLoaded) return null
 
     return (
@@ -204,9 +228,15 @@ function AuthGatedLayout() {
                                 </>
                             )}
 
-                            <View style={{ flex: 1 }}>
+                            <Animated.View
+                                style={{
+                                    flex: 1,
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: slideAnim }],
+                                }}
+                            >
                                 <Slot />
-                            </View>
+                            </Animated.View>
 
                             {showNav && (
                                 <View style={styles.bottomNav}>
