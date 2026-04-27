@@ -14,6 +14,7 @@ import { useChatContext } from "../../context/ChatContext"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
@@ -36,6 +37,12 @@ export default function ShopScreen() {
     const { t } = useTranslation()
     const { partQuery } = useChatContext()
     const shopNotice = useAlphaNotice("shop-alpha")
+    const { register } = useInfoNotice()
+
+    useEffect(() => {
+        register(shopNotice.show)
+        return () => register(null)
+    }, [])
     const { theme } = useTheme()
 
     const [searchQuery, setSearchQuery] = useState("")

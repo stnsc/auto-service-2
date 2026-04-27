@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter, useSegments } from "expo-router"
 import Head from "expo-router/head"
 import { NTabBar } from "../components/replacements/NTabBar"
+import { NButton } from "../components/replacements/NButton"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
 import maplibregl from "maplibre-gl"
@@ -23,6 +24,7 @@ import { ProfileProvider } from "../context/ProfileContext"
 import { NModal } from "../components/replacements/NModal"
 import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
+import { InfoNoticeProvider, useInfoNotice } from "../context/InfoNoticeContext"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { useTranslation } from "react-i18next"
@@ -35,8 +37,6 @@ import {
     IosevkaCharon_500Medium,
     IosevkaCharon_700Bold,
 } from "@expo-google-fonts/iosevka-charon"
-import { BlurView } from "expo-blur"
-
 // eww global values i know, but this is a workaround for a bug that BlurView
 // has related to a saturation backdrop filter being applied for no reason when intensity is 0
 let intensity = 0
@@ -45,7 +45,9 @@ export default function RootLayout() {
     return (
         <ThemeProvider>
             <AuthProvider>
-                <AuthGatedLayout />
+                <InfoNoticeProvider>
+                    <AuthGatedLayout />
+                </InfoNoticeProvider>
             </AuthProvider>
         </ThemeProvider>
     )
@@ -58,6 +60,7 @@ function AuthGatedLayout() {
     const segments = useSegments()
     const router = useRouter()
     const welcomeNotice = useAlphaNotice("alpha-welcome")
+    const { replay, hasReplay } = useInfoNotice()
 
     // Auth guard — redirect based on auth state
     useEffect(() => {
@@ -262,6 +265,19 @@ function AuthGatedLayout() {
                                         />
                                     </View>
                                 )}
+
+                                {showNav && hasReplay && (
+                                    <NButton
+                                        onPress={replay}
+                                        style={styles.infoButton}
+                                    >
+                                        <Ionicons
+                                            name="information-circle-outline"
+                                            size={25}
+                                            color={theme.icon}
+                                        />
+                                    </NButton>
+                                )}
                             </View>
                         </View>
 
@@ -340,6 +356,12 @@ const styles = StyleSheet.create({
     },
     overlay: {
         ...StyleSheet.absoluteFillObject,
+    },
+    infoButton: {
+        position: "absolute",
+        bottom: 24,
+        left: 16,
+        zIndex: 100,
     },
 })
 

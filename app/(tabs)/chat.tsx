@@ -22,6 +22,7 @@ import { useAuthContext } from "../../context/AuthContext"
 import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import "../../i18n"
 
@@ -122,6 +123,12 @@ export default function ChatScreen() {
     const [hasIntentSuggestion, setHasIntentSuggestion] = useState(false)
     const [suggestionsHeight, setSuggestionsHeight] = useState(0)
     const chatNotice = useAlphaNotice("chat-logging")
+    const { register } = useInfoNotice()
+
+    useEffect(() => {
+        register(chatNotice.show)
+        return () => register(null)
+    }, [])
 
     // Use global chat context
     const {

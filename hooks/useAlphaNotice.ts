@@ -19,9 +19,17 @@ function setFlag(key: string) {
     } catch {}
 }
 
+function clearFlag(key: string) {
+    if (Platform.OS !== "web") return
+    try {
+        localStorage.removeItem(STORAGE_PREFIX + key)
+    } catch {}
+}
+
 /**
  * Shows a one-time notice identified by `key`.
  * Once dismissed, the notice won't appear again for this browser.
+ * Call `show()` to replay it manually.
  */
 export function useAlphaNotice(key: string) {
     const [visible, setVisible] = useState(false)
@@ -35,5 +43,10 @@ export function useAlphaNotice(key: string) {
         setVisible(false)
     }
 
-    return { visible, dismiss }
+    const show = () => {
+        clearFlag(key)
+        setVisible(true)
+    }
+
+    return { visible, dismiss, show }
 }

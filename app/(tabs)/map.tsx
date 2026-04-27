@@ -7,6 +7,7 @@ import { useLocalSearchParams } from "expo-router"
 import { NModal } from "../../components/replacements/NModal"
 import { NText } from "../../components/replacements/NText"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useCarServices } from "../../hooks/useCarServices"
 import { useTranslation } from "react-i18next"
 import "../../i18n"
@@ -40,6 +41,12 @@ export default function MapScreen() {
         longitude?: string
     }>()
     const mapNotice = useAlphaNotice("map-alpha")
+    const { register } = useInfoNotice()
+
+    useEffect(() => {
+        register(mapNotice.show)
+        return () => register(null)
+    }, [])
     const { t } = useTranslation()
 
     const initialLatitude = useMemo(() => {

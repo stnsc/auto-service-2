@@ -16,6 +16,7 @@ import { useProfileContext } from "../../context/ProfileContext"
 import { fonts } from "../../theme"
 import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
+import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
@@ -101,6 +102,12 @@ export default function AppointmentScreen() {
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
     const { services } = useCarServices()
     const appointmentNotice = useAlphaNotice("appointment-alpha")
+    const { register } = useInfoNotice()
+
+    useEffect(() => {
+        register(appointmentNotice.show)
+        return () => register(null)
+    }, [])
     const {
         currentStep,
         setCurrentStep,
@@ -137,7 +144,12 @@ export default function AppointmentScreen() {
             vehicleMake: prev.vehicleMake || primary.make,
             vehicleModel: prev.vehicleModel || primary.model,
             vehiclePlate: prev.vehiclePlate || primary.licensePlate,
-            customerName: prev.customerName || [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "",
+            customerName:
+                prev.customerName ||
+                [profile?.firstName, profile?.lastName]
+                    .filter(Boolean)
+                    .join(" ") ||
+                "",
             customerPhone: prev.customerPhone || profile?.phoneNumber || "",
         }))
     }, [profile])
