@@ -3,6 +3,7 @@ import {
     Platform,
     Pressable,
     StyleSheet,
+    StyleProp,
     Text,
     TextInput,
     TextInputProps,
@@ -14,6 +15,8 @@ import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withTiming,
+    interpolate,
+    interpolateColor,
     Easing,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
@@ -32,7 +35,7 @@ const GRADIENT_COLORS: [string, string] = [
 const ERROR_TIMING = { duration: 250, easing: Easing.out(Easing.cubic) }
 
 interface NInputProps extends TextInputProps {
-    containerStyle?: ViewStyle
+    containerStyle?: StyleProp<ViewStyle>
     placeholder?: string
     color?: string
     overlayColor?: string
@@ -51,13 +54,17 @@ export const NInput = React.memo(function NInput({
     failedText = "Invalid input",
     secureTextEntry,
     highlightSegments,
+    placeholder,
     ...props
 }: NInputProps) {
     const [showPassword, setShowPassword] = useState(false)
+    const [isFocused, setIsFocused] = useState(false)
     const { theme } = useTheme()
 
     const focusValue = useSharedValue(0)
     const inputHeight = useSharedValue(MIN_HEIGHT)
+    const labelProgress = useSharedValue(0)
+    const hasFloatingLabel = !!placeholder
 
     // Track value internally so the shadow Text always reflects current content,
     // even for uncontrolled usage or external clears (e.g. after send).
@@ -68,6 +75,16 @@ export const NInput = React.memo(function NInput({
             setShadowValue(props.value)
         }
     }, [props.value])
+
+    // Drive label up whenever focused or has a value
+    useEffect(() => {
+        if (!hasFloatingLabel) return
+        const raised = isFocused || shadowValue.length > 0
+        labelProgress.value = withTiming(raised ? 1 : 0, {
+            duration: 200,
+            easing: Easing.out(Easing.cubic),
+        })
+    }, [isFocused, shadowValue, hasFloatingLabel])
 
     const onChangeText = useCallback(
         (text: string) => {
@@ -90,10 +107,12 @@ export const NInput = React.memo(function NInput({
 
     const onFocus = useCallback(() => {
         focusValue.value = withTiming(1, { duration: 300 })
+        setIsFocused(true)
     }, [focusValue])
 
     const onBlur = useCallback(() => {
         focusValue.value = withTiming(0, { duration: 300 })
+        setIsFocused(false)
     }, [focusValue])
 
     const animatedWrapperStyle = useAnimatedStyle(() => ({
@@ -112,7 +131,31 @@ export const NInput = React.memo(function NInput({
 
     const animatedInputStyle = useAnimatedStyle(() => ({
         height: inputHeight.value,
+        paddingTop: hasFloatingLabel
+            ? interpolate(labelProgress.value, [0, 1], [15, 22])
+            : 15,
+        paddingBottom: hasFloatingLabel
+            ? interpolate(labelProgress.value, [0, 1], [15, 8])
+            : 15,
     }))
+
+    const labelAnimStyle = useAnimatedStyle(() => {
+        const p = labelProgress.value
+        return {
+            position: "absolute" as const,
+            left: 20,
+            top: interpolate(p, [0, 1], [15, 7]),
+            fontSize: interpolate(p, [0, 1], [16, 11]),
+            fontFamily: p > 0.5 ? fonts.bold : fonts.regular,
+            color: interpolateColor(
+                p,
+                [0, 1],
+                [theme.inputPlaceholder, theme.text],
+            ),
+            pointerEvents: "none" as any,
+            zIndex: 1,
+        }
+    })
 
     return (
         <>
@@ -140,8 +183,20 @@ export const NInput = React.memo(function NInput({
                                 pointerEvents="none"
                             />
                         )}
+                        {hasFloatingLabel && (
+                            <Animated.Text
+                                style={labelAnimStyle}
+                                numberOfLines={1}
+                                pointerEvents="none"
+                            >
+                                {placeholder}
+                            </Animated.Text>
+                        )}
                         <AnimatedTextInput
                             {...props}
+                            placeholder={
+                                hasFloatingLabel ? "" : placeholder
+                            }
                             style={[
                                 styles.input,
                                 {
@@ -160,7 +215,6 @@ export const NInput = React.memo(function NInput({
                             multiline={!secureTextEntry}
                             textAlignVertical="top"
                             scrollEnabled={false}
-                            placeholder={props.placeholder}
                         />
                         {secureTextEntry && (
                             <Pressable

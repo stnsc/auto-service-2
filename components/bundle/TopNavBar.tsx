@@ -30,6 +30,11 @@ export const TopNavBar = () => {
 
     const CONTEXT = [
         {
+            key: "profile",
+            label: t("tabs.profile"),
+            icon: <Ionicons name="person" size={22} color={theme.icon} />,
+        },
+        {
             key: "history",
             label: t("topNav.chatHistory"),
             icon: <Ionicons name="time-outline" size={18} color={theme.icon} />,
@@ -57,6 +62,10 @@ export const TopNavBar = () => {
     ]
 
     const handleAction = (key: string) => {
+        if (key === "profile") {
+            router.push("/profile" as any)
+            return
+        }
         if (key === "history") {
             router.push("/history" as any)
             return

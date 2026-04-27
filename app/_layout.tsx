@@ -19,6 +19,7 @@ import { ChatProvider } from "../context/ChatContext"
 import { AppointmentProvider } from "../context/AppointmentContext"
 import { AuthProvider, useAuthContext } from "../context/AuthContext"
 import { ThemeProvider, useTheme } from "../context/ThemeContext"
+import { ProfileProvider } from "../context/ProfileContext"
 import { NModal } from "../components/replacements/NModal"
 import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
@@ -149,6 +150,7 @@ function AuthGatedLayout() {
         "/shop": t("pageTitles.shop"),
         "/map": t("pageTitles.map"),
         "/history": t("pageTitles.history"),
+        "/profile": t("pageTitles.profile"),
         "/login": t("pageTitles.login"),
         "/signup": t("pageTitles.signup"),
         "/verify": t("pageTitles.verify"),
@@ -188,106 +190,108 @@ function AuthGatedLayout() {
     return (
         <ChatProvider>
             <AppointmentProvider>
-                <GestureHandlerRootView style={styles.container}>
-                    <Head>
-                        <title>{pageTitle}</title>
-                    </Head>
-                    <View
-                        style={[
-                            styles.appFrame,
-                            showContainer && styles.customerShell,
-                            showContainer &&
-                                windowWidth > 600 &&
-                                styles.customerShellDesktop,
-                        ]}
-                    >
-                        {/* Background layer — clipped separately so overflow:hidden
-                             doesn't break backdrop-filter on content BlurViews */}
+                <ProfileProvider>
+                    <GestureHandlerRootView style={styles.container}>
+                        <Head>
+                            <title>{pageTitle}</title>
+                        </Head>
                         <View
                             style={[
-                                styles.bgLayer,
+                                styles.appFrame,
+                                showContainer && styles.customerShell,
                                 showContainer &&
                                     windowWidth > 600 &&
-                                    styles.bgLayerRounded,
+                                    styles.customerShellDesktop,
                             ]}
                         >
-                            <Image
-                                source={require("../assets/autoservice/background.jpg")}
-                                style={[
-                                    styles.image,
-                                    Platform.select({
-                                        web: {
-                                            filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
-                                        } as any,
-                                    }),
-                                ]}
-                                resizeMode="cover"
-                            />
+                            {/* Background layer — clipped separately so overflow:hidden
+                             doesn't break backdrop-filter on content BlurViews */}
                             <View
                                 style={[
-                                    styles.overlay,
-                                    { backgroundColor: theme.overlayBg },
+                                    styles.bgLayer,
+                                    showContainer &&
+                                        windowWidth > 600 &&
+                                        styles.bgLayerRounded,
                                 ]}
-                            />
-                        </View>
-
-                        <View style={{ flex: 1 }}>
-                            {showNav && (
-                                <>
-                                    <View style={styles.topNav}>
-                                        <TopNavBar />
-                                    </View>
-                                </>
-                            )}
-
-                            <Animated.View
-                                style={{
-                                    flex: 1,
-                                    opacity: fadeAnim,
-                                    transform: [{ translateY: slideAnim }],
-                                }}
                             >
-                                <Slot />
-                            </Animated.View>
+                                <Image
+                                    source={require("../assets/autoservice/background.jpg")}
+                                    style={[
+                                        styles.image,
+                                        Platform.select({
+                                            web: {
+                                                filter: `hue-rotate(${hue}deg) saturate(${sat}%) blur(2px)`,
+                                            } as any,
+                                        }),
+                                    ]}
+                                    resizeMode="cover"
+                                />
+                                <View
+                                    style={[
+                                        styles.overlay,
+                                        { backgroundColor: theme.overlayBg },
+                                    ]}
+                                />
+                            </View>
 
-                            {showNav && (
-                                <View style={styles.bottomNav}>
-                                    <NTabBar
-                                        tabs={TABS}
-                                        activeKey={activeKey}
-                                        onTabPress={handleTabPress}
-                                    />
-                                </View>
-                            )}
+                            <View style={{ flex: 1 }}>
+                                {showNav && (
+                                    <>
+                                        <View style={styles.topNav}>
+                                            <TopNavBar />
+                                        </View>
+                                    </>
+                                )}
+
+                                <Animated.View
+                                    style={{
+                                        flex: 1,
+                                        opacity: fadeAnim,
+                                        transform: [{ translateY: slideAnim }],
+                                    }}
+                                >
+                                    <Slot />
+                                </Animated.View>
+
+                                {showNav && (
+                                    <View style={styles.bottomNav}>
+                                        <NTabBar
+                                            tabs={TABS}
+                                            activeKey={activeKey}
+                                            onTabPress={handleTabPress}
+                                        />
+                                    </View>
+                                )}
+                            </View>
                         </View>
-                    </View>
 
-                    {isAuthenticated && !isAuth && (
-                        <NModal
-                            visible={welcomeNotice.visible}
-                            onDismiss={welcomeNotice.dismiss}
-                            title={t("welcome.title")}
-                        >
-                            <NText style={modalStyles.text}>
-                                {t("welcome.line1")}
-                            </NText>
-                            <NText style={modalStyles.text}>
-                                {t("welcome.line2")}
-                            </NText>
-                            <NText style={modalStyles.text}>
-                                {t("welcome.line3")}
-                            </NText>
-                            <NText style={modalStyles.text}>
-                                {t("welcome.line4")}
-                            </NText>
-                            <NText style={modalStyles.text}>
-                                {t("welcome.line5")}
-                            </NText>
-                        </NModal>
-                    )}
-                    <Analytics />
-                    <SpeedInsights />
-                </GestureHandlerRootView>
+                        {isAuthenticated && !isAuth && (
+                            <NModal
+                                visible={welcomeNotice.visible}
+                                onDismiss={welcomeNotice.dismiss}
+                                title={t("welcome.title")}
+                            >
+                                <NText style={modalStyles.text}>
+                                    {t("welcome.line1")}
+                                </NText>
+                                <NText style={modalStyles.text}>
+                                    {t("welcome.line2")}
+                                </NText>
+                                <NText style={modalStyles.text}>
+                                    {t("welcome.line3")}
+                                </NText>
+                                <NText style={modalStyles.text}>
+                                    {t("welcome.line4")}
+                                </NText>
+                                <NText style={modalStyles.text}>
+                                    {t("welcome.line5")}
+                                </NText>
+                            </NModal>
+                        )}
+                        <Analytics />
+                        <SpeedInsights />
+                    </GestureHandlerRootView>
+                </ProfileProvider>
             </AppointmentProvider>
         </ChatProvider>
     )

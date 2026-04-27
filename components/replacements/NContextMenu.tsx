@@ -1,10 +1,12 @@
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import {
     StyleSheet,
     View,
-    Text,
     ViewStyle,
     TouchableOpacity,
+    Modal,
+    Pressable,
+    useWindowDimensions,
 } from "react-native"
 import Animated, {
     useSharedValue,
@@ -13,6 +15,7 @@ import Animated, {
     interpolate,
     SharedValue,
     Easing,
+    runOnJS,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
@@ -35,8 +38,6 @@ interface NContextMenuProps {
     intensity?: number
     style?: ViewStyle
 }
-
-// Single Anim Row
 
 function AnimatedMenuItem({
     action,
@@ -105,8 +106,6 @@ function AnimatedMenuItem({
     )
 }
 
-// Context Menu
-
 export function NContextMenu({
     actions,
     onAction,
@@ -116,96 +115,214 @@ export function NContextMenu({
     style,
 }: NContextMenuProps) {
     const [isOpen, setIsOpen] = useState(false)
+    const [menuPos, setMenuPos] = useState({ top: 0, right: 16 })
+    const triggerRef = useRef<View>(null)
     const openProgress = useSharedValue(0)
+    // Estimate height upfront so the first frame isn't wildly wrong
+    const measuredHeight = useSharedValue(42 + actions.length * 52)
     const { theme } = useTheme()
+    const { width: screenWidth } = useWindowDimensions()
 
-    const toggle = () => {
-        const next = !isOpen
-        setIsOpen(next)
-        openProgress.value = withTiming(next ? 1 : 0, {
-            duration: 320,
-            easing: next ? Easing.out(Easing.cubic) : Easing.in(Easing.quad),
+    const open = () => {
+        triggerRef.current?.measure((_x, _y, w, h, pageX, pageY) => {
+            setMenuPos({
+                top: pageY,
+                right: screenWidth - pageX - w,
+            })
+            setIsOpen(true)
+            openProgress.value = withTiming(1, {
+                duration: 320,
+                easing: Easing.out(Easing.cubic),
+            })
         })
+    }
+
+    const close = () => {
+        openProgress.value = withTiming(
+            0,
+            { duration: 220, easing: Easing.in(Easing.quad) },
+            (finished) => {
+                if (finished) runOnJS(setIsOpen)(false)
+            },
+        )
     }
 
     const handleAction = (key: string) => {
-        openProgress.value = withTiming(0, {
-            duration: 220,
-            easing: Easing.in(Easing.quad),
-        })
-        setIsOpen(false)
+        close()
         onAction?.(key)
     }
 
-    // The whole pill grows from circle → rectangle
+    // Outer pill: right edge stays fixed, grows leftward
     const containerStyle = useAnimatedStyle(() => ({
         width: interpolate(openProgress.value, [0, 1], [42, 230]),
         height: interpolate(
             openProgress.value,
             [0, 1],
-            [42, 42 + actions.length * 38],
+            [42, measuredHeight.value],
         ),
         borderRadius: interpolate(openProgress.value, [0, 1], [21, 32]),
     }))
 
-    const avatarButtonStyle = useAnimatedStyle(() => ({
+    // Avatar (right side): shrinks and fades out
+    const avatarStyle = useAnimatedStyle(() => ({
         width: interpolate(openProgress.value, [0, 0.25], [42, 0], "clamp"),
         opacity: interpolate(openProgress.value, [0, 0.2], [1, 0], "clamp"),
         overflow: "hidden",
     }))
 
-    // Update menuPanelStyle to use full width when avatar is gone
+    // Menu panel (left side): grows and fades in
     const menuPanelStyle = useAnimatedStyle(() => ({
         width: interpolate(openProgress.value, [0, 1], [0, 238]),
         opacity: interpolate(openProgress.value, [0, 0.2, 1], [0, 0, 1]),
     }))
 
+    // Backdrop: fades in
+    const backdropStyle = useAnimatedStyle(() => ({
+        opacity: interpolate(openProgress.value, [0, 1], [0, 1]),
+    }))
+
     return (
-        <Animated.View style={[styles.wrapper, containerStyle, style]}>
-            <LinearGradient
-                colors={[theme.borderStart, theme.borderEnd]}
-                style={styles.gradientStroke}
+        <>
+            {/* Trigger — fixed size, never shifts layout. Hidden while modal is open. */}
+            <View
+                ref={triggerRef}
+                style={[styles.trigger, style, isOpen && { opacity: 0 }]}
             >
-                <BlurView
-                    intensity={intensity}
-                    tint={theme.blurTint}
-                    style={[styles.container, { backgroundColor: color }]}
+                <LinearGradient
+                    colors={[theme.borderStart, theme.borderEnd]}
+                    style={styles.gradientStroke}
                 >
-                    {/* Avatar — the trigger */}
-                    <Animated.View style={avatarButtonStyle}>
+                    <BlurView
+                        intensity={intensity}
+                        tint={theme.blurTint}
+                        style={[
+                            styles.triggerInner,
+                            { backgroundColor: color },
+                        ]}
+                    >
                         <TouchableOpacity
-                            onPress={toggle}
+                            onPress={open}
                             style={styles.avatarButton}
                             activeOpacity={0.75}
                         >
                             <View style={styles.avatarInner}>{avatar}</View>
                         </TouchableOpacity>
-                    </Animated.View>
+                    </BlurView>
+                </LinearGradient>
+            </View>
 
-                    {/* Expanding items panel — no arrow */}
-                    <Animated.View style={[styles.menuPanel, menuPanelStyle]}>
-                        <View style={styles.menuItems}>
-                            {actions.map((action, index) => (
-                                <AnimatedMenuItem
-                                    key={action.key}
-                                    action={action}
-                                    index={index}
-                                    total={actions.length}
-                                    openProgress={openProgress}
-                                    onPress={() => handleAction(action.key)}
-                                />
-                            ))}
-                        </View>
-                    </Animated.View>
-                </BlurView>
-            </LinearGradient>
-        </Animated.View>
+            <Modal
+                visible={isOpen}
+                transparent
+                animationType="none"
+                onRequestClose={close}
+                statusBarTranslucent
+            >
+                {/* Dim + blur backdrop */}
+                <Animated.View
+                    style={[StyleSheet.absoluteFill, backdropStyle]}
+                    pointerEvents="none"
+                >
+                    <BlurView
+                        intensity={14}
+                        tint={theme.blurTint}
+                        style={StyleSheet.absoluteFill}
+                    />
+                    <View
+                        style={[
+                            StyleSheet.absoluteFill,
+                            { backgroundColor: "rgba(0,0,0,0.45)" },
+                        ]}
+                    />
+                </Animated.View>
+
+                {/* Full-screen tap-to-close */}
+                <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+
+                {/* Expanding pill - starts as a circle at the trigger's exact position */}
+                <Animated.View
+                    style={[
+                        styles.wrapper,
+                        { top: menuPos.top, right: menuPos.right },
+                        containerStyle,
+                    ]}
+                >
+                    <LinearGradient
+                        colors={[theme.borderStart, theme.borderEnd]}
+                        style={styles.gradientStroke}
+                    >
+                        <BlurView
+                            intensity={intensity}
+                            tint={theme.blurTint}
+                            style={[
+                                styles.container,
+                                { backgroundColor: color },
+                            ]}
+                        >
+                            {/* Items on the left, expand leftward */}
+                            <Animated.View
+                                style={[styles.menuPanel, menuPanelStyle]}
+                            >
+                                <View
+                                    style={styles.menuItems}
+                                    onLayout={(e) => {
+                                        measuredHeight.value =
+                                            e.nativeEvent.layout.height + 3
+                                    }}
+                                >
+                                    {actions.map((action, index) => (
+                                        <AnimatedMenuItem
+                                            key={action.key}
+                                            action={action}
+                                            index={index}
+                                            total={actions.length}
+                                            openProgress={openProgress}
+                                            onPress={() =>
+                                                handleAction(action.key)
+                                            }
+                                        />
+                                    ))}
+                                </View>
+                            </Animated.View>
+
+                            {/* Avatar on the right, collapses as items appear */}
+                            <Animated.View style={avatarStyle}>
+                                <TouchableOpacity
+                                    onPress={close}
+                                    style={styles.avatarButton}
+                                    activeOpacity={0.75}
+                                >
+                                    <View style={styles.avatarInner}>
+                                        {avatar}
+                                    </View>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        </BlurView>
+                    </LinearGradient>
+                </Animated.View>
+            </Modal>
+        </>
     )
 }
 
 const styles = StyleSheet.create({
-    wrapper: {
+    // The fixed trigger that lives in the navbar
+    trigger: {
+        width: 42,
+        height: 42,
         borderRadius: 32,
+        overflow: "hidden",
+    },
+    triggerInner: {
+        flex: 1,
+        borderRadius: 30,
+        overflow: "hidden",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    // The animated expanding pill inside the Modal
+    wrapper: {
+        position: "absolute",
         overflow: "hidden",
     },
     gradientStroke: {
@@ -234,14 +351,13 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         overflow: "hidden",
     },
-
     menuPanel: {
         overflow: "hidden",
     },
     menuItems: {
         width: 228,
         paddingRight: 14,
-        paddingLeft: 14, // left padding now that avatar is gone
+        paddingLeft: 14,
         paddingVertical: 6,
     },
     menuItem: {
@@ -259,8 +375,8 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: "500",
         flexShrink: 1,
+        flexWrap: "wrap",
     },
-    destructiveLabel: {},
     separator: {
         height: StyleSheet.hairlineWidth,
         marginHorizontal: 4,

@@ -19,6 +19,7 @@ import { fonts } from "../../theme"
 import { useRouter } from "expo-router"
 import { useChatContext } from "../../context/ChatContext"
 import { useAuthContext } from "../../context/AuthContext"
+import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 import { useTranslation } from "react-i18next"
@@ -111,9 +112,9 @@ export default function ChatScreen() {
     const { t } = useTranslation()
     const { theme, colorScheme } = useTheme()
 
-    const [user] = useState("<user>")
     const { userEmail } = useAuthContext()
-    const displayName = userEmail?.split("@")[0] || "User"
+    const { profile } = useProfileContext()
+    const firstName = profile?.firstName || ""
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [chatIntent, setChatIntent] = useState<string>("")
@@ -329,7 +330,9 @@ export default function ChatScreen() {
                                                     textAlign: "right",
                                                 }}
                                             >
-                                                {displayName}
+                                                {firstName ||
+                                                    userEmail?.split("@")[0] ||
+                                                    "User"}
                                             </NText>
                                             <NButton color="rgba(33, 168, 112, 0.51)">
                                                 <NText
@@ -425,7 +428,9 @@ export default function ChatScreen() {
                                 { fontFamily: fonts.regular },
                             ]}
                         >
-                            {t("chat.greeting", { name: displayName })}
+                            {firstName
+                                ? t("chat.greeting", { name: firstName })
+                                : t("chat.greetingAnon")}
                         </NText>
                     </View>
                 ) : (

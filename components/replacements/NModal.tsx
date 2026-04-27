@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react"
-import { StyleSheet, View, Pressable, ScrollView } from "react-native"
+import { StyleSheet, View, Pressable, ScrollView, Modal } from "react-native"
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
@@ -14,6 +14,8 @@ interface NModalProps {
     title?: string
     children?: ReactNode
     dismissLabel?: string
+    confirmLabel?: string
+    onConfirm?: () => void
     color?: string
 }
 
@@ -23,12 +25,21 @@ export function NModal({
     title,
     children,
     dismissLabel = "Got it",
+    confirmLabel,
+    onConfirm,
     color = "rgba(255, 255, 255, 0.15)",
 }: NModalProps) {
     const { theme } = useTheme()
     if (!visible) return null
 
     return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="none"
+            onRequestClose={onDismiss}
+            statusBarTranslucent
+        >
         <View style={[styles.backdrop, { backgroundColor: theme.backdrop }]}>
             <Pressable style={styles.backdropPress} onPress={onDismiss} />
 
@@ -50,31 +61,54 @@ export function NModal({
 
                         <ScrollView
                             style={styles.body}
+                            contentContainerStyle={styles.bodyContent}
                             showsVerticalScrollIndicator={false}
                         >
                             {children}
                         </ScrollView>
 
-                        <NButton
-                            color="rgba(33, 168, 112, 0.51)"
-                            onPress={onDismiss}
-                            style={styles.dismissBtn}
-                        >
-                            <NText style={styles.dismissText}>
-                                {dismissLabel}
-                            </NText>
-                        </NButton>
+                        {onConfirm ? (
+                            <View style={styles.buttonRow}>
+                                <NButton
+                                    onPress={onDismiss}
+                                    style={styles.buttonRowItem}
+                                >
+                                    <NText style={styles.dismissText}>
+                                        {dismissLabel}
+                                    </NText>
+                                </NButton>
+                                <NButton
+                                    color="rgba(33, 168, 112, 0.51)"
+                                    onPress={onConfirm}
+                                    style={styles.buttonRowItem}
+                                >
+                                    <NText style={styles.dismissText}>
+                                        {confirmLabel}
+                                    </NText>
+                                </NButton>
+                            </View>
+                        ) : (
+                            <NButton
+                                color="rgba(33, 168, 112, 0.51)"
+                                onPress={onDismiss}
+                                style={styles.dismissBtn}
+                            >
+                                <NText style={styles.dismissText}>
+                                    {dismissLabel}
+                                </NText>
+                            </NButton>
+                        )}
                     </BlurView>
                 </LinearGradient>
             </Animated.View>
         </View>
+        </Modal>
     )
 }
 
 const styles = StyleSheet.create({
     backdrop: {
         ...StyleSheet.absoluteFillObject,
-        zIndex: 9999,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -85,15 +119,18 @@ const styles = StyleSheet.create({
         width: "88%",
         maxWidth: 420,
         maxHeight: "80%",
+        overflow: "hidden",
     },
     gradientStroke: {
         padding: 1.5,
         borderRadius: 25,
+        flex: 1,
     },
     card: {
         borderRadius: 23,
         padding: 24,
         overflow: "hidden",
+        flex: 1,
     },
     title: {
         fontFamily: fonts.bold,
@@ -103,6 +140,10 @@ const styles = StyleSheet.create({
     },
     body: {
         marginBottom: 20,
+        flex: 1,
+    },
+    bodyContent: {
+        paddingHorizontal: 3,
     },
     dismissBtn: {
         alignSelf: "stretch",
@@ -111,5 +152,12 @@ const styles = StyleSheet.create({
         fontFamily: fonts.bold,
         fontSize: 15,
         textAlign: "center",
+    },
+    buttonRow: {
+        flexDirection: "row",
+        gap: 10,
+    },
+    buttonRowItem: {
+        flex: 1,
     },
 })
