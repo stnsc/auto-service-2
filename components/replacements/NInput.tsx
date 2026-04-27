@@ -194,9 +194,7 @@ export const NInput = React.memo(function NInput({
                         )}
                         <AnimatedTextInput
                             {...props}
-                            placeholder={
-                                hasFloatingLabel ? "" : placeholder
-                            }
+                            placeholder={hasFloatingLabel ? "" : placeholder}
                             style={[
                                 styles.input,
                                 {
