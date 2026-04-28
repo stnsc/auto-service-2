@@ -9,6 +9,7 @@ const ro = {
     tabs: {
         chat: "Chat",
         schedule: "Programări",
+        appointment: "Programări",
         shop: "Magazin",
         map: "Hartă",
         profile: "Informații Profil",
@@ -122,11 +123,14 @@ const ro = {
         greetingAnon: "Bună!\nCu ce te pot ajuta?",
         newChat: "Chat Nou",
         inputPlaceholder: "Care este întrebarea ta?",
-        assistantLabel: "AutoService Intelligence",
+        assistantLabel: "Inteligența AutoService",
         goTo: "Mergi la {{intent}}",
         modalTitle: "Previzualizare Chat",
         modalLine1: "În cursul Closed Alpha, toate conversațiile cu chatbot-ul AI sunt înregistrate pentru îmbunătățirea serviciului.",
         modalLine2: "Te rugăm să eviți partajarea informațiilor personale sau sensibile în mesaje.",
+        quickBook: "Programează un service",
+        quickFind: "Găsește un atelier aproape",
+        quickParts: "Caută piese de schimb",
     },
     history: {
         title: "Istoric Chat",

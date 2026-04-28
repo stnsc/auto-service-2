@@ -9,6 +9,7 @@ const en = {
     tabs: {
         chat: "Chat",
         schedule: "Schedule",
+        appointment: "Schedule",
         shop: "Shop",
         map: "Map",
         profile: "Profile Information",
@@ -127,6 +128,9 @@ const en = {
         modalTitle: "Chat Preview",
         modalLine1: "During the Closed Alpha, all conversations with the AI chatbot are being logged to help improve the service.",
         modalLine2: "Please avoid sharing personal or sensitive information in your messages.",
+        quickBook: "Book a service appointment",
+        quickFind: "Find a workshop near me",
+        quickParts: "Browse spare parts",
     },
     history: {
         title: "Chat History",

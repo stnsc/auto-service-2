@@ -139,6 +139,17 @@ export const NInput = React.memo(function NInput({
             : 15,
     }))
 
+    // Mirrors the input's vertical padding so the underline overlay stays in sync
+    // with the actual text position when the floating label is raised.
+    const shadowPaddingStyle = useAnimatedStyle(() => ({
+        paddingTop: hasFloatingLabel
+            ? interpolate(labelProgress.value, [0, 1], [15, 22])
+            : 15,
+        paddingBottom: hasFloatingLabel
+            ? interpolate(labelProgress.value, [0, 1], [15, 8])
+            : 15,
+    }))
+
     const labelAnimStyle = useAnimatedStyle(() => {
         const p = labelProgress.value
         return {
@@ -239,10 +250,11 @@ export const NInput = React.memo(function NInput({
                             ]}
                         >
                             {highlightSegments ? (
-                                <Text
+                                <Animated.Text
                                     style={[
                                         styles.input,
                                         styles.shadowText,
+                                        shadowPaddingStyle,
                                         {
                                             color: "transparent",
                                             fontFamily: fonts.regular,
@@ -282,7 +294,7 @@ export const NInput = React.memo(function NInput({
                                             </Text>
                                         ),
                                     )}
-                                </Text>
+                                </Animated.Text>
                             ) : (
                                 <Text
                                     style={[styles.input, styles.shadowText]}

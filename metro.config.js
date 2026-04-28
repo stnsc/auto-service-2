@@ -8,4 +8,4 @@ config.resolver.sourceExts.push('css');
 // ensure .web.tsx / .native.tsx platform extensions work
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
-module.exports = config;
+module.exports = config;    

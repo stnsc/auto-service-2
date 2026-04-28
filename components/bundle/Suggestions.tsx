@@ -17,6 +17,7 @@ interface Props {
     onSelect: (suggestion: string | void) => void
     chatStarted: boolean
     onHasIntentSuggestion?: (hasIntent: boolean) => void
+    onHasSuggestions?: (has: boolean) => void
 }
 
 function SuggestionItem({
@@ -78,6 +79,7 @@ export function Suggestions({
     onSelect,
     chatStarted,
     onHasIntentSuggestion,
+    onHasSuggestions,
 }: Props) {
     const { t } = useTranslation()
     const { theme } = useTheme()
@@ -91,6 +93,12 @@ export function Suggestions({
         const hasIntentSuggestion = intent !== "chat" && confidence > 0.75
         onHasIntentSuggestion?.(hasIntentSuggestion)
     }, [intent, confidence, onHasIntentSuggestion])
+
+    useEffect(() => {
+        const hasSugs =
+            suggestions.length > 0 || (intent !== "chat" && confidence > 0.75)
+        onHasSuggestions?.(hasSugs)
+    }, [suggestions, intent, confidence, onHasSuggestions])
 
     useEffect(() => {
         if (!debouncedQuery || debouncedQuery.trim().length < 3) {
