@@ -31,6 +31,8 @@ interface ChatContextType {
     setVehicleInfo: (info: VehicleInfo) => void
     partQuery: string
     setPartQuery: (query: string) => void
+    partPriceLimit: number | null
+    setPartPriceLimit: (limit: number | null) => void
     conversationId: string
     clearChat: () => void
     loadConversation: (record: ConversationRecord) => void
@@ -53,6 +55,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const [messages, setMessages] = useState<Message[]>([])
     const [summary, setSummary] = useState("")
     const [partQuery, setPartQuery] = useState("")
+    const [partPriceLimit, setPartPriceLimit] = useState<number | null>(null)
     const [vehicleInfo, setVehicleInfo] =
         useState<VehicleInfo>(defaultVehicleInfo)
     const [conversationId, setConversationId] = useState(generateConversationId)
@@ -61,6 +64,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setMessages([])
         setSummary("")
         setPartQuery("")
+        setPartPriceLimit(null)
         setVehicleInfo(defaultVehicleInfo)
         setConversationId(generateConversationId())
     }
@@ -74,6 +78,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         )
         setSummary(record.summary)
         setPartQuery("")
+        setPartPriceLimit(null)
         setVehicleInfo({
             make: (record.vehicleInfo.make as string | null) ?? null,
             model: (record.vehicleInfo.model as string | null) ?? null,
@@ -96,6 +101,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 setVehicleInfo,
                 partQuery,
                 setPartQuery,
+                partPriceLimit,
+                setPartPriceLimit,
                 conversationId,
                 clearChat,
                 loadConversation,

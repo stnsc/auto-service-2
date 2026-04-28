@@ -33,9 +33,97 @@ interface ShopResult {
 
 type SortMode = "price_asc" | "price_desc" | "rating"
 
+const AUTO_KEYWORDS = [
+    // English
+    "car",
+    "auto",
+    "vehicle",
+    "motor",
+    "engine",
+    "brake",
+    "tire",
+    "tyre",
+    "wheel",
+    "oil",
+    "filter",
+    "spark",
+    "plug",
+    "clutch",
+    "transmission",
+    "battery",
+    "exhaust",
+    "radiator",
+    "suspension",
+    "steering",
+    "alternator",
+    "starter",
+    "coolant",
+    "fuse",
+    "belt",
+    "hose",
+    "gasket",
+    "piston",
+    "caliper",
+    "rotor",
+    "pad",
+    "muffler",
+    "catalytic",
+    "intake",
+    "injector",
+    "pump",
+    "sensor",
+    "axle",
+    "bearing",
+    "seal",
+    "bulb",
+    "wiper",
+    "headlight",
+    "taillight",
+    "mirror",
+    "bumper",
+    "hood",
+    "trunk",
+    "part",
+    "parts",
+    "repair",
+    "fluid",
+    "shock",
+    "strut",
+    "cv",
+    "timing",
+    // Romanian
+    "masina",
+    "mașin",
+    "masin",
+    "motor",
+    "frân",
+    "frana",
+    "roat",
+    "roata",
+    "ulei",
+    "filtru",
+    "baterie",
+    "transmisie",
+    "ambreiaj",
+    "curea",
+    "furtun",
+    "piesa",
+    "piesă",
+    "reparati",
+    "service",
+    "senzor",
+    "pompa",
+    "pompă",
+]
+
+function isAutoRelated(query: string): boolean {
+    const lower = query.toLowerCase()
+    return AUTO_KEYWORDS.some((kw) => lower.includes(kw))
+}
+
 export default function ShopScreen() {
     const { t } = useTranslation()
-    const { partQuery } = useChatContext()
+    const { partQuery, partPriceLimit } = useChatContext()
     const shopNotice = useAlphaNotice("shop-alpha")
     const { register } = useInfoNotice()
 
@@ -46,6 +134,7 @@ export default function ShopScreen() {
     const { theme } = useTheme()
 
     const [searchQuery, setSearchQuery] = useState("")
+    const [priceCap, setPriceCap] = useState("")
     const [results, setResults] = useState<ShopResult[]>([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -56,6 +145,12 @@ export default function ShopScreen() {
     const performSearch = useCallback(async (query: string) => {
         const trimmed = query.trim()
         if (!trimmed) return
+        if (!isAutoRelated(trimmed)) {
+            setError(t("shop.notCarRelated"))
+            setResults([])
+            setHasSearched(true)
+            return
+        }
         setLoading(true)
         setError(null)
         setHasSearched(true)
@@ -90,20 +185,37 @@ export default function ShopScreen() {
         }
     }, [partQuery, performSearch])
 
+    // Auto-fill price cap from chat context
+    useEffect(() => {
+        if (partPriceLimit !== null) {
+            setPriceCap(String(partPriceLimit))
+        }
+    }, [partPriceLimit])
+
     const sortedResults = useMemo(() => {
-        return [...results].sort((a, b) => {
+        const cap = parseFloat(priceCap)
+        const filtered = isNaN(cap)
+            ? results
+            : results.filter((r) => r.price <= cap)
+        return [...filtered].sort((a, b) => {
             switch (sortMode) {
                 case "price_asc":
                     return a.price - b.price
                 case "price_desc":
                     return b.price - a.price
-                case "rating":
-                    return (b.rating ?? 0) - (a.rating ?? 0)
+                case "rating": {
+                    // Score = rating * log(reviews + 1) so popular highly-rated items rank first
+                    const scoreA =
+                        (a.rating ?? 0) * Math.log((a.reviews ?? 0) + 1)
+                    const scoreB =
+                        (b.rating ?? 0) * Math.log((b.reviews ?? 0) + 1)
+                    return scoreB - scoreA
+                }
                 default:
                     return 0
             }
         })
-    }, [results, sortMode])
+    }, [results, sortMode, priceCap])
 
     const openUrl = (url: string) => {
         if (typeof window !== "undefined") {
@@ -118,25 +230,6 @@ export default function ShopScreen() {
                 contentContainerStyle={styles.contentContainer}
             >
                 <NText style={styles.heading}>{t("shop.title")}</NText>
-
-                {/* Search Row */}
-                <View style={styles.searchRow}>
-                    <View style={{ flex: 1 }}>
-                        <NInput
-                            placeholder={t("shop.searchPlaceholder")}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                            onSubmitEditing={() => performSearch(searchQuery)}
-                        />
-                    </View>
-                    <NButton
-                        color="rgba(33, 168, 112, 0.51)"
-                        onPress={() => performSearch(searchQuery)}
-                        style={styles.searchButton}
-                    >
-                        <Ionicons name="search" size={22} color={theme.icon} />
-                    </NButton>
-                </View>
 
                 {/* Sort Controls */}
                 {results.length > 0 && (
@@ -182,7 +275,11 @@ export default function ShopScreen() {
                 {/* Results Count */}
                 {hasSearched && !loading && results.length > 0 && (
                     <NText style={styles.resultCount}>
-                        {t("shop.resultsFound", { count: results.length })}
+                        {t("shop.resultsFound", {
+                            count: sortedResults.length,
+                        })}
+                        {sortedResults.length < results.length &&
+                            ` ${t("shop.priceCapFiltered", { total: results.length })}`}
                     </NText>
                 )}
 
@@ -277,6 +374,61 @@ export default function ShopScreen() {
                     ))}
             </ScrollView>
 
+            {/* Bottom search bar */}
+            <View style={styles.bottomBar}>
+                {/* Price Cap Row */}
+                <View style={styles.priceCapRow}>
+                    <NInput
+                        containerStyle={styles.priceCapInput}
+                        placeholder="Maximum"
+                        value={priceCap}
+                        onChangeText={(v) =>
+                            setPriceCap(v.replace(/[^0-9.]/g, ""))
+                        }
+                        keyboardType="numeric"
+                    />
+                    {priceCap.length > 0 && (
+                        <NButton
+                            color="rgba(255,255,255,0.08)"
+                            onPress={() => setPriceCap("")}
+                            style={{ marginBottom: 24 }}
+                        >
+                            <Ionicons
+                                name="close"
+                                size={14}
+                                color={theme.textSubtle}
+                            />
+                        </NButton>
+                    )}
+                    <Ionicons
+                        name="pricetag-outline"
+                        size={14}
+                        color={theme.textSubtle}
+                    />
+                    <NText style={styles.priceCapLabel}>
+                        {t("shop.priceCapLabel")}
+                    </NText>
+                </View>
+
+                {/* Search Row */}
+                <View style={styles.searchRow}>
+                    <View style={{ flex: 1 }}>
+                        <NInput
+                            placeholder={t("shop.searchPlaceholder")}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            onSubmitEditing={() => performSearch(searchQuery)}
+                        />
+                    </View>
+                    <NButton
+                        color="rgba(33, 168, 112, 0.51)"
+                        onPress={() => performSearch(searchQuery)}
+                    >
+                        <Ionicons name="search" size={20} color={theme.icon} />
+                    </NButton>
+                </View>
+            </View>
+
             <NModal
                 visible={shopNotice.visible}
                 onDismiss={shopNotice.dismiss}
@@ -299,8 +451,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     contentContainer: {
+        flexGrow: 1,
         padding: 20,
-        paddingBottom: 120,
+        paddingBottom: 20,
     },
     heading: {
         fontSize: 22,
@@ -309,15 +462,37 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
 
+    // Bottom bar
+    bottomBar: {
+        paddingHorizontal: 20,
+        paddingTop: 8,
+        paddingBottom: 80,
+        gap: 6,
+    },
+
     // Search
     searchRow: {
         flexDirection: "row",
         alignItems: "flex-start",
         gap: 10,
-        marginBottom: 15,
     },
-    searchButton: {
-        marginTop: 2,
+
+    // Price cap
+    priceCapRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingHorizontal: 4,
+    },
+    priceCapLabel: {
+        fontFamily: fonts.regular,
+        fontSize: 12,
+        color: "rgba(255,255,255,0.45)",
+        flex: 1,
+    },
+    priceCapInput: {
+        width: 110,
+        minWidth: 0,
     },
 
     // Sort
@@ -406,8 +581,9 @@ const styles = StyleSheet.create({
 
     // States
     centerBox: {
+        flex: 1,
         alignItems: "center",
-        paddingVertical: 40,
+        justifyContent: "center",
         gap: 12,
     },
     loadingText: {

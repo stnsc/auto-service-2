@@ -13,6 +13,7 @@ import {
     AppointmentFormData,
 } from "../../context/AppointmentContext"
 import { useProfileContext } from "../../context/ProfileContext"
+import { useAuthContext } from "../../context/AuthContext"
 import { fonts } from "../../theme"
 import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
@@ -135,15 +136,17 @@ export default function AppointmentScreen() {
     }, [vehicleInfo.year, vehicleInfo.make, vehicleInfo.model, summary])
 
     // Auto-populate from profile's primary vehicle (lower priority than chat context)
+    const { userEmail } = useAuthContext()
     useEffect(() => {
         const primary = profile?.vehicles.find((v) => v.isPrimary)
-        if (!primary) return
         setFormData((prev) => ({
             ...prev,
-            vehicleYear: prev.vehicleYear || primary.year,
-            vehicleMake: prev.vehicleMake || primary.make,
-            vehicleModel: prev.vehicleModel || primary.model,
-            vehiclePlate: prev.vehiclePlate || primary.licensePlate,
+            ...(primary && {
+                vehicleYear: prev.vehicleYear || primary.year,
+                vehicleMake: prev.vehicleMake || primary.make,
+                vehicleModel: prev.vehicleModel || primary.model,
+                vehiclePlate: prev.vehiclePlate || primary.licensePlate,
+            }),
             customerName:
                 prev.customerName ||
                 [profile?.firstName, profile?.lastName]
@@ -151,8 +154,9 @@ export default function AppointmentScreen() {
                     .join(" ") ||
                 "",
             customerPhone: prev.customerPhone || profile?.phoneNumber || "",
+            customerEmail: prev.customerEmail || userEmail || "",
         }))
-    }, [profile])
+    }, [profile, userEmail])
 
     // Use geolocation when available so the nearest center is shown first.
     useEffect(() => {

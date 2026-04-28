@@ -11,10 +11,12 @@ import {
     ViewStyle,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { Gesture, GestureDetector } from "react-native-gesture-handler"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withTiming,
+    withSpring,
     interpolate,
     interpolateColor,
     Easing,
@@ -24,6 +26,7 @@ import { BlurView } from "expo-blur"
 import { fonts } from "../../theme"
 import { NText } from "./NText"
 import { useTheme } from "../../context/ThemeContext"
+import { useCarouselGesture } from "../../context/GestureContext"
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput)
 
@@ -60,9 +63,12 @@ export const NInput = React.memo(function NInput({
     const [showPassword, setShowPassword] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
     const { theme } = useTheme()
+    const carouselPanRef = useCarouselGesture()
 
     const focusValue = useSharedValue(0)
     const inputHeight = useSharedValue(MIN_HEIGHT)
+    const translateX = useSharedValue(0)
+    const translateY = useSharedValue(0)
     const labelProgress = useSharedValue(0)
     const hasFloatingLabel = !!placeholder
 
@@ -115,8 +121,30 @@ export const NInput = React.memo(function NInput({
         setIsFocused(false)
     }, [focusValue])
 
+    const pan = Gesture.Pan()
+        // Fail if the user moves more than 10 px vertically — that's a scroll,
+        // not an input interaction — so the native scroll view can take over.
+        .failOffsetY([-10, 10])
+        .requireExternalGestureToFail(
+            (carouselPanRef as any) || Gesture.Native(),
+        )
+        .onUpdate((event) => {
+            translateX.value = event.translationX / 15
+            translateY.value = event.translationY / 15
+        })
+        // onFinalize runs on both normal end AND gesture failure/cancel,
+        // so the component always springs back to its resting position.
+        .onFinalize(() => {
+            translateX.value = withSpring(0)
+            translateY.value = withSpring(0)
+        })
+
     const animatedWrapperStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: withTiming(focusValue.value ? 1.02 : 1) }],
+        transform: [
+            { translateX: translateX.value },
+            { translateY: translateY.value },
+            { scale: withTiming(focusValue.value ? 1.02 : 1) },
+        ],
     }))
 
     const errorAnimation = useAnimatedStyle(() => ({
@@ -131,17 +159,6 @@ export const NInput = React.memo(function NInput({
 
     const animatedInputStyle = useAnimatedStyle(() => ({
         height: inputHeight.value,
-        paddingTop: hasFloatingLabel
-            ? interpolate(labelProgress.value, [0, 1], [15, 22])
-            : 15,
-        paddingBottom: hasFloatingLabel
-            ? interpolate(labelProgress.value, [0, 1], [15, 8])
-            : 15,
-    }))
-
-    // Mirrors the input's vertical padding so the underline overlay stays in sync
-    // with the actual text position when the floating label is raised.
-    const shadowPaddingStyle = useAnimatedStyle(() => ({
         paddingTop: hasFloatingLabel
             ? interpolate(labelProgress.value, [0, 1], [15, 22])
             : 15,
@@ -170,146 +187,160 @@ export const NInput = React.memo(function NInput({
 
     return (
         <>
-            <Animated.View
-                style={[styles.wrapper, animatedWrapperStyle, containerStyle]}
-            >
-                <LinearGradient
-                    colors={GRADIENT_COLORS}
-                    style={styles.gradientStroke}
+            <GestureDetector gesture={pan}>
+                <Animated.View
+                    style={[
+                        styles.wrapper,
+                        animatedWrapperStyle,
+                        containerStyle,
+                    ]}
                 >
-                    <BlurView
-                        intensity={intensity}
-                        tint={theme.blurTint}
-                        style={[
-                            styles.innerInputContainer,
-                            { backgroundColor: color },
-                        ]}
+                    <LinearGradient
+                        colors={GRADIENT_COLORS}
+                        style={styles.gradientStroke}
                     >
-                        {overlayColor && (
-                            <View
-                                style={[
-                                    StyleSheet.absoluteFillObject,
-                                    { backgroundColor: overlayColor },
-                                ]}
-                                pointerEvents="none"
-                            />
-                        )}
-                        {hasFloatingLabel && (
-                            <Animated.Text
-                                style={labelAnimStyle}
-                                numberOfLines={1}
-                                pointerEvents="none"
-                            >
-                                {placeholder}
-                            </Animated.Text>
-                        )}
-                        <AnimatedTextInput
-                            {...props}
-                            placeholder={hasFloatingLabel ? "" : placeholder}
+                        <BlurView
+                            intensity={intensity}
+                            tint={theme.blurTint}
                             style={[
-                                styles.input,
-                                {
-                                    fontFamily: fonts.regular,
-                                    color: theme.text,
-                                },
-                                animatedInputStyle,
-                                secureTextEntry && styles.inputWithEye,
-                                props.style,
-                            ]}
-                            placeholderTextColor={theme.inputPlaceholder}
-                            onFocus={onFocus}
-                            onBlur={onBlur}
-                            onChangeText={onChangeText}
-                            secureTextEntry={secureTextEntry && !showPassword}
-                            multiline={!secureTextEntry}
-                            textAlignVertical="top"
-                            scrollEnabled={false}
-                        />
-                        {secureTextEntry && (
-                            <Pressable
-                                style={styles.eyeButton}
-                                onPress={() => setShowPassword((v) => !v)}
-                                hitSlop={8}
-                            >
-                                <Ionicons
-                                    name={showPassword ? "eye" : "eye-off"}
-                                    size={20}
-                                    color={theme.iconMuted}
-                                />
-                            </Pressable>
-                        )}
-                        {/* Shadow Text: mirrors input value and fires onLayout on any size change,
-                            including shrink — more reliable than onContentSizeChange cross-platform */}
-                        <View
-                            pointerEvents="none"
-                            style={[
-                                styles.shadowContainer,
-                                highlightSegments
-                                    ? styles.shadowVisible
-                                    : undefined,
+                                styles.innerInputContainer,
+                                { backgroundColor: color },
                             ]}
                         >
-                            {highlightSegments ? (
-                                <Animated.Text
+                            {overlayColor && (
+                                <View
                                     style={[
-                                        styles.input,
-                                        styles.shadowText,
-                                        shadowPaddingStyle,
-                                        {
-                                            color: "transparent",
-                                            fontFamily: fonts.regular,
-                                        },
+                                        StyleSheet.absoluteFillObject,
+                                        { backgroundColor: overlayColor },
                                     ]}
-                                    onLayout={onShadowLayout}
-                                >
-                                    {highlightSegments.map((seg, i) =>
-                                        seg.highlight ? (
-                                            <Text
-                                                key={i}
-                                                style={{
-                                                    textDecorationLine:
-                                                        "underline",
-                                                    textDecorationColor:
-                                                        "#21a870",
-                                                    textDecorationStyle:
-                                                        "solid",
-                                                    ...({
-                                                        textDecorationThickness: 3,
-                                                    } as any),
-                                                    color: "transparent",
-                                                    fontFamily: fonts.regular,
-                                                }}
-                                            >
-                                                {seg.text}
-                                            </Text>
-                                        ) : (
-                                            <Text
-                                                key={i}
-                                                style={{
-                                                    color: "transparent",
-                                                    fontFamily: fonts.regular,
-                                                }}
-                                            >
-                                                {seg.text}
-                                            </Text>
-                                        ),
-                                    )}
-                                </Animated.Text>
-                            ) : (
-                                <Text
-                                    style={[styles.input, styles.shadowText]}
-                                    onLayout={onShadowLayout}
-                                >
-                                    {shadowValue || " "}
-                                </Text>
+                                    pointerEvents="none"
+                                />
                             )}
-                        </View>
-                    </BlurView>
-                </LinearGradient>
-                <Animated.View style={[errorAnimation]}>
-                    <NText style={styles.failed}>{failedText}</NText>
+                            {hasFloatingLabel && (
+                                <Animated.Text
+                                    style={labelAnimStyle}
+                                    numberOfLines={1}
+                                    pointerEvents="none"
+                                >
+                                    {placeholder}
+                                </Animated.Text>
+                            )}
+                            <AnimatedTextInput
+                                {...props}
+                                placeholder={
+                                    hasFloatingLabel ? "" : placeholder
+                                }
+                                style={[
+                                    styles.input,
+                                    {
+                                        fontFamily: fonts.regular,
+                                        color: theme.text,
+                                    },
+                                    animatedInputStyle,
+                                    secureTextEntry && styles.inputWithEye,
+                                    props.style,
+                                ]}
+                                placeholderTextColor={theme.inputPlaceholder}
+                                onFocus={onFocus}
+                                onBlur={onBlur}
+                                onChangeText={onChangeText}
+                                secureTextEntry={
+                                    secureTextEntry && !showPassword
+                                }
+                                multiline={!secureTextEntry}
+                                textAlignVertical="top"
+                                scrollEnabled={false}
+                            />
+                            {secureTextEntry && (
+                                <Pressable
+                                    style={styles.eyeButton}
+                                    onPress={() => setShowPassword((v) => !v)}
+                                    hitSlop={8}
+                                >
+                                    <Ionicons
+                                        name={showPassword ? "eye" : "eye-off"}
+                                        size={20}
+                                        color={theme.iconMuted}
+                                    />
+                                </Pressable>
+                            )}
+                            {/* Shadow Text: mirrors input value and fires onLayout on any size change,
+                            including shrink — more reliable than onContentSizeChange cross-platform */}
+                            <View
+                                pointerEvents="none"
+                                style={[
+                                    styles.shadowContainer,
+                                    highlightSegments
+                                        ? styles.shadowVisible
+                                        : undefined,
+                                ]}
+                            >
+                                {highlightSegments ? (
+                                    <Text
+                                        style={[
+                                            styles.input,
+                                            styles.shadowText,
+                                            {
+                                                color: "transparent",
+                                                fontFamily: fonts.regular,
+                                            },
+                                        ]}
+                                        onLayout={onShadowLayout}
+                                    >
+                                        {highlightSegments.map((seg, i) =>
+                                            seg.highlight ? (
+                                                <Text
+                                                    key={i}
+                                                    style={{
+                                                        textDecorationLine:
+                                                            "underline",
+                                                        textDecorationColor:
+                                                            "#21a870",
+                                                        textDecorationStyle:
+                                                            "solid",
+                                                        ...({
+                                                            textDecorationThickness: 3,
+                                                        } as any),
+                                                        color: "transparent",
+                                                        fontFamily:
+                                                            fonts.regular,
+                                                    }}
+                                                >
+                                                    {seg.text}
+                                                </Text>
+                                            ) : (
+                                                <Text
+                                                    key={i}
+                                                    style={{
+                                                        color: "transparent",
+                                                        fontFamily:
+                                                            fonts.regular,
+                                                    }}
+                                                >
+                                                    {seg.text}
+                                                </Text>
+                                            ),
+                                        )}
+                                    </Text>
+                                ) : (
+                                    <Text
+                                        style={[
+                                            styles.input,
+                                            styles.shadowText,
+                                        ]}
+                                        onLayout={onShadowLayout}
+                                    >
+                                        {shadowValue || " "}
+                                    </Text>
+                                )}
+                            </View>
+                        </BlurView>
+                    </LinearGradient>
+                    <Animated.View style={[errorAnimation]}>
+                        <NText style={styles.failed}>{failedText}</NText>
+                    </Animated.View>
                 </Animated.View>
-            </Animated.View>
+            </GestureDetector>
         </>
     )
 })

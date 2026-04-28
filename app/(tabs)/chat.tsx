@@ -328,6 +328,22 @@ export default function ChatScreen() {
     const { userEmail } = useAuthContext()
     const { profile } = useProfileContext()
     const firstName = profile?.firstName || ""
+
+    // Derive vehicleInfo from the user's primary vehicle (if any)
+    const primaryVehicle = profile?.vehicles?.find((v) => v.isPrimary) ?? null
+    const vehicleInfoFromProfile = primaryVehicle
+        ? {
+              make: primaryVehicle.make || null,
+              model: primaryVehicle.model || null,
+              year: primaryVehicle.year
+                  ? parseInt(primaryVehicle.year, 10)
+                  : null,
+              mileage: primaryVehicle.currentMileage
+                  ? parseInt(primaryVehicle.currentMileage, 10)
+                  : null,
+              warningLights: null as boolean | null,
+          }
+        : null
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [chatIntent, setChatIntent] = useState<string>("")
@@ -354,6 +370,7 @@ export default function ChatScreen() {
         vehicleInfo,
         setVehicleInfo,
         setPartQuery,
+        setPartPriceLimit,
         conversationId,
         clearChat,
     } = useChatContext()
@@ -400,6 +417,19 @@ export default function ChatScreen() {
             }).start(() => setGreetingHidden(true))
         }
     }, [chatStarted])
+
+    // Seed vehicleInfo from the primary vehicle when profile loads,
+    // but only if vehicleInfo is still empty (no data gathered yet)
+    useEffect(() => {
+        if (
+            vehicleInfoFromProfile &&
+            vehicleInfo.make === null &&
+            vehicleInfo.model === null &&
+            vehicleInfo.year === null
+        ) {
+            setVehicleInfo(vehicleInfoFromProfile)
+        }
+    }, [profile])
 
     // Clean up streaming timer on unmount
     useEffect(() => {
@@ -497,6 +527,11 @@ export default function ChatScreen() {
                 setPartQuery(data.partQuery)
             }
 
+            // Update price limit for the shop tab
+            if (data.partPriceLimit !== undefined) {
+                setPartPriceLimit(data.partPriceLimit)
+            }
+
             // Update intent and confidence for suggestions
             if (data.intent) {
                 setChatIntent(data.intent)
@@ -523,6 +558,10 @@ export default function ChatScreen() {
         setGreetingHidden(false)
         greetingOpacity.setValue(1)
         clearChat()
+        // Re-seed vehicle info from primary vehicle after clearing
+        if (vehicleInfoFromProfile) {
+            setVehicleInfo(vehicleInfoFromProfile)
+        }
         setChatIntent("")
         setChatConfidence(0)
         setQuery("")
@@ -837,6 +876,12 @@ export default function ChatScreen() {
                         onSelect={(suggestion) => {
                             if (!suggestion) return
                             if (suggestion.startsWith("/(tabs)/")) {
+                                if (
+                                    suggestion === "/(tabs)/shop" &&
+                                    query.trim()
+                                ) {
+                                    setPartQuery(query.trim())
+                                }
                                 router.push(suggestion as any)
                             } else {
                                 setQuery(suggestion)

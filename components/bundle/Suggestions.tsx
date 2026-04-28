@@ -103,6 +103,8 @@ export function Suggestions({
     useEffect(() => {
         if (!debouncedQuery || debouncedQuery.trim().length < 3) {
             setSuggestions([])
+            setIntent("")
+            setConfidence(0)
             return
         }
 
@@ -143,21 +145,6 @@ export function Suggestions({
     }, [debouncedQuery, chatStarted])
 
     if (loading) return null
-
-    if (suggestions.length === 0 && !chatStarted) {
-        return (
-            <View style={styles.center}>
-                <NText
-                    style={{
-                        fontFamily: fonts.light,
-                        fontSize: 14,
-                    }}
-                >
-                    {t("suggestions.noSuggestions")}
-                </NText>
-            </View>
-        )
-    }
 
     return (
         <View style={styles.container}>

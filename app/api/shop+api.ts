@@ -53,6 +53,27 @@ async function searchGoogleShopping(query: string): Promise<ShopResult[]> {
     return results
 }
 
+const AUTO_KEYWORDS = [
+    // English
+    "car", "auto", "vehicle", "motor", "engine", "brake", "tire", "tyre",
+    "wheel", "oil", "filter", "spark", "plug", "clutch", "transmission",
+    "battery", "exhaust", "radiator", "suspension", "steering", "alternator",
+    "starter", "coolant", "fuse", "belt", "hose", "gasket", "piston",
+    "caliper", "rotor", "pad", "muffler", "catalytic", "intake", "injector",
+    "pump", "sensor", "axle", "bearing", "seal", "bulb", "wiper",
+    "headlight", "taillight", "mirror", "bumper", "hood", "trunk", "part",
+    "parts", "repair", "fluid", "shock", "strut", "cv", "timing",
+    // Romanian
+    "masina", "masin", "motor", "fran", "roat", "ulei", "filtru", "baterie",
+    "transmisie", "ambreiaj", "curea", "furtun", "piesa", "reparati", "service",
+    "senzor", "pompa",
+]
+
+function isAutoRelated(query: string): boolean {
+    const lower = query.toLowerCase()
+    return AUTO_KEYWORDS.some((kw) => lower.includes(kw))
+}
+
 export async function POST(request: Request) {
     const { query } = await request.json()
 
@@ -64,6 +85,17 @@ export async function POST(request: Request) {
     }
 
     const trimmed = query.trim()
+
+    if (!isAutoRelated(trimmed)) {
+        return Response.json(
+            {
+                results: [],
+                query: trimmed,
+                error: "Please search for automotive parts or car-related items only.",
+            },
+            { status: 400 },
+        )
+    }
 
     try {
         const results = await searchGoogleShopping(trimmed)

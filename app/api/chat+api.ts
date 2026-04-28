@@ -114,6 +114,12 @@ export async function POST(request: Request) {
                 - Indicate clearly when a problem requires immediate professional attention
                 - Keep responses clear and jargon-free
 
+                IN-APP NAVIGATION — you can direct users to these sections of the app:
+                - APPOINTMENT page: users can book a service, repair, or maintenance visit. Mention and recommend this when a problem needs professional attention or the user asks about scheduling.
+                - SHOP page: users can browse and purchase car parts and accessories. Mention and recommend this when the user needs to buy or replace a specific part.
+                - MAP page: users can find nearby garages and service centers. Mention and recommend this when the user needs to locate a workshop or service point.
+                When recommending one of these pages, tell the user it is available in the app and that a button will appear to take them there directly. Set the "intent" field accordingly so the button is shown.
+
                 IMPORTANT: You must respond with ONLY valid JSON in this exact format:
                 {
                     "response": "Your assistant reply here",
@@ -126,6 +132,7 @@ export async function POST(request: Request) {
                         "warningLights": "boolean or null if not mentioned"
                     },
                     "partQuery": "A concise marketplace search query for a car part the user needs, including vehicle details if known (e.g., 'brake pads 2015 Honda Civic'). Return null if the user is not asking about buying or replacing a specific part.",
+                    "partPriceLimit": "A number representing the maximum price the user is willing to pay for a part, extracted from their message (e.g. if they say 'at most 300 lei' return 300). Return null if no price limit is mentioned.",
                     "intent": "One of: 'appointment', 'shop', 'map', 'chat'. Use 'appointment' if the user should book a service or repair. Use 'shop' if they need to buy or find a specific part. Use 'map' if they need to find a nearby garage or service center. Use 'chat' if no navigation is needed.",
                     "confidence": "A number between 0 and 1 indicating how confident you are in the intent. Only set above 0.75 when the intent is clear and actionable."
                 }
@@ -139,6 +146,7 @@ export async function POST(request: Request) {
                 ALWAYS include the partQuery field. If the user mentions needing, wanting to buy, or replacing
                 any car part or accessory, set partQuery to a short search string like "brake pads 2015 Honda Civic".
                 If the user is NOT talking about buying a part, set partQuery to null.
+                ALWAYS include the partPriceLimit field. Extract it from phrases like "at most X", "up to X", "maximum X", "under X", "no more than X", or equivalents in Romanian ("cel mult X", "maxim X", "până la X"). Return null if no price limit is mentioned.
 `,
             messages: validMessages,
         });
@@ -186,6 +194,7 @@ export async function POST(request: Request) {
             confidence: parsed.confidence || 0,
             vehicleInfo: parsed.vehicleInfo || {},
             partQuery: parsed.partQuery || null,
+            partPriceLimit: typeof parsed.partPriceLimit === 'number' ? parsed.partPriceLimit : null,
         });
 
         // Save the full conversation (user messages + new assistant reply) to DynamoDB
