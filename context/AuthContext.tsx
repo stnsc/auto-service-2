@@ -18,6 +18,7 @@ import {
     getOAuthSession,
     clearOAuthSession,
 } from "../utils/oauthSession"
+import { logLogin } from "../utils/loginLogger"
 
 interface AuthContextType {
     user: CognitoUser | null
@@ -193,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         setUserEmail(email)
                         setIsAuthenticated(true)
                         setIsPendingApproval(false)
+                        logLogin(email, "cognito")
                         resolve()
                     },
                     onFailure: (err) => {
@@ -280,6 +282,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUserEmail(confirmedEmail || email)
                 setIsAuthenticated(true)
                 setIsPendingApproval(false)
+                logLogin(confirmedEmail || email, "google")
             } else {
                 setIsPendingApproval(true)
             }

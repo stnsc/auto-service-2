@@ -11,6 +11,25 @@ const client = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(client)
 
+function extractClientIp(request: Request): string {
+    const forwarded = request.headers.get("x-forwarded-for")
+    if (forwarded) {
+        return forwarded.split(",")[0].trim()
+    }
+    return (
+        request.headers.get("x-real-ip") ??
+        request.headers.get("cf-connecting-ip") ??
+        "unknown"
+    )
+}
+
+function extractLocation(request: Request) {
+    return {
+        country: request.headers.get("x-vercel-ip-country") ?? "unknown",
+        region: request.headers.get("x-vercel-ip-country-region") ?? "unknown",
+    }
+}
+
 export async function POST(request: Request) {
     const { userId, action, payload } = await request.json()
 
@@ -21,6 +40,17 @@ export async function POST(request: Request) {
         )
     }
 
+    const ip = extractClientIp(request)
+    const userAgent = request.headers.get("user-agent") ?? "unknown"
+    const location = extractLocation(request)
+
+    const enrichedPayload = {
+        ...(payload || {}),
+        ip,
+        userAgent,
+        location,
+    }
+
     try {
         await docClient.send(
             new PutCommand({
@@ -29,7 +59,7 @@ export async function POST(request: Request) {
                     userId,
                     timestamp: new Date().toISOString(),
                     action,
-                    payload: payload || {},
+                    payload: enrichedPayload,
                 },
             }),
         )

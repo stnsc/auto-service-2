@@ -1,16 +1,13 @@
-import React, { ReactNode } from "react"
-import { StyleSheet, View, ViewStyle } from "react-native"
-import { Gesture, GestureDetector } from "react-native-gesture-handler"
+import React, { ReactNode, useCallback } from "react"
+import { Pressable, StyleSheet, ViewStyle } from "react-native"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withSpring,
     withTiming,
-    runOnJS,
 } from "react-native-reanimated"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
-import { useCarouselGesture } from "../../context/GestureContext"
 import { useTheme } from "../../context/ThemeContext"
 
 interface NButtonProps {
@@ -28,50 +25,20 @@ export function NButton({
     intensity = 30,
     style,
 }: NButtonProps) {
-    const carouselPanRef = useCarouselGesture()
     const { theme } = useTheme()
 
     const isPressed = useSharedValue(false)
-    const translateX = useSharedValue(0)
-    const translateY = useSharedValue(0)
 
-    const tap = Gesture.Tap()
-        .onBegin(() => {
-            isPressed.value = true
-        })
-        .onFinalize(() => {
-            isPressed.value = false
-        })
-        .onEnd(() => {
-            if (onPress) {
-                runOnJS(onPress)()
-            }
-        })
+    const onPressIn = useCallback(() => {
+        isPressed.value = true
+    }, [])
 
-    const pan = Gesture.Pan()
-        .withTestId("button-pan")
-        // If a carousel pan ref is available, this button's pan waits for it to fail
-        // before claiming the gesture. This lets horizontal drags pass through.
-        .requireExternalGestureToFail(
-            (carouselPanRef as any) || Gesture.Native(),
-        )
-        .onUpdate((event) => {
-            translateX.value = event.translationX / 15
-            translateY.value = event.translationY / 15
-        })
-        .onEnd(() => {
-            translateX.value = withSpring(0)
-            translateY.value = withSpring(0)
-        })
-
-    const composedGestures = Gesture.Simultaneous(tap, pan)
+    const onPressOut = useCallback(() => {
+        isPressed.value = false
+    }, [])
 
     const animatedStyle = useAnimatedStyle(() => ({
-        transform: [
-            { translateX: translateX.value },
-            { translateY: translateY.value },
-            { scale: withSpring(isPressed.value ? 1.1 : 1) },
-        ],
+        transform: [{ scale: withSpring(isPressed.value ? 1.1 : 1) }],
     }))
 
     // This handles the brightness increase
@@ -81,8 +48,13 @@ export function NButton({
     }))
 
     return (
-        <GestureDetector gesture={composedGestures}>
-            <Animated.View style={[styles.wrapper, animatedStyle, style]}>
+        <Pressable
+            onPress={onPress}
+            onPressIn={onPressIn}
+            onPressOut={onPressOut}
+            style={style}
+        >
+            <Animated.View style={[styles.wrapper, animatedStyle]}>
                 <LinearGradient
                     colors={[color, "rgba(255,255,255,0.05)"]}
                     style={styles.gradientStroke}
@@ -100,7 +72,7 @@ export function NButton({
                     </BlurView>
                 </LinearGradient>
             </Animated.View>
-        </GestureDetector>
+        </Pressable>
     )
 }
 
