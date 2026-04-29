@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import {
     View,
     StyleSheet,
@@ -19,9 +19,25 @@ import i18n from "../../i18n"
 export const TopNavBar = () => {
     const { t, i18n: i18nInstance } = useTranslation()
     const router = useRouter()
-    const { signOut } = useAuthContext()
+    const { signOut, userEmail, user } = useAuthContext()
     const { theme, colorScheme, toggleTheme } = useTheme()
     const currentLang = i18nInstance.language
+
+    const [hasApprovedService, setHasApprovedService] = useState(false)
+
+    useEffect(() => {
+        if (!userEmail) return
+        const uid = user?.getUsername() ?? userEmail
+        fetch(`/api/service-applications?userId=${encodeURIComponent(uid)}`)
+            .then((r) => r.json())
+            .then((data: any[]) => {
+                const approved = Array.isArray(data)
+                    ? data.filter((a) => a.status === "approved")
+                    : []
+                setHasApprovedService(approved.length > 0)
+            })
+            .catch(() => {})
+    }, [userEmail, user])
 
     const toggleLanguage = () => {
         const next = currentLang === "en" ? "ro" : "en"
@@ -44,13 +60,21 @@ export const TopNavBar = () => {
             label: t("topNav.reportBug"),
             icon: <Ionicons name="bug-outline" size={18} color={theme.icon} />,
         },
-        {
-            key: "admin",
-            label: t("topNav.adminPanel"),
-            icon: (
-                <Ionicons name="shield-outline" size={18} color={theme.icon} />
-            ),
-        },
+        ...(hasApprovedService
+            ? [
+                  {
+                      key: "admin",
+                      label: t("topNav.adminPanel"),
+                      icon: (
+                          <Ionicons
+                              name="shield-outline"
+                              size={18}
+                              color={theme.icon}
+                          />
+                      ),
+                  },
+              ]
+            : []),
         {
             key: "logout",
             label: t("topNav.logout"),

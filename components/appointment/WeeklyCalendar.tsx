@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react"
+import React, { useState, useMemo, useCallback, useEffect } from "react"
 import { View, StyleSheet, Pressable } from "react-native"
 import { NText } from "../replacements/NText"
 import { LinearGradient } from "expo-linear-gradient"
@@ -6,8 +6,10 @@ import { BlurView } from "expo-blur"
 import { fonts } from "../../theme"
 import {
     getSlotsForDay,
+    getSlotsForDayFromConfig,
     formatDateStr,
     TimeSlot,
+    WeekSchedule,
 } from "../../data/serviceAvailability"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
@@ -52,6 +54,9 @@ interface WeeklyCalendarProps {
     selectedDate: string
     selectedTime: string
     onSelectSlot: (date: string, time: string) => void
+    schedule?: WeekSchedule | null
+    slotDuration?: number
+    bookingWindowWeeks?: number
 }
 
 export function WeeklyCalendar({
@@ -59,6 +64,9 @@ export function WeeklyCalendar({
     selectedDate,
     selectedTime,
     onSelectSlot,
+    schedule,
+    slotDuration = 30,
+    bookingWindowWeeks = 8,
 }: WeeklyCalendarProps) {
     const { t } = useTranslation()
     const { theme } = useTheme()
@@ -71,7 +79,6 @@ export function WeeklyCalendar({
     const today = useMemo(() => new Date(), [])
     const todayMonday = useMemo(() => getMonday(today), [today])
 
-    // Initialize to the week of the already-selected date, or current week
     const [weekStart, setWeekStart] = useState<Date>(() => {
         if (selectedDate) {
             const [y, m, d] = selectedDate.split("-").map(Number)
@@ -90,7 +97,6 @@ export function WeeklyCalendar({
             )
             return Math.max(0, Math.min(6, diff))
         }
-        // Default to today's index within the week
         const day = today.getDay()
         return day === 0 ? 6 : day - 1
     })
@@ -99,11 +105,31 @@ export function WeeklyCalendar({
     const activeDate = weekDays[activeDayIndex]
     const activeDateStr = formatDateStr(activeDate)
 
-    const slots = useMemo(
-        () => getSlotsForDay(serviceCenterId, activeDate),
-        [serviceCenterId, activeDateStr],
-    )
+    // Fetch booked times for the active date when using real schedule
+    const [bookedTimes, setBookedTimes] = useState<string[]>([])
+    useEffect(() => {
+        if (!schedule || !serviceCenterId) return
+        fetch(
+            `/api/appointments?serviceId=${serviceCenterId}&date=${activeDateStr}`,
+        )
+            .then((r) => r.json())
+            .then((data) => setBookedTimes(data.bookedTimes ?? []))
+            .catch(() => setBookedTimes([]))
+    }, [schedule, serviceCenterId, activeDateStr])
 
+    const slots = useMemo(() => {
+        if (schedule) {
+            return getSlotsForDayFromConfig(
+                schedule,
+                slotDuration,
+                activeDate,
+                bookedTimes,
+            )
+        }
+        return getSlotsForDay(serviceCenterId, activeDate)
+    }, [schedule, slotDuration, serviceCenterId, activeDateStr, bookedTimes])
+
+    const maxWeekOffset = bookingWindowWeeks
     const isCurrentWeek = weekStart.getTime() === todayMonday.getTime()
 
     const prevWeek = useCallback(() => {
@@ -119,14 +145,14 @@ export function WeeklyCalendar({
     const nextWeek = useCallback(() => {
         setWeekStart((prev) => {
             const maxDate = new Date(todayMonday)
-            maxDate.setDate(maxDate.getDate() + 8 * 7)
+            maxDate.setDate(maxDate.getDate() + maxWeekOffset * 7)
             const newStart = new Date(prev)
             newStart.setDate(newStart.getDate() + 7)
             if (newStart > maxDate) return prev
             setActiveDayIndex(0)
             return newStart
         })
-    }, [todayMonday])
+    }, [todayMonday, maxWeekOffset])
 
     const weekLabel = `${MONTH_NAMES[weekDays[0].getMonth()]} ${weekDays[0].getDate()} - ${MONTH_NAMES[weekDays[6].getMonth()]} ${weekDays[6].getDate()}`
 
@@ -377,8 +403,6 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         padding: 16,
     },
-
-    // Week navigation
     weekNavRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -399,8 +423,6 @@ const styles = StyleSheet.create({
         fontFamily: fonts.bold,
         fontSize: 14,
     },
-
-    // Day selector
     dayRow: {
         flexDirection: "row",
         justifyContent: "space-between",
@@ -418,7 +440,6 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         gap: 2,
     },
-    dayPillActive: {},
     dayPillPast: {
         opacity: 0.35,
     },
@@ -426,7 +447,6 @@ const styles = StyleSheet.create({
         fontFamily: fonts.light,
         fontSize: 10,
     },
-    dayNameActive: {},
     dayNumber: {
         fontFamily: fonts.bold,
         fontSize: 16,
@@ -442,8 +462,6 @@ const styles = StyleSheet.create({
         height: 4,
         borderRadius: 2,
     },
-
-    // Closed message
     closedContainer: {
         paddingVertical: 30,
         alignItems: "center",
@@ -452,8 +470,6 @@ const styles = StyleSheet.create({
         fontFamily: fonts.regular,
         fontSize: 14,
     },
-
-    // Time slots grid
     slotsGrid: {
         flexDirection: "row",
         flexWrap: "wrap",
@@ -472,22 +488,15 @@ const styles = StyleSheet.create({
     slotChipDisabled: {
         opacity: 0.5,
     },
-    slotChipSelected: {},
     slotText: {
         fontFamily: fonts.regular,
         fontSize: 14,
-    },
-    slotTextDisabled: {},
-    slotTextSelected: {
-        fontFamily: fonts.bold,
     },
     bookedLabel: {
         fontFamily: fonts.light,
         fontSize: 9,
         marginTop: 2,
     },
-
-    // Selection summary
     selectionSummary: {
         marginTop: 14,
         paddingTop: 12,

@@ -1,5 +1,5 @@
-import React from "react"
-import { StyleSheet, View, ScrollView } from "react-native"
+import React, { useEffect, useState } from "react"
+import { StyleSheet, View, ScrollView, Pressable } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
@@ -7,16 +7,33 @@ import { NText } from "../../components/replacements/NText"
 import { NInput } from "../../components/replacements/NInput"
 import { fonts } from "../../theme"
 import { useTranslation } from "react-i18next"
+import type { ServiceConfig } from "../api/service-config+api"
+import { useAdminService } from "../../context/AdminServiceContext"
 import "../../i18n"
+
+const SERVICE_TYPES = [
+    "mechanic",
+    "tire_shop",
+    "car_wash",
+    "body_shop",
+    "oil_change",
+    "towing",
+]
 
 function FieldRow({
     label,
     icon,
     placeholder,
+    value,
+    onChangeText,
+    keyboardType,
 }: {
     label: string
     icon: keyof typeof Ionicons.glyphMap
     placeholder: string
+    value: string
+    onChangeText: (text: string) => void
+    keyboardType?: "default" | "phone-pad" | "decimal-pad"
 }) {
     return (
         <View style={styles.fieldRow}>
@@ -28,7 +45,9 @@ function FieldRow({
             </View>
             <NInput
                 placeholder={placeholder}
-                editable={false}
+                value={value}
+                onChangeText={onChangeText}
+                keyboardType={keyboardType ?? "default"}
                 style={styles.fieldInput}
             />
         </View>
@@ -37,6 +56,73 @@ function FieldRow({
 
 export default function SettingsScreen() {
     const { t } = useTranslation()
+    const { serviceId } = useAdminService()
+
+    const [name, setName] = useState("")
+    const [address, setAddress] = useState("")
+    const [phone, setPhone] = useState("")
+    const [type, setType] = useState("")
+    const [latitude, setLatitude] = useState("")
+    const [longitude, setLongitude] = useState("")
+    const [isSaving, setIsSaving] = useState(false)
+    const [saveStatus, setSaveStatus] = useState<"idle" | "ok" | "err">("idle")
+    const [currentConfig, setCurrentConfig] = useState<ServiceConfig | null>(
+        null,
+    )
+
+    useEffect(() => {
+        if (!serviceId) return
+        fetch(`/api/service-config?serviceId=${serviceId}`)
+            .then((r) => r.json())
+            .then((config: ServiceConfig) => {
+                setCurrentConfig(config)
+                setName(config.name ?? "")
+                setAddress(config.address ?? "")
+                setPhone(config.phone ?? "")
+                setType(config.type ?? "")
+                setLatitude(
+                    config.latitude != null ? String(config.latitude) : "",
+                )
+                setLongitude(
+                    config.longitude != null ? String(config.longitude) : "",
+                )
+            })
+            .catch(() => {})
+    }, [serviceId])
+
+    const handleSave = async () => {
+        setIsSaving(true)
+        setSaveStatus("idle")
+        try {
+            const res = await fetch("/api/service-config", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...currentConfig,
+                    serviceId,
+                    name,
+                    address,
+                    phone,
+                    type,
+                    latitude: latitude ? parseFloat(latitude) : null,
+                    longitude: longitude ? parseFloat(longitude) : null,
+                }),
+            })
+            if (res.ok) {
+                const updated = await res.json()
+                setCurrentConfig(updated)
+                setSaveStatus("ok")
+            } else {
+                setSaveStatus("err")
+            }
+        } catch {
+            setSaveStatus("err")
+        } finally {
+            setIsSaving(false)
+            setTimeout(() => setSaveStatus("idle"), 3000)
+        }
+    }
+
     return (
         <ScrollView
             style={styles.container}
@@ -66,25 +152,73 @@ export default function SettingsScreen() {
                             label={t("settings.serviceName")}
                             icon="business-outline"
                             placeholder={t("settings.notConfigured")}
+                            value={name}
+                            onChangeText={setName}
                         />
                         <View style={styles.separator} />
                         <FieldRow
                             label={t("settings.address")}
                             icon="location-outline"
                             placeholder={t("settings.notConfigured")}
+                            value={address}
+                            onChangeText={setAddress}
                         />
                         <View style={styles.separator} />
                         <FieldRow
                             label={t("settings.phone")}
                             icon="call-outline"
                             placeholder={t("settings.notConfigured")}
+                            value={phone}
+                            onChangeText={setPhone}
+                            keyboardType="phone-pad"
                         />
                         <View style={styles.separator} />
-                        <FieldRow
-                            label={t("settings.type")}
-                            icon="construct-outline"
-                            placeholder={t("settings.notConfigured")}
-                        />
+                        <View style={styles.fieldRow}>
+                            <View style={styles.fieldLabel}>
+                                <Ionicons
+                                    name="construct-outline"
+                                    size={18}
+                                    color="rgba(255,255,255,0.5)"
+                                />
+                                <NText
+                                    style={[
+                                        styles.labelText,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
+                                    {t("settings.type")}
+                                </NText>
+                            </View>
+                            <View style={styles.typeChipRow}>
+                                {SERVICE_TYPES.map((st) => (
+                                    <Pressable
+                                        key={st}
+                                        onPress={() => setType(st)}
+                                        style={[
+                                            styles.typeChip,
+                                            type === st &&
+                                                styles.typeChipActive,
+                                        ]}
+                                    >
+                                        <NText
+                                            style={[
+                                                styles.typeChipText,
+                                                type === st &&
+                                                    styles.typeChipTextActive,
+                                                {
+                                                    fontFamily:
+                                                        type === st
+                                                            ? fonts.medium
+                                                            : fonts.regular,
+                                                },
+                                            ]}
+                                        >
+                                            {t(`settings.types.${st}`)}
+                                        </NText>
+                                    </Pressable>
+                                ))}
+                            </View>
+                        </View>
                     </BlurView>
                 </LinearGradient>
             </View>
@@ -122,14 +256,13 @@ export default function SettingsScreen() {
                                 >
                                     {t("settings.latitude")}
                                 </NText>
-                                <NText
-                                    style={[
-                                        styles.coordValue,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                >
-                                    —
-                                </NText>
+                                <NInput
+                                    placeholder="45.0000"
+                                    value={latitude}
+                                    onChangeText={setLatitude}
+                                    keyboardType="decimal-pad"
+                                    style={styles.coordInput}
+                                />
                             </View>
                             <View style={styles.coordItem}>
                                 <NText
@@ -140,24 +273,36 @@ export default function SettingsScreen() {
                                 >
                                     {t("settings.longitude")}
                                 </NText>
-                                <NText
-                                    style={[
-                                        styles.coordValue,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                >
-                                    —
-                                </NText>
+                                <NInput
+                                    placeholder="25.0000"
+                                    value={longitude}
+                                    onChangeText={setLongitude}
+                                    keyboardType="decimal-pad"
+                                    style={styles.coordInput}
+                                />
                             </View>
                         </View>
                     </BlurView>
                 </LinearGradient>
             </View>
 
-            {/* Save button (disabled placeholder) */}
-            <View style={styles.saveWrapper}>
+            {/* Save button */}
+            <Pressable
+                onPress={handleSave}
+                disabled={isSaving}
+                style={[styles.saveWrapper, isSaving && { opacity: 0.5 }]}
+            >
                 <LinearGradient
-                    colors={["rgba(33,168,112,0.4)", "rgba(33,168,112,0.15)"]}
+                    colors={
+                        saveStatus === "ok"
+                            ? ["rgba(33,168,112,0.6)", "rgba(33,168,112,0.3)"]
+                            : saveStatus === "err"
+                              ? ["rgba(220,50,50,0.5)", "rgba(220,50,50,0.2)"]
+                              : [
+                                    "rgba(33,168,112,0.4)",
+                                    "rgba(33,168,112,0.15)",
+                                ]
+                    }
                     style={styles.saveGradient}
                 >
                     <BlurView
@@ -171,11 +316,17 @@ export default function SettingsScreen() {
                                 { fontFamily: fonts.medium },
                             ]}
                         >
-                            {t("settings.saveChanges")}
+                            {isSaving
+                                ? t("settings.saving")
+                                : saveStatus === "ok"
+                                  ? t("settings.saved")
+                                  : saveStatus === "err"
+                                    ? t("settings.saveError")
+                                    : t("settings.saveChanges")}
                         </NText>
                     </BlurView>
                 </LinearGradient>
-            </View>
+            </Pressable>
         </ScrollView>
     )
 }
@@ -223,35 +374,50 @@ const styles = StyleSheet.create({
         color: "rgba(255,255,255,0.7)",
         fontSize: 13,
     },
-    fieldInput: {
-        opacity: 0.6,
-    },
+    fieldInput: {},
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: "rgba(255,255,255,0.12)",
         marginVertical: 4,
     },
+    typeChipRow: {
+        flexDirection: "row",
+        gap: 8,
+        flexWrap: "wrap",
+    },
+    typeChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        backgroundColor: "rgba(255,255,255,0.1)",
+    },
+    typeChipActive: {
+        backgroundColor: "rgba(33,168,112,0.45)",
+    },
+    typeChipText: {
+        color: "rgba(255,255,255,0.55)",
+        fontSize: 12,
+    },
+    typeChipTextActive: {
+        color: "#ffffff",
+    },
     coordRow: {
         flexDirection: "row",
-        gap: 24,
+        gap: 16,
     },
     coordItem: {
         flex: 1,
-        gap: 4,
+        gap: 6,
     },
     coordLabel: {
         color: "rgba(255,255,255,0.5)",
         fontSize: 13,
     },
-    coordValue: {
-        color: "#ffffff",
-        fontSize: 16,
-    },
+    coordInput: {},
     saveWrapper: {
         marginTop: 32,
         borderRadius: 20,
         overflow: "hidden",
-        opacity: 0.5,
     },
     saveGradient: {
         padding: 1.5,

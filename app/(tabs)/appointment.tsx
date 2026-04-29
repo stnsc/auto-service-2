@@ -20,6 +20,7 @@ import { useAlphaNotice } from "../../hooks/useAlphaNotice"
 import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
+import type { ServiceConfig } from "../api/service-config+api"
 import "../../i18n"
 
 const STEPS_KEYS = [
@@ -104,10 +105,24 @@ export default function AppointmentScreen() {
     const { services } = useCarServices()
     const appointmentNotice = useAlphaNotice("appointment-alpha")
     const { register } = useInfoNotice()
+    const [serviceConfig, setServiceConfig] = useState<ServiceConfig | null>(
+        null,
+    )
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitSuccess, setSubmitSuccess] = useState(false)
+    const [submitError, setSubmitError] = useState<string | null>(null)
 
     useEffect(() => {
         register(appointmentNotice.show)
         return () => register(null)
+    }, [])
+
+    // Fetch service schedule config for the calendar
+    useEffect(() => {
+        fetch("/api/service-config")
+            .then((r) => r.json())
+            .then(setServiceConfig)
+            .catch(() => {})
     }, [])
     const {
         currentStep,
@@ -116,6 +131,7 @@ export default function AppointmentScreen() {
         setFormData,
         errors,
         setErrors,
+        resetAppointment,
     } = useAppointmentContext()
 
     // Get vehicle info from chat context
@@ -136,7 +152,7 @@ export default function AppointmentScreen() {
     }, [vehicleInfo.year, vehicleInfo.make, vehicleInfo.model, summary])
 
     // Auto-populate from profile's primary vehicle (lower priority than chat context)
-    const { userEmail } = useAuthContext()
+    const { userEmail, user } = useAuthContext()
     useEffect(() => {
         const primary = profile?.vehicles.find((v) => v.isPrimary)
         setFormData((prev) => ({
@@ -259,8 +275,42 @@ export default function AppointmentScreen() {
         }
     }
 
-    const handleSubmit = () => {
-        console.log("Form submitted:", formData)
+    const handleSubmit = async () => {
+        setIsSubmitting(true)
+        setSubmitError(null)
+        try {
+            const response = await fetch("/api/appointments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: user?.getUsername() ?? userEmail ?? "anonymous",
+                    serviceId: formData.serviceCenterId,
+                    serviceName: services.find((s) => s.id === formData.serviceCenterId)?.name ?? "",
+                    customerName: formData.customerName,
+                    customerPhone: formData.customerPhone,
+                    customerEmail: formData.customerEmail,
+                    vehicleYear: formData.vehicleYear,
+                    vehicleMake: formData.vehicleMake,
+                    vehicleModel: formData.vehicleModel,
+                    vehiclePlate: formData.vehiclePlate,
+                    problemDescription: formData.problemDescription,
+                    preferredDate: formData.preferredDate,
+                    preferredTime: formData.preferredTime,
+                    additionalNotes: formData.additionalNotes,
+                }),
+            })
+            if (!response.ok) throw new Error("Failed to submit")
+            setSubmitSuccess(true)
+        } catch {
+            setSubmitError(t("appointment.submitError"))
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleSuccessDismiss = () => {
+        setSubmitSuccess(false)
+        resetAppointment()
     }
 
     const selectedServiceCenter = services.find(
@@ -502,6 +552,11 @@ export default function AppointmentScreen() {
                                 updateField("preferredDate", date)
                                 updateField("preferredTime", time)
                             }}
+                            schedule={serviceConfig?.schedule}
+                            slotDuration={serviceConfig?.slotDuration ?? 30}
+                            bookingWindowWeeks={
+                                serviceConfig?.bookingWindowWeeks ?? 8
+                            }
                         />
                         {(!!errors.preferredDate || !!errors.preferredTime) && (
                             <NText
@@ -744,11 +799,16 @@ export default function AppointmentScreen() {
                 {currentStep === STEPS.length - 1 ? (
                     <NButton
                         onPress={handleSubmit}
-                        style={styles.button}
+                        style={[
+                            styles.button,
+                            isSubmitting && styles.buttonDisabled,
+                        ]}
                         color="rgba(33, 168, 112, 0.51)"
                     >
                         <NText style={styles.buttonText}>
-                            {t("appointment.submit")}
+                            {isSubmitting
+                                ? t("appointment.submitting")
+                                : t("appointment.submit")}
                         </NText>
                     </NButton>
                 ) : (
@@ -775,6 +835,24 @@ export default function AppointmentScreen() {
                 <NText style={styles.noticeText}>
                     {t("appointment.modalLine2")}
                 </NText>
+            </NModal>
+
+            <NModal
+                visible={submitSuccess}
+                onDismiss={handleSuccessDismiss}
+                title={t("appointment.submitSuccessTitle")}
+            >
+                <NText style={styles.noticeText}>
+                    {t("appointment.submitSuccessMessage")}
+                </NText>
+            </NModal>
+
+            <NModal
+                visible={!!submitError}
+                onDismiss={() => setSubmitError(null)}
+                title={t("appointment.submitErrorTitle")}
+            >
+                <NText style={styles.noticeText}>{submitError}</NText>
             </NModal>
         </View>
     )

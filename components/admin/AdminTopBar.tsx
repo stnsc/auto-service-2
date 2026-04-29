@@ -1,5 +1,5 @@
 import React from "react"
-import { StyleSheet, View } from "react-native"
+import { StyleSheet, View, Pressable } from "react-native"
 import { usePathname } from "expo-router"
 import { NText } from "../replacements/NText"
 import { NContextMenu, MenuAction } from "../replacements/NContextMenu"
@@ -10,9 +10,15 @@ import "../../i18n"
 
 interface AdminTopBarProps {
     onAction?: (key: string) => void
+    serviceName?: string
+    onSwitchService?: () => void
 }
 
-export function AdminTopBar({ onAction }: AdminTopBarProps) {
+export function AdminTopBar({
+    onAction,
+    serviceName,
+    onSwitchService,
+}: AdminTopBarProps) {
     const { t } = useTranslation()
     const pathname = usePathname()
 
@@ -24,11 +30,21 @@ export function AdminTopBar({ onAction }: AdminTopBarProps) {
     }
 
     const ADMIN_CONTEXT: MenuAction[] = [
-        {
-            key: "profile",
-            label: t("adminNav.serviceProfile"),
-            icon: <Ionicons name="business-outline" size={18} color="white" />,
-        },
+        ...(onSwitchService
+            ? [
+                  {
+                      key: "switch",
+                      label: "Switch Service",
+                      icon: (
+                          <Ionicons
+                              name="swap-vertical-outline"
+                              size={18}
+                              color="white"
+                          />
+                      ),
+                  },
+              ]
+            : []),
         {
             key: "customer",
             label: t("adminNav.customerView"),
@@ -46,9 +62,23 @@ export function AdminTopBar({ onAction }: AdminTopBarProps) {
 
     return (
         <View style={styles.container}>
-            <NText style={[styles.title, { fontFamily: fonts.bold }]}>
-                {title}
-            </NText>
+            <View style={styles.left}>
+                <NText style={[styles.title, { fontFamily: fonts.bold }]}>
+                    {title}
+                </NText>
+                {serviceName ? (
+                    <View style={styles.serviceRow}>
+                        <NText
+                            style={[
+                                styles.serviceName,
+                                { fontFamily: fonts.light },
+                            ]}
+                        >
+                            {serviceName}
+                        </NText>
+                    </View>
+                ) : null}
+            </View>
 
             <View style={styles.right}>
                 <NText style={[styles.badge, { fontFamily: fonts.light }]}>
@@ -56,7 +86,13 @@ export function AdminTopBar({ onAction }: AdminTopBarProps) {
                 </NText>
                 <NContextMenu
                     avatar={<Ionicons name="person" size={22} color="white" />}
-                    onAction={(key) => onAction?.(key)}
+                    onAction={(key) => {
+                        if (key === "switch") {
+                            onSwitchService?.()
+                        } else {
+                            onAction?.(key)
+                        }
+                    }}
                     actions={ADMIN_CONTEXT}
                 />
             </View>
@@ -75,6 +111,28 @@ const styles = StyleSheet.create({
     title: {
         color: "#ffffff",
         fontSize: 24,
+    },
+    left: {
+        gap: 2,
+    },
+    serviceRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+    serviceName: {
+        color: "rgba(255,255,255,0.5)",
+        fontSize: 13,
+    },
+    switchBtn: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 8,
+        backgroundColor: "rgba(255,255,255,0.1)",
+    },
+    switchText: {
+        color: "rgba(255,255,255,0.5)",
+        fontSize: 11,
     },
     right: {
         flexDirection: "row",

@@ -13,6 +13,30 @@ export interface TimeSlot {
     isBooked: boolean
 }
 
+// ── Types used by the real schedule (from service-config API) ──────────────
+export type DayKey =
+    | "monday"
+    | "tuesday"
+    | "wednesday"
+    | "thursday"
+    | "friday"
+    | "saturday"
+    | "sunday"
+
+export type DayConfig = { isOpen: boolean; open: string; close: string }
+export type WeekSchedule = Record<DayKey, DayConfig>
+
+// Maps JS Date.getDay() (0=Sun … 6=Sat) to WeekSchedule key
+const DAY_INDEX_TO_KEY: DayKey[] = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+]
+
 const SCHEDULES: Record<string, ServiceSchedule> = {
     "1": {
         // AutoFix Brasov: Mon-Fri 08-17, Sat 09-14, Sun closed
@@ -99,6 +123,38 @@ export function formatDateStr(date: Date): string {
     return `${y}-${m}-${d}`
 }
 
+// ── Real schedule slot generator (uses config from service-config API) ───────
+export function getSlotsForDayFromConfig(
+    schedule: WeekSchedule,
+    slotDuration: number,
+    date: Date,
+    bookedTimes: string[] = [],
+): TimeSlot[] {
+    const dayKey = DAY_INDEX_TO_KEY[date.getDay()]
+    const dayConfig = schedule[dayKey]
+
+    if (!dayConfig || !dayConfig.isOpen) return []
+
+    const openMin = parseTime(dayConfig.open)
+    const closeMin = parseTime(dayConfig.close)
+    const dateStr = formatDateStr(date)
+
+    const now = new Date()
+    const todayStr = formatDateStr(now)
+    const isToday = dateStr === todayStr
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+    const slots: TimeSlot[] = []
+    for (let min = openMin; min < closeMin; min += slotDuration) {
+        const time = minutesToTime(min)
+        const isPast = isToday && min <= currentMinutes
+        const booked = bookedTimes.includes(time)
+        slots.push({ time, available: !isPast && !booked, isBooked: booked })
+    }
+    return slots
+}
+
+// ── Legacy mock-data slot generator (kept for backward compatibility) ─────────
 export function getSlotsForDay(
     serviceCenterId: string,
     date: Date,

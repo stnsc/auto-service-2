@@ -132,7 +132,8 @@ function AuthGatedLayout() {
         router.push(TAB_ROUTES[key] as any)
     }
 
-    const isAdmin = pathname.startsWith("/admin")
+    const isAdmin =
+        pathname.startsWith("/admin") || pathname.startsWith("/master-admin")
     const isAuth = [
         "/login",
         "/signup",

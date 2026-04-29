@@ -20,6 +20,8 @@ import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
 import { fonts } from "../../theme"
 import { Vehicle, FuelType, Transmission } from "../types/UserProfile"
+import type { Appointment } from "../api/appointments+api"
+import type { ServiceApplication } from "../api/service-applications+api"
 import "../../i18n"
 
 const FUEL_TYPES: FuelType[] = [
@@ -246,10 +248,17 @@ function VehicleCard({
     )
 }
 
+const STATUS_COLORS: Record<string, string> = {
+    pending: "rgba(245,158,11,0.85)",
+    confirmed: "rgba(59,130,246,0.85)",
+    completed: "rgba(33,168,112,0.85)",
+    cancelled: "rgba(150,150,150,0.7)",
+}
+
 export default function ProfileScreen() {
     const { t } = useTranslation()
     const { theme } = useTheme()
-    const { userEmail, signOut } = useAuthContext()
+    const { userEmail, user, signOut } = useAuthContext()
     const {
         profile,
         saveProfile,
@@ -259,6 +268,10 @@ export default function ProfileScreen() {
         setPrimaryVehicle,
     } = useProfileContext()
     const router = useRouter()
+
+    const [appointments, setAppointments] = useState<Appointment[]>([])
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+    const [serviceApps, setServiceApps] = useState<ServiceApplication[]>([])
 
     // Personal info state
     const [firstName, setFirstName] = useState("")
@@ -285,6 +298,26 @@ export default function ProfileScreen() {
     const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null)
 
     useEffect(() => {
+        if (!userEmail) return
+        setAppointmentsLoading(true)
+        fetch(
+            `/api/appointments?customerEmail=${encodeURIComponent(userEmail)}`,
+        )
+            .then((r) => r.json())
+            .then((data) => setAppointments(Array.isArray(data) ? data : []))
+            .catch(() => setAppointments([]))
+            .finally(() => setAppointmentsLoading(false))
+
+        const uid = user?.getUsername() ?? userEmail
+        fetch(`/api/service-applications?userId=${encodeURIComponent(uid)}`)
+            .then((r) => r.json())
+            .then((data) => {
+                setServiceApps(Array.isArray(data) ? data : [])
+            })
+            .catch(() => {})
+    }, [userEmail, user])
+
+    useEffect(() => {
         if (profile) {
             setFirstName(profile.firstName)
             setLastName(profile.lastName)
@@ -296,13 +329,22 @@ export default function ProfileScreen() {
         const nameRegex = /^[a-zA-ZÀ-ÿ\s'-]+$/
         const errors: typeof fieldErrors = {}
 
-        if (firstName.trim() && (firstName.trim().length < 2 || !nameRegex.test(firstName.trim()))) {
+        if (
+            firstName.trim() &&
+            (firstName.trim().length < 2 || !nameRegex.test(firstName.trim()))
+        ) {
             errors.firstName = t("validation.invalidName")
         }
-        if (lastName.trim() && (lastName.trim().length < 2 || !nameRegex.test(lastName.trim()))) {
+        if (
+            lastName.trim() &&
+            (lastName.trim().length < 2 || !nameRegex.test(lastName.trim()))
+        ) {
             errors.lastName = t("validation.invalidName")
         }
-        if (phoneNumber.trim() && !/^[+\d\s\-(). ]{7,}$/.test(phoneNumber.trim())) {
+        if (
+            phoneNumber.trim() &&
+            !/^[+\d\s\-(). ]{7,}$/.test(phoneNumber.trim())
+        ) {
             errors.phoneNumber = t("validation.invalidPhone")
         }
 
@@ -506,7 +548,13 @@ export default function ProfileScreen() {
                     <NInput
                         placeholder={t("profile.firstName")}
                         value={firstName}
-                        onChangeText={(v) => { setFirstName(v); setFieldErrors((e) => ({ ...e, firstName: undefined })) }}
+                        onChangeText={(v) => {
+                            setFirstName(v)
+                            setFieldErrors((e) => ({
+                                ...e,
+                                firstName: undefined,
+                            }))
+                        }}
                         containerStyle={[styles.modalInput, styles.flex1]}
                         failed={!!fieldErrors.firstName}
                         failedText={fieldErrors.firstName}
@@ -514,7 +562,13 @@ export default function ProfileScreen() {
                     <NInput
                         placeholder={t("profile.lastName")}
                         value={lastName}
-                        onChangeText={(v) => { setLastName(v); setFieldErrors((e) => ({ ...e, lastName: undefined })) }}
+                        onChangeText={(v) => {
+                            setLastName(v)
+                            setFieldErrors((e) => ({
+                                ...e,
+                                lastName: undefined,
+                            }))
+                        }}
                         containerStyle={[styles.modalInput, styles.flex1]}
                         failed={!!fieldErrors.lastName}
                         failedText={fieldErrors.lastName}
@@ -524,7 +578,13 @@ export default function ProfileScreen() {
                 <NInput
                     placeholder={t("profile.phoneNumber")}
                     value={phoneNumber}
-                    onChangeText={(v) => { setPhoneNumber(v); setFieldErrors((e) => ({ ...e, phoneNumber: undefined })) }}
+                    onChangeText={(v) => {
+                        setPhoneNumber(v)
+                        setFieldErrors((e) => ({
+                            ...e,
+                            phoneNumber: undefined,
+                        }))
+                    }}
                     keyboardType="phone-pad"
                     failed={!!fieldErrors.phoneNumber}
                     failedText={fieldErrors.phoneNumber}
@@ -622,6 +682,172 @@ export default function ProfileScreen() {
                         onSetPrimary={() => setPrimaryVehicle(v.id)}
                     />
                 ))}
+
+                {/* - My Appointments - */}
+                <SectionHeader label={t("profile.myAppointments")} />
+
+                {appointmentsLoading ? (
+                    <ActivityIndicator
+                        size="small"
+                        color={theme.accentSolid}
+                        style={{ marginVertical: 12 }}
+                    />
+                ) : appointments.length === 0 ? (
+                    <NText
+                        style={[
+                            styles.emptyText,
+                            {
+                                color: theme.textMuted,
+                                fontFamily: fonts.light,
+                            },
+                        ]}
+                    >
+                        {t("profile.noAppointments")}
+                    </NText>
+                ) : (
+                    appointments.slice(0, 5).map((appt) => (
+                        <View key={appt.appointmentId} style={styles.apptCard}>
+                            <View style={styles.apptHeader}>
+                                <NText
+                                    style={[
+                                        styles.apptService,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                    numberOfLines={1}
+                                >
+                                    {appt.serviceName ||
+                                        t("profile.unknownService")}
+                                </NText>
+                                <View
+                                    style={[
+                                        styles.apptBadge,
+                                        {
+                                            backgroundColor:
+                                                STATUS_COLORS[appt.status] ??
+                                                STATUS_COLORS.pending,
+                                        },
+                                    ]}
+                                >
+                                    <NText
+                                        style={[
+                                            styles.apptBadgeText,
+                                            { fontFamily: fonts.medium },
+                                        ]}
+                                    >
+                                        {t(`bookings.status.${appt.status}`)}
+                                    </NText>
+                                </View>
+                            </View>
+                            <NText
+                                style={[
+                                    styles.apptMeta,
+                                    {
+                                        color: theme.textMuted,
+                                        fontFamily: fonts.light,
+                                    },
+                                ]}
+                            >
+                                {appt.preferredDate} · {appt.preferredTime}
+                            </NText>
+                            <NText
+                                style={[
+                                    styles.apptMeta,
+                                    {
+                                        color: theme.textMuted,
+                                        fontFamily: fonts.light,
+                                    },
+                                ]}
+                            >
+                                {appt.vehicleYear} {appt.vehicleMake}{" "}
+                                {appt.vehicleModel}
+                            </NText>
+                        </View>
+                    ))
+                )}
+
+                {/* - Register Your Service - */}
+                <SectionHeader label={t("profile.registerServiceBanner")} />
+                <NText
+                    style={[
+                        styles.emptyText,
+                        { color: theme.textMuted, fontFamily: fonts.light },
+                    ]}
+                >
+                    {t("profile.registerServiceDesc")}
+                </NText>
+
+                {serviceApps.map((app) => (
+                    <View key={app.applicationId} style={styles.apptCard}>
+                        <View style={styles.apptHeader}>
+                            <NText
+                                style={[
+                                    styles.apptService,
+                                    { fontFamily: fonts.medium },
+                                ]}
+                            >
+                                {app.serviceName}
+                            </NText>
+                            <View
+                                style={[
+                                    styles.apptBadge,
+                                    {
+                                        backgroundColor:
+                                            app.status === "approved"
+                                                ? "rgba(33,168,112,0.85)"
+                                                : app.status === "rejected"
+                                                  ? "rgba(220,50,50,0.75)"
+                                                  : "rgba(245,158,11,0.85)",
+                                    },
+                                ]}
+                            >
+                                <NText
+                                    style={[
+                                        styles.apptBadgeText,
+                                        { fontFamily: fonts.medium },
+                                    ]}
+                                >
+                                    {t(`applications.status.${app.status}`)}
+                                </NText>
+                            </View>
+                        </View>
+                        {app.status === "rejected" && app.rejectionReason ? (
+                            <NText
+                                style={[
+                                    styles.apptMeta,
+                                    {
+                                        color: "rgba(220,100,100,0.8)",
+                                        fontFamily: fonts.light,
+                                    },
+                                ]}
+                            >
+                                {app.rejectionReason}
+                            </NText>
+                        ) : null}
+                    </View>
+                ))}
+
+                <NButton
+                    color="rgba(33,168,112,0.15)"
+                    style={styles.addVehicleBtn}
+                    onPress={() => router.push("/register-service" as any)}
+                >
+                    <Ionicons
+                        name="business-outline"
+                        size={18}
+                        color="rgb(33,168,112)"
+                    />
+                    <NText
+                        style={[
+                            styles.addVehicleBtnText,
+                            {
+                                color: "rgb(33,168,112)",
+                                fontFamily: fonts.medium,
+                            },
+                        ]}
+                    >
+                        {t("profile.registerServiceBtn")}
+                    </NText>
+                </NButton>
 
                 <View style={styles.bottomSpacer} />
             </ScrollView>
@@ -1007,6 +1233,37 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     vehicleMetaText: {
+        fontSize: 12,
+    },
+    apptCard: {
+        backgroundColor: "rgba(255,255,255,0.05)",
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 8,
+        gap: 3,
+    },
+    apptHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 2,
+    },
+    apptService: {
+        color: "#ffffff",
+        fontSize: 14,
+        flex: 1,
+        marginRight: 8,
+    },
+    apptBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 8,
+    },
+    apptBadgeText: {
+        color: "#ffffff",
+        fontSize: 11,
+    },
+    apptMeta: {
         fontSize: 12,
     },
     logoutBtn: {
