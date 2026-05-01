@@ -3,7 +3,7 @@ import Map, { MapHandle } from "../../components/Map.web"
 import HorizontalCarousel from "../../components/bundle/HorizontalCarousel"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { CarService } from "../../app/types/CarService"
-import { useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useFocusEffect } from "expo-router"
 import { NModal } from "../../components/replacements/NModal"
 import { NText } from "../../components/replacements/NText"
 import { useAlphaNotice } from "../../hooks/useAlphaNotice"
@@ -59,7 +59,8 @@ export default function MapScreen() {
         return Number.isFinite(parsed) ? parsed : 25.5887 //fallback, set to a random spot in Brasov
     }, [params.longitude])
 
-    const { services } = useCarServices()
+    const { services, refresh } = useCarServices()
+    useFocusEffect(useCallback(() => { refresh() }, [refresh]))
     const servicesRef = useRef<CarService[]>(services)
     useEffect(() => {
         servicesRef.current = services

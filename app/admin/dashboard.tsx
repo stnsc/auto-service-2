@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { StyleSheet, View, ScrollView, Pressable } from "react-native"
+import React, { useState, useCallback } from "react"
+import { StyleSheet, View, ScrollView } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
@@ -8,8 +8,10 @@ import { fonts } from "../../theme"
 import { useTranslation } from "react-i18next"
 import type { Appointment } from "../api/appointments+api"
 import type { ServiceConfig } from "../api/service-config+api"
+import type { CarService } from "../types/CarService"
 import type { WeekSchedule } from "../../data/serviceAvailability"
 import { useAdminService } from "../../context/AdminServiceContext"
+import { useFocusEffect } from "expo-router"
 import "../../i18n"
 
 function isOpenNow(schedule: WeekSchedule): boolean {
@@ -48,7 +50,7 @@ function StatCard({
                 colors={[color, "rgba(255,255,255,0.05)"]}
                 style={styles.statGradient}
             >
-                <BlurView intensity={30} tint="dark" style={styles.statInner}>
+                <BlurView intensity={40} tint="dark" style={styles.statInner}>
                     <Ionicons
                         name={icon}
                         size={24}
@@ -82,34 +84,55 @@ function BookingRow({ booking }: { booking: Appointment }) {
     const { t } = useTranslation()
     const statusColor = STATUS_COLORS[booking.status] ?? STATUS_COLORS.pending
     return (
-        <View style={styles.bookingRow}>
-            <View style={styles.bookingMain}>
-                <NText
-                    style={[styles.bookingName, { fontFamily: fonts.medium }]}
-                >
-                    {booking.customerName}
-                </NText>
-                <NText
-                    style={[styles.bookingMeta, { fontFamily: fonts.light }]}
-                >
-                    {booking.vehicleYear} {booking.vehicleMake}{" "}
-                    {booking.vehicleModel}
-                </NText>
-                <NText
-                    style={[styles.bookingDate, { fontFamily: fonts.light }]}
-                >
-                    {booking.preferredDate} · {booking.preferredTime}
-                </NText>
-            </View>
-            <View
-                style={[styles.statusBadge, { backgroundColor: statusColor }]}
+        <View style={styles.bookingCardWrapper}>
+            <LinearGradient
+                colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.04)"]}
+                style={styles.bookingCardGradient}
             >
-                <NText
-                    style={[styles.statusText, { fontFamily: fonts.medium }]}
-                >
-                    {t(`bookings.status.${booking.status}`)}
-                </NText>
-            </View>
+                <BlurView intensity={40} tint="dark" style={styles.bookingCardInner}>
+                    <View style={styles.bookingRow}>
+                        <View style={styles.bookingMain}>
+                            <NText
+                                style={[styles.bookingName, { fontFamily: fonts.medium }]}
+                            >
+                                {booking.customerName}
+                            </NText>
+                            <NText
+                                style={[styles.bookingMeta, { fontFamily: fonts.light }]}
+                            >
+                                {booking.vehicleYear} {booking.vehicleMake}{" "}
+                                {booking.vehicleModel}
+                            </NText>
+                            <NText
+                                style={[styles.bookingDate, { fontFamily: fonts.light }]}
+                            >
+                                {booking.preferredDate} · {booking.preferredTime}
+                            </NText>
+                            {booking.rating != null && (
+                                <View style={styles.ratingRow}>
+                                    <NText style={[styles.ratingStars, { fontFamily: fonts.regular }]}>
+                                        {"★".repeat(booking.rating)}{"☆".repeat(5 - booking.rating)}
+                                    </NText>
+                                    {booking.ratingComment ? (
+                                        <NText style={[styles.ratingComment, { fontFamily: fonts.light }]}>
+                                            "{booking.ratingComment}"
+                                        </NText>
+                                    ) : null}
+                                </View>
+                            )}
+                        </View>
+                        <View
+                            style={[styles.statusBadge, { backgroundColor: statusColor }]}
+                        >
+                            <NText
+                                style={[styles.statusText, { fontFamily: fonts.medium }]}
+                            >
+                                {t(`bookings.status.${booking.status}`)}
+                            </NText>
+                        </View>
+                    </View>
+                </BlurView>
+            </LinearGradient>
         </View>
     )
 }
@@ -118,27 +141,34 @@ export default function DashboardScreen() {
     const { t } = useTranslation()
     const { serviceId } = useAdminService()
     const [todayCount, setTodayCount] = useState<number | null>(null)
-    const [serviceConfig, setServiceConfig] = useState<ServiceConfig | null>(
-        null,
-    )
+    const [serviceConfig, setServiceConfig] = useState<ServiceConfig | null>(null)
+    const [carService, setCarService] = useState<CarService | null>(null)
     const [recentBookings, setRecentBookings] = useState<Appointment[]>([])
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        if (!serviceId) return
-        Promise.all([
-            fetch(`/api/appointments?filter=today&serviceId=${serviceId}`).then((r) => r.json()),
-            fetch(`/api/appointments?filter=all&serviceId=${serviceId}`).then((r) => r.json()),
-            fetch(`/api/service-config?serviceId=${serviceId}`).then((r) => r.json()),
-        ])
-            .then(([today, all, config]) => {
-                setTodayCount(Array.isArray(today) ? today.length : 0)
-                setRecentBookings(Array.isArray(all) ? all.slice(0, 5) : [])
-                setServiceConfig(config)
-            })
-            .catch(() => {})
-            .finally(() => setLoading(false))
-    }, [serviceId])
+    useFocusEffect(
+        useCallback(() => {
+            if (!serviceId) return
+            setLoading(true)
+            Promise.all([
+                fetch(`/api/appointments?filter=today&serviceId=${serviceId}`).then((r) => r.json()),
+                fetch(`/api/appointments?filter=all&serviceId=${serviceId}`).then((r) => r.json()),
+                fetch(`/api/service-config?serviceId=${serviceId}`).then((r) => r.json()),
+                fetch(`/api/services`).then((r) => r.json()),
+            ])
+                .then(([today, all, config, allServices]) => {
+                    setTodayCount(Array.isArray(today) ? today.length : 0)
+                    setRecentBookings(Array.isArray(all) ? all.slice(0, 5) : [])
+                    setServiceConfig(config)
+                    const match = Array.isArray(allServices)
+                        ? (allServices as CarService[]).find((s) => s.id === serviceId) ?? null
+                        : null
+                    setCarService(match)
+                })
+                .catch(() => {})
+                .finally(() => setLoading(false))
+        }, [serviceId])
+    )
 
     const isOpen = serviceConfig?.schedule
         ? isOpenNow(serviceConfig.schedule)
@@ -166,8 +196,8 @@ export default function DashboardScreen() {
                     value={
                         loading
                             ? "…"
-                            : serviceConfig?.rating
-                              ? serviceConfig.rating.toFixed(1)
+                            : carService?.rating
+                              ? carService.rating.toFixed(1)
                               : "—"
                     }
                     color="rgba(59,130,246,0.3)"
@@ -209,7 +239,7 @@ export default function DashboardScreen() {
                         style={styles.emptyGradient}
                     >
                         <BlurView
-                            intensity={20}
+                            intensity={40}
                             tint="dark"
                             style={styles.emptyInner}
                         >
@@ -233,28 +263,9 @@ export default function DashboardScreen() {
                 </View>
             ) : (
                 <View style={styles.bookingsList}>
-                    <LinearGradient
-                        colors={[
-                            "rgba(255,255,255,0.15)",
-                            "rgba(255,255,255,0.05)",
-                        ]}
-                        style={styles.emptyGradient}
-                    >
-                        <BlurView
-                            intensity={20}
-                            tint="dark"
-                            style={styles.bookingsInner}
-                        >
-                            {recentBookings.map((b, i) => (
-                                <React.Fragment key={b.appointmentId}>
-                                    <BookingRow booking={b} />
-                                    {i < recentBookings.length - 1 && (
-                                        <View style={styles.separator} />
-                                    )}
-                                </React.Fragment>
-                            ))}
-                        </BlurView>
-                    </LinearGradient>
+                    {recentBookings.map((b) => (
+                        <BookingRow key={b.appointmentId} booking={b} />
+                    ))}
                 </View>
             )}
         </ScrollView>
@@ -323,19 +334,25 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
     bookingsList: {
+        gap: 12,
+    },
+    bookingCardWrapper: {
         borderRadius: 20,
         overflow: "hidden",
     },
-    bookingsInner: {
+    bookingCardGradient: {
+        padding: 1.5,
+        borderRadius: 20,
+    },
+    bookingCardInner: {
         borderRadius: 18,
         overflow: "hidden",
-        padding: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
     },
     bookingRow: {
         flexDirection: "row",
         alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 12,
     },
     bookingMain: {
         flex: 1,
@@ -363,9 +380,18 @@ const styles = StyleSheet.create({
         color: "#ffffff",
         fontSize: 12,
     },
-    separator: {
-        height: StyleSheet.hairlineWidth,
-        backgroundColor: "rgba(255,255,255,0.12)",
-        marginHorizontal: 12,
+    ratingRow: {
+        marginTop: 4,
+        gap: 2,
+    },
+    ratingStars: {
+        color: "#f59e0b",
+        fontSize: 13,
+        letterSpacing: 1,
+    },
+    ratingComment: {
+        color: "rgba(255,255,255,0.45)",
+        fontSize: 12,
+        fontStyle: "italic",
     },
 })

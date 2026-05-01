@@ -6,6 +6,8 @@ import {
     ScanCommand,
 } from "@aws-sdk/lib-dynamodb"
 import { randomUUID } from "crypto"
+import en from "../../i18n/locales/en"
+import ro from "../../i18n/locales/ro"
 
 const ddbClient = new DynamoDBClient({
     region: process.env.AWS_REGION,
@@ -24,6 +26,7 @@ export interface Appointment {
     appointmentId: string
     userId: string
     serviceName?: string
+    servicePhone?: string
     customerName: string
     customerPhone: string
     customerEmail: string
@@ -36,12 +39,26 @@ export interface Appointment {
     preferredTime: string
     additionalNotes: string
     status: "pending" | "confirmed" | "completed" | "cancelled"
+    language?: string
+    cancellationReason?: string
     ratingToken?: string
     rating?: number
     ratingComment?: string
     ratedAt?: string
     createdAt: string
     updatedAt: string
+}
+
+// ── Email helpers ─────────────────────────────────────────────────────────────
+function emailLocale(lang?: string) {
+    return lang === "ro" ? ro.email : en.email
+}
+
+function ipl(template: string, vars: Record<string, string>) {
+    return Object.entries(vars).reduce(
+        (s, [k, v]) => s.replaceAll(`{{${k}}}`, v),
+        template,
+    )
 }
 
 // ── Notification helper ───────────────────────────────────────────────────────
@@ -54,6 +71,10 @@ async function sendCompletionNotifications(
     const fromEmail = process.env.AWS_SES_FROM_EMAIL
 
     if (!fromEmail) return
+
+    const serviceName = appointment.serviceName ?? "the service center"
+    const loc = emailLocale(appointment.language)
+    const sc = loc.completed
 
     // Email via SES
     if (appointment.customerEmail) {
@@ -68,8 +89,6 @@ async function sendCompletionNotifications(
                     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
                 },
             })
-            const serviceName =
-                appointment.serviceName ?? "our service"
             await ses.send(
                 new SendEmailCommand({
                     Source: fromEmail,
@@ -77,22 +96,21 @@ async function sendCompletionNotifications(
                         ToAddresses: [appointment.customerEmail],
                     },
                     Message: {
-                        Subject: {
-                            Data: "How was your AutoService appointment?",
-                        },
+                        Subject: { Data: ipl(sc.subject, { service: serviceName }) },
                         Body: {
                             Html: {
                                 Data: `
-<p>Hi ${appointment.customerName},</p>
-<p>Your appointment at <strong>${serviceName}</strong> on ${appointment.preferredDate} at ${appointment.preferredTime} has been marked as completed.</p>
-<p>We'd love to hear how it went! Please take a moment to rate your experience:</p>
-<p><a href="${ratingUrl}" style="background:#21a870;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Rate Your Experience</a></p>
-<p>Or copy this link: ${ratingUrl}</p>
-<br><p>Thank you,<br>AutoService Team</p>
+<p>${ipl(loc.hi, { name: appointment.customerName })}</p>
+<p>${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime })}</p>
+<p>${sc.ratePrompt}</p>
+<p><a href="${ratingUrl}" style="background:#21a870;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">${sc.rateButton}</a></p>
+<p>${ipl(sc.rateLink, { url: ratingUrl })}</p>
+<br><p>${loc.thanks.replace("\n", "<br>")}</p>
+<p style="color:#888;font-style:italic;font-size:12px;">${loc.automated}</p>
                                 `.trim(),
                             },
                             Text: {
-                                Data: `Hi ${appointment.customerName}, your appointment at ${serviceName} is complete. Rate your experience: ${ratingUrl}`,
+                                Data: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime }).replace(/<[^>]+>/g, "")} ${sc.rateButton}: ${ratingUrl}`,
                             },
                         },
                     },
@@ -122,11 +140,255 @@ async function sendCompletionNotifications(
             await sns.send(
                 new PublishCommand({
                     PhoneNumber: appointment.customerPhone,
-                    Message: `Hi ${appointment.customerName}, your AutoService appointment is complete. Rate us: ${ratingUrl}`,
+                    Message: `${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime }).replace(/<[^>]+>/g, "")} ${sc.rateButton}: ${ratingUrl}`,
                 }),
             )
         } catch (err) {
             console.error("SNS send failed:", err)
+        }
+    }
+}
+
+// ── Booking confirmation notification ────────────────────────────────────────
+async function sendBookingConfirmation(appointment: Appointment) {
+    const fromEmail = process.env.AWS_SES_FROM_EMAIL
+    if (!fromEmail) return
+
+    const serviceName = appointment.serviceName ?? "the service center"
+    const loc = emailLocale(appointment.language)
+    const sb = loc.booking
+
+    if (appointment.customerEmail) {
+        try {
+            const { SESClient, SendEmailCommand } = await import(
+                "@aws-sdk/client-ses"
+            )
+            const ses = new SESClient({
+                region: process.env.AWS_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                },
+            })
+            await ses.send(
+                new SendEmailCommand({
+                    Source: fromEmail,
+                    Destination: { ToAddresses: [appointment.customerEmail] },
+                    Message: {
+                        Subject: { Data: ipl(sb.subject, { service: serviceName }) },
+                        Body: {
+                            Html: {
+                                Data: `
+<p>${ipl(loc.hi, { name: appointment.customerName })}</p>
+<p>${ipl(sb.intro, { service: serviceName })}</p>
+<table style="border-collapse:collapse;width:100%;max-width:500px">
+  <tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tableService}</td><td style="padding:8px"><strong>${serviceName}</strong></td></tr>
+  <tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tableDatetime}</td><td style="padding:8px"><strong>${appointment.preferredDate} at ${appointment.preferredTime}</strong></td></tr>
+  <tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tableVehicle}</td><td style="padding:8px">${appointment.vehicleYear} ${appointment.vehicleMake} ${appointment.vehicleModel}${appointment.vehiclePlate ? ` · ${appointment.vehiclePlate}` : ""}</td></tr>
+  <tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tableProblem}</td><td style="padding:8px">${appointment.problemDescription}</td></tr>
+  ${appointment.servicePhone ? `<tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tablePhone}</td><td style="padding:8px">${appointment.servicePhone}</td></tr>` : ""}
+</table>
+<p>${ipl(sb.footer, { service: serviceName })}</p>
+<br><p>${loc.thanks.replace("\n", "<br>")}</p>
+<p style="color:#888;font-style:italic;font-size:12px;">${loc.automated}</p>
+                                `.trim(),
+                            },
+                            Text: {
+                                Data: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sb.intro, { service: serviceName }).replace(/<[^>]+>/g, "")} ${serviceName}, ${appointment.preferredDate} at ${appointment.preferredTime}. ${appointment.vehicleYear} ${appointment.vehicleMake} ${appointment.vehicleModel}.${appointment.servicePhone ? ` ${loc.tablePhone}: ${appointment.servicePhone}` : ""}`,
+                            },
+                        },
+                    },
+                }),
+            )
+        } catch (err) {
+            console.error("SES booking confirmation failed:", err)
+        }
+    }
+
+    if (
+        process.env.ENABLE_SMS_NOTIFICATIONS === "true" &&
+        appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
+    ) {
+        try {
+            const { SNSClient, PublishCommand } = await import(
+                "@aws-sdk/client-sns"
+            )
+            const sns = new SNSClient({
+                region: process.env.AWS_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                },
+            })
+            await sns.send(
+                new PublishCommand({
+                    PhoneNumber: appointment.customerPhone,
+                    Message: `${ipl(loc.hi, { name: appointment.customerName })} ${sb.intro} ${serviceName}, ${appointment.preferredDate} at ${appointment.preferredTime}.`,
+                }),
+            )
+        } catch (err) {
+            console.error("SNS booking confirmation failed:", err)
+        }
+    }
+}
+
+// ── Cancellation notification ─────────────────────────────────────────────────
+async function sendCancellationNotification(
+    appointment: Appointment,
+    reason: string,
+) {
+    const fromEmail = process.env.AWS_SES_FROM_EMAIL
+    if (!fromEmail) return
+
+    const serviceName = appointment.serviceName ?? "the service center"
+    const loc = emailLocale(appointment.language)
+    const sc = loc.cancelled
+
+    if (appointment.customerEmail) {
+        try {
+            const { SESClient, SendEmailCommand } = await import(
+                "@aws-sdk/client-ses"
+            )
+            const ses = new SESClient({
+                region: process.env.AWS_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                },
+            })
+            await ses.send(
+                new SendEmailCommand({
+                    Source: fromEmail,
+                    Destination: { ToAddresses: [appointment.customerEmail] },
+                    Message: {
+                        Subject: { Data: ipl(sc.subject, { service: serviceName }) },
+                        Body: {
+                            Html: {
+                                Data: `
+<p>${ipl(loc.hi, { name: appointment.customerName })}</p>
+<p>${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime })}</p>
+<p><strong>${sc.reasonLabel}</strong> ${reason}</p>
+<p>${sc.footer}</p>
+<br><p>${sc.thankYou.replace("\n", "<br>")}</p>
+<p style="color:#888;font-style:italic;font-size:12px;">${loc.automated}</p>
+                                `.trim(),
+                            },
+                            Text: {
+                                Data: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime }).replace(/<[^>]+>/g, "")} ${sc.reasonLabel} ${reason}`,
+                            },
+                        },
+                    },
+                }),
+            )
+        } catch (err) {
+            console.error("SES cancellation notification failed:", err)
+        }
+    }
+
+    if (
+        process.env.ENABLE_SMS_NOTIFICATIONS === "true" &&
+        appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
+    ) {
+        try {
+            const { SNSClient, PublishCommand } = await import(
+                "@aws-sdk/client-sns"
+            )
+            const sns = new SNSClient({
+                region: process.env.AWS_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                },
+            })
+            await sns.send(
+                new PublishCommand({
+                    PhoneNumber: appointment.customerPhone,
+                    Message: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime }).replace(/<[^>]+>/g, "")} ${sc.reasonLabel} ${reason}`,
+                }),
+            )
+        } catch (err) {
+            console.error("SNS cancellation notification failed:", err)
+        }
+    }
+}
+
+// ── Status-confirmed notification ────────────────────────────────────────────
+async function sendStatusConfirmedNotification(appointment: Appointment) {
+    const fromEmail = process.env.AWS_SES_FROM_EMAIL
+    if (!fromEmail) return
+
+    const serviceName = appointment.serviceName ?? "the service center"
+    const loc = emailLocale(appointment.language)
+    const sc = loc.confirmed
+
+    if (appointment.customerEmail) {
+        try {
+            const { SESClient, SendEmailCommand } = await import(
+                "@aws-sdk/client-ses"
+            )
+            const ses = new SESClient({
+                region: process.env.AWS_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                },
+            })
+            await ses.send(
+                new SendEmailCommand({
+                    Source: fromEmail,
+                    Destination: { ToAddresses: [appointment.customerEmail] },
+                    Message: {
+                        Subject: { Data: ipl(sc.subject, { service: serviceName }) },
+                        Body: {
+                            Html: {
+                                Data: `
+<p>${ipl(loc.hi, { name: appointment.customerName })}</p>
+<p>${ipl(sc.intro, { service: serviceName })}</p>
+<table style="border-collapse:collapse;width:100%;max-width:500px">
+  <tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tableDatetime}</td><td style="padding:8px"><strong>${appointment.preferredDate} at ${appointment.preferredTime}</strong></td></tr>
+  <tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tableVehicle}</td><td style="padding:8px">${appointment.vehicleYear} ${appointment.vehicleMake} ${appointment.vehicleModel}${appointment.vehiclePlate ? ` · ${appointment.vehiclePlate}` : ""}</td></tr>
+  ${appointment.servicePhone ? `<tr><td style="padding:8px;color:#888;font-size:12px;text-transform:uppercase">${loc.tablePhone}</td><td style="padding:8px">${appointment.servicePhone}</td></tr>` : ""}
+</table>
+<p>${sc.footer}</p>
+<br><p>${loc.thanks.replace("\n", "<br>")}</p>
+<p style="color:#888;font-style:italic;font-size:12px;">${loc.automated}</p>
+                                `.trim(),
+                            },
+                            Text: {
+                                Data: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName }).replace(/<[^>]+>/g, "")} ${appointment.preferredDate} at ${appointment.preferredTime}.${appointment.servicePhone ? ` ${loc.tablePhone}: ${appointment.servicePhone}` : ""}`,
+                            },
+                        },
+                    },
+                }),
+            )
+        } catch (err) {
+            console.error("SES status-confirmed notification failed:", err)
+        }
+    }
+
+    if (
+        process.env.ENABLE_SMS_NOTIFICATIONS === "true" &&
+        appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
+    ) {
+        try {
+            const { SNSClient, PublishCommand } = await import(
+                "@aws-sdk/client-sns"
+            )
+            const sns = new SNSClient({
+                region: process.env.AWS_REGION,
+                credentials: {
+                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+                },
+            })
+            await sns.send(
+                new PublishCommand({
+                    PhoneNumber: appointment.customerPhone,
+                    Message: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName }).replace(/<[^>]+>/g, "")} ${appointment.preferredDate} at ${appointment.preferredTime}.`,
+                }),
+            )
+        } catch (err) {
+            console.error("SNS status-confirmed notification failed:", err)
         }
     }
 }
@@ -213,7 +475,8 @@ export async function GET(request: Request) {
         }
 
         // Admin filtered list
-        const today = new Date().toISOString().slice(0, 10)
+        const now = new Date()
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
         let filtered: Appointment[]
         switch (filter) {
             case "today":
@@ -256,6 +519,7 @@ export async function POST(request: Request) {
         userId,
         serviceId,
         serviceName,
+        servicePhone,
         customerName,
         customerPhone,
         customerEmail,
@@ -267,6 +531,7 @@ export async function POST(request: Request) {
         preferredDate,
         preferredTime,
         additionalNotes,
+        language,
     } = body
 
     if (!preferredDate || !preferredTime || !customerName) {
@@ -282,6 +547,7 @@ export async function POST(request: Request) {
         appointmentId,
         userId: userId ?? "anonymous",
         serviceName: serviceName ?? "",
+        servicePhone: servicePhone ?? "",
         customerName,
         customerPhone: customerPhone ?? "",
         customerEmail: customerEmail ?? "",
@@ -293,6 +559,7 @@ export async function POST(request: Request) {
         preferredDate,
         preferredTime,
         additionalNotes: additionalNotes ?? "",
+        language: language ?? "en",
         status: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -300,6 +567,7 @@ export async function POST(request: Request) {
 
     try {
         await docClient.send(new PutCommand({ TableName: TABLE, Item: item }))
+        sendBookingConfirmation(item).catch(console.error)
         return Response.json(item, { status: 201 })
     } catch (err) {
         console.error("Failed to create appointment:", err)
@@ -320,7 +588,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { appointmentId, serviceId, status } = body
+    const { appointmentId, serviceId, status, cancellationReason } = body
 
     if (!appointmentId || !status) {
         return Response.json(
@@ -357,6 +625,10 @@ export async function PATCH(request: Request) {
             )
         }
 
+        const isCancellingNow =
+            status === "cancelled" && existing.status !== "cancelled"
+        const isConfirmingNow =
+            status === "confirmed" && existing.status !== "confirmed"
         const isCompletingNow =
             status === "completed" && existing.status !== "completed"
         const ratingToken =
@@ -368,6 +640,9 @@ export async function PATCH(request: Request) {
             ...(existing as Appointment),
             status,
             ratingToken,
+            ...(isCancellingNow && cancellationReason
+                ? { cancellationReason }
+                : {}),
             updatedAt: new Date().toISOString(),
         }
 
@@ -375,9 +650,18 @@ export async function PATCH(request: Request) {
             new PutCommand({ TableName: TABLE, Item: updated }),
         )
 
-        // Send notifications when first completing the appointment
+        if (isConfirmingNow) {
+            sendStatusConfirmedNotification(updated).catch(console.error)
+        }
+
         if (isCompletingNow && ratingToken) {
             sendCompletionNotifications(updated, ratingToken).catch(
+                console.error,
+            )
+        }
+
+        if (isCancellingNow && cancellationReason) {
+            sendCancellationNotification(updated, cancellationReason).catch(
                 console.error,
             )
         }

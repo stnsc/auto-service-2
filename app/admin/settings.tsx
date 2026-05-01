@@ -144,7 +144,7 @@ export default function SettingsScreen() {
                     style={styles.cardGradient}
                 >
                     <BlurView
-                        intensity={20}
+                        intensity={40}
                         tint="dark"
                         style={styles.cardInner}
                     >
@@ -242,7 +242,7 @@ export default function SettingsScreen() {
                     style={styles.cardGradient}
                 >
                     <BlurView
-                        intensity={20}
+                        intensity={40}
                         tint="dark"
                         style={styles.cardInner}
                     >
@@ -306,7 +306,7 @@ export default function SettingsScreen() {
                     style={styles.saveGradient}
                 >
                     <BlurView
-                        intensity={20}
+                        intensity={40}
                         tint="dark"
                         style={styles.saveInner}
                     >

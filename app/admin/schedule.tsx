@@ -235,7 +235,7 @@ export default function ScheduleScreen() {
                     style={styles.cardGradient}
                 >
                     <BlurView
-                        intensity={20}
+                        intensity={40}
                         tint="dark"
                         style={styles.cardInner}
                     >
@@ -293,7 +293,7 @@ export default function ScheduleScreen() {
                     style={styles.cardGradient}
                 >
                     <BlurView
-                        intensity={20}
+                        intensity={40}
                         tint="dark"
                         style={styles.cardInner}
                     >
@@ -412,7 +412,7 @@ export default function ScheduleScreen() {
                     style={styles.saveGradient}
                 >
                     <BlurView
-                        intensity={20}
+                        intensity={40}
                         tint="dark"
                         style={styles.saveInner}
                     >

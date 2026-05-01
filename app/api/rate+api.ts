@@ -3,6 +3,7 @@ import {
     DynamoDBDocumentClient,
     PutCommand,
     ScanCommand,
+    UpdateCommand,
 } from "@aws-sdk/lib-dynamodb"
 import type { Appointment } from "./appointments+api"
 
@@ -117,6 +118,48 @@ export async function POST(request: Request) {
         await docClient.send(
             new PutCommand({ TableName: TABLE, Item: updated }),
         )
+
+        // Recalculate aggregate rating and save to car-services table
+        try {
+            const ratedResult = await docClient.send(
+                new ScanCommand({
+                    TableName: TABLE,
+                    FilterExpression:
+                        "serviceId = :sid AND attribute_exists(#r)",
+                    ExpressionAttributeNames: { "#r": "rating" },
+                    ExpressionAttributeValues: { ":sid": item.serviceId },
+                }),
+            )
+            const ratings = (ratedResult.Items ?? [])
+                .map((a) => a.rating as number)
+                .filter((r) => typeof r === "number" && r >= 1 && r <= 5)
+            const avgRating =
+                ratings.length > 0
+                    ? Math.round(
+                          (ratings.reduce((s, r) => s + r, 0) /
+                              ratings.length) *
+                              10,
+                      ) / 10
+                    : 0
+
+            const servicesTable = process.env.DYNAMODB_SERVICES_TABLE_NAME
+            if (servicesTable) {
+                await docClient.send(
+                    new UpdateCommand({
+                        TableName: servicesTable,
+                        Key: { id: item.serviceId },
+                        UpdateExpression: "SET rating = :r, reviewCount = :c",
+                        ExpressionAttributeValues: {
+                            ":r": avgRating,
+                            ":c": ratings.length,
+                        },
+                    }),
+                )
+            }
+        } catch (ratingErr) {
+            console.error("Failed to update service aggregate rating:", ratingErr)
+            // Non-fatal — rating was saved, aggregation can be retried
+        }
 
         return Response.json({ success: true })
     } catch (err) {

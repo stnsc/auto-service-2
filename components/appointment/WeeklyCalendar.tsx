@@ -105,6 +105,15 @@ export function WeeklyCalendar({
     const activeDate = weekDays[activeDayIndex]
     const activeDateStr = formatDateStr(activeDate)
 
+    // When the week changes, clamp activeDayIndex to the first non-past day
+    useEffect(() => {
+        const days = getWeekDays(weekStart)
+        if (isDayPast(days[activeDayIndex], today)) {
+            const firstValid = days.findIndex((d) => !isDayPast(d, today))
+            setActiveDayIndex(firstValid === -1 ? 0 : firstValid)
+        }
+    }, [weekStart])
+
     // Fetch booked times for the active date when using real schedule
     const [bookedTimes, setBookedTimes] = useState<string[]>([])
     useEffect(() => {
@@ -137,7 +146,6 @@ export function WeeklyCalendar({
             const newStart = new Date(prev)
             newStart.setDate(newStart.getDate() - 7)
             if (newStart < todayMonday) return prev
-            setActiveDayIndex(0)
             return newStart
         })
     }, [todayMonday])
@@ -149,7 +157,6 @@ export function WeeklyCalendar({
             const newStart = new Date(prev)
             newStart.setDate(newStart.getDate() + 7)
             if (newStart > maxDate) return prev
-            setActiveDayIndex(0)
             return newStart
         })
     }, [todayMonday, maxWeekOffset])
@@ -163,7 +170,7 @@ export function WeeklyCalendar({
                 style={styles.gradientStroke}
             >
                 <BlurView
-                    intensity={30}
+                    intensity={40}
                     tint={theme.blurTint}
                     style={[
                         styles.innerContainer,

@@ -3,6 +3,7 @@ import {
     DynamoDBDocumentClient,
     GetCommand,
     PutCommand,
+    UpdateCommand,
 } from "@aws-sdk/lib-dynamodb"
 
 const ddbClient = new DynamoDBClient({
@@ -40,7 +41,6 @@ export interface ServiceConfig {
     schedule: WeekSchedule
     slotDuration: number
     bookingWindowWeeks: number
-    rating: number
     updatedAt: string
 }
 
@@ -65,7 +65,6 @@ export const DEFAULT_CONFIG: ServiceConfig = {
     schedule: DEFAULT_SCHEDULE,
     slotDuration: 30,
     bookingWindowWeeks: 8,
-    rating: 0,
     updatedAt: new Date().toISOString(),
 }
 
@@ -118,22 +117,28 @@ export async function PUT(request: Request) {
     try {
         await docClient.send(new PutCommand({ TableName: TABLE, Item: item }))
 
-        // Sync basic info to car-services table for customer discovery
+        // Sync basic info to car-services table — use UpdateCommand so we
+        // don't overwrite the rating that is managed by the review system
         const servicesTable = process.env.DYNAMODB_SERVICES_TABLE_NAME
         if (servicesTable && item.name) {
             try {
                 await docClient.send(
-                    new PutCommand({
+                    new UpdateCommand({
                         TableName: servicesTable,
-                        Item: {
-                            id: resolvedServiceId,
-                            name: item.name,
-                            address: item.address,
-                            phone: item.phone,
-                            type: item.type,
-                            latitude: item.latitude ?? 0,
-                            longitude: item.longitude ?? 0,
-                            rating: item.rating ?? 0,
+                        Key: { id: resolvedServiceId },
+                        UpdateExpression:
+                            "SET #n = :name, address = :addr, phone = :phone, #t = :type, latitude = :lat, longitude = :lon",
+                        ExpressionAttributeNames: {
+                            "#n": "name",
+                            "#t": "type",
+                        },
+                        ExpressionAttributeValues: {
+                            ":name": item.name,
+                            ":addr": item.address,
+                            ":phone": item.phone,
+                            ":type": item.type,
+                            ":lat": item.latitude ?? 0,
+                            ":lon": item.longitude ?? 0,
                         },
                     }),
                 )

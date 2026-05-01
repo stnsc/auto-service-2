@@ -70,8 +70,10 @@ function AuthGatedLayout() {
         // Let the OAuth callback page handle itself — it only lives briefly
         // while expo-web-browser closes the popup.
         const isOAuthCallback = segments[0] === "oauth-callback"
+        // Rating page is public — accessible without login from email links
+        const isRatePage = segments[0] === "rate"
 
-        if (!isAuthenticated && !inAuthGroup && !isOAuthCallback) {
+        if (!isAuthenticated && !inAuthGroup && !isOAuthCallback && !isRatePage) {
             router.replace("/(auth)/login")
         } else if (isAuthenticated && inAuthGroup) {
             router.replace("/")
@@ -143,8 +145,10 @@ function AuthGatedLayout() {
         "/reset-password",
         "/oauth-callback",
     ].includes(pathname)
+    const isRate = pathname === "/rate"
     const showContainer = !isAdmin
     const showNav = !isAdmin && !isAuth
+    const showTopBar = showNav
 
     activeKey === "chat" ? (intensity = 30) : (intensity = 0)
 
@@ -239,7 +243,7 @@ function AuthGatedLayout() {
                             </View>
 
                             <View style={{ flex: 1 }}>
-                                {showNav && (
+                                {showTopBar && (
                                     <>
                                         <View style={styles.topNav}>
                                             <TopNavBar />

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react"
-import { View, StyleSheet, Pressable, ActivityIndicator } from "react-native"
+import { View, StyleSheet, ActivityIndicator, Pressable } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
 import { useLocalSearchParams } from "expo-router"
 import { NText } from "../components/replacements/NText"
+import { NButton } from "../components/replacements/NButton"
 import { fonts } from "../theme"
 import { useTranslation } from "react-i18next"
 import "../i18n"
@@ -249,7 +250,7 @@ export default function RateScreen() {
                                     padding: "10px 12px",
                                     color: "#ffffff",
                                     fontSize: 14,
-                                    fontFamily: "inherit",
+                                    fontFamily: fonts.regular,
                                     resize: "vertical",
                                     outline: "none",
                                     boxSizing: "border-box",
@@ -269,46 +270,25 @@ export default function RateScreen() {
                         ) : null}
 
                         {/* Submit */}
-                        <Pressable
+                        <NButton
                             onPress={handleSubmit}
                             disabled={!selectedRating || submitting}
-                            style={[
-                                styles.submitBtn,
-                                (!selectedRating || submitting) && {
-                                    opacity: 0.4,
-                                },
-                            ]}
+                            color="rgba(33,168,112,0.5)"
+                            style={styles.submitBtn}
                         >
-                            <LinearGradient
-                                colors={[
-                                    "rgba(33,168,112,0.5)",
-                                    "rgba(33,168,112,0.2)",
-                                ]}
-                                style={styles.submitGradient}
-                            >
-                                <BlurView
-                                    intensity={20}
-                                    tint="dark"
-                                    style={styles.submitInner}
+                            {submitting ? (
+                                <ActivityIndicator size="small" color="#ffffff" />
+                            ) : (
+                                <NText
+                                    style={[
+                                        styles.submitText,
+                                        { fontFamily: fonts.medium },
+                                    ]}
                                 >
-                                    {submitting ? (
-                                        <ActivityIndicator
-                                            size="small"
-                                            color="#ffffff"
-                                        />
-                                    ) : (
-                                        <NText
-                                            style={[
-                                                styles.submitText,
-                                                { fontFamily: fonts.medium },
-                                            ]}
-                                        >
-                                            {t("rate.submit")}
-                                        </NText>
-                                    )}
-                                </BlurView>
-                            </LinearGradient>
-                        </Pressable>
+                                    {t("rate.submit")}
+                                </NText>
+                            )}
+                        </NButton>
                     </BlurView>
                 </LinearGradient>
             </View>
@@ -394,15 +374,6 @@ const styles = StyleSheet.create({
     },
     submitBtn: {
         marginTop: 12,
-        borderRadius: 14,
-        overflow: "hidden",
-    },
-    submitGradient: { padding: 1.5, borderRadius: 14 },
-    submitInner: {
-        borderRadius: 12,
-        overflow: "hidden",
-        paddingVertical: 14,
-        alignItems: "center",
     },
     submitText: { color: "#ffffff", fontSize: 15 },
 })

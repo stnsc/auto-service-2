@@ -1,5 +1,5 @@
-import { View, StyleSheet, ScrollView, Pressable } from "react-native"
-import { useState, useEffect, useMemo } from "react"
+import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
@@ -7,7 +7,7 @@ import { NModal } from "../../components/replacements/NModal"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useChatContext } from "../../context/ChatContext"
 import { useCarServices } from "../../hooks/useCarServices"
-import { useRouter } from "expo-router"
+import { useRouter, useFocusEffect } from "expo-router"
 import {
     useAppointmentContext,
     AppointmentFormData,
@@ -47,7 +47,7 @@ function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 }
 
 export default function AppointmentScreen() {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const STEPS = t("appointment.steps", { returnObjects: true }) as string[]
     const req = t("common.isRequired")
     const { theme } = useTheme()
@@ -102,28 +102,10 @@ export default function AppointmentScreen() {
     }
     const router = useRouter()
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
-    const { services } = useCarServices()
+    const { services, refresh } = useCarServices()
+    useFocusEffect(useCallback(() => { refresh() }, [refresh]))
     const appointmentNotice = useAlphaNotice("appointment-alpha")
     const { register } = useInfoNotice()
-    const [serviceConfig, setServiceConfig] = useState<ServiceConfig | null>(
-        null,
-    )
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [submitSuccess, setSubmitSuccess] = useState(false)
-    const [submitError, setSubmitError] = useState<string | null>(null)
-
-    useEffect(() => {
-        register(appointmentNotice.show)
-        return () => register(null)
-    }, [])
-
-    // Fetch service schedule config for the calendar
-    useEffect(() => {
-        fetch("/api/service-config")
-            .then((r) => r.json())
-            .then(setServiceConfig)
-            .catch(() => {})
-    }, [])
     const {
         currentStep,
         setCurrentStep,
@@ -133,6 +115,47 @@ export default function AppointmentScreen() {
         setErrors,
         resetAppointment,
     } = useAppointmentContext()
+    const [serviceConfig, setServiceConfig] = useState<ServiceConfig | null>(
+        null,
+    )
+    const [serviceConfigLoading, setServiceConfigLoading] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitSuccess, setSubmitSuccess] = useState(false)
+    const [submitError, setSubmitError] = useState<string | null>(null)
+    const [submittedAppointment, setSubmittedAppointment] = useState<{
+        preferredDate: string
+        preferredTime: string
+        serviceName: string
+        vehicleYear: string
+        vehicleMake: string
+        vehicleModel: string
+        problemDescription: string
+        appointmentId: string
+    } | null>(null)
+
+    useEffect(() => {
+        register(appointmentNotice.show)
+        return () => register(null)
+    }, [])
+
+    // Fetch service schedule config for the selected service center
+    useEffect(() => {
+        if (!formData.serviceCenterId) {
+            setServiceConfig(null)
+            return
+        }
+        setServiceConfigLoading(true)
+        fetch(`/api/service-config?serviceId=${formData.serviceCenterId}`)
+            .then((r) => r.json())
+            .then(setServiceConfig)
+            .catch(() => {})
+            .finally(() => setServiceConfigLoading(false))
+    }, [formData.serviceCenterId])
+
+    // Reset date/time when the user switches service centers
+    useEffect(() => {
+        setFormData((prev) => ({ ...prev, preferredDate: "", preferredTime: "" }))
+    }, [formData.serviceCenterId])
 
     // Get vehicle info from chat context
     const { vehicleInfo, summary } = useChatContext()
@@ -286,6 +309,7 @@ export default function AppointmentScreen() {
                     userId: user?.getUsername() ?? userEmail ?? "anonymous",
                     serviceId: formData.serviceCenterId,
                     serviceName: services.find((s) => s.id === formData.serviceCenterId)?.name ?? "",
+                    servicePhone: services.find((s) => s.id === formData.serviceCenterId)?.phone ?? "",
                     customerName: formData.customerName,
                     customerPhone: formData.customerPhone,
                     customerEmail: formData.customerEmail,
@@ -297,9 +321,25 @@ export default function AppointmentScreen() {
                     preferredDate: formData.preferredDate,
                     preferredTime: formData.preferredTime,
                     additionalNotes: formData.additionalNotes,
+                    language: i18n.language,
                 }),
             })
             if (!response.ok) throw new Error("Failed to submit")
+            const appt = await response.json()
+            setSubmittedAppointment({
+                preferredDate: appt.preferredDate ?? formData.preferredDate,
+                preferredTime: appt.preferredTime ?? formData.preferredTime,
+                serviceName:
+                    appt.serviceName ??
+                    services.find((s) => s.id === formData.serviceCenterId)?.name ??
+                    "",
+                vehicleYear: appt.vehicleYear ?? formData.vehicleYear,
+                vehicleMake: appt.vehicleMake ?? formData.vehicleMake,
+                vehicleModel: appt.vehicleModel ?? formData.vehicleModel,
+                problemDescription:
+                    appt.problemDescription ?? formData.problemDescription,
+                appointmentId: appt.appointmentId ?? "",
+            })
             setSubmitSuccess(true)
         } catch {
             setSubmitError(t("appointment.submitError"))
@@ -310,7 +350,49 @@ export default function AppointmentScreen() {
 
     const handleSuccessDismiss = () => {
         setSubmitSuccess(false)
+        setSubmittedAppointment(null)
         resetAppointment()
+    }
+
+    function buildGoogleCalendarUrl(appt: typeof submittedAppointment) {
+        if (!appt) return ""
+        const [y, m, d] = appt.preferredDate.split("-")
+        const [hh, mm] = appt.preferredTime.split(":")
+        const start = `${y}${m}${d}T${hh}${mm}00`
+        const endHour = String(parseInt(hh, 10) + 1).padStart(2, "0")
+        const end = `${y}${m}${d}T${endHour}${mm}00`
+        const title = `AutoService${appt.serviceName ? ` — ${appt.serviceName}` : ""}`
+        const details = `Vehicle: ${appt.vehicleYear} ${appt.vehicleMake} ${appt.vehicleModel}\nProblem: ${appt.problemDescription}`
+        return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${start}/${end}&details=${encodeURIComponent(details)}`
+    }
+
+    function openIcs(appt: typeof submittedAppointment) {
+        if (!appt) return
+        const [y, m, d] = appt.preferredDate.split("-")
+        const [hh, mm] = appt.preferredTime.split(":")
+        const start = `${y}${m}${d}T${hh}${mm}00`
+        const endHour = String(parseInt(hh, 10) + 1).padStart(2, "0")
+        const end = `${y}${m}${d}T${endHour}${mm}00`
+        const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z"
+        const title = `AutoService${appt.serviceName ? ` — ${appt.serviceName}` : ""}`
+        const desc = `Vehicle: ${appt.vehicleYear} ${appt.vehicleMake} ${appt.vehicleModel}\\nProblem: ${appt.problemDescription}`
+        const ics = [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//AutoService//AutoService//EN",
+            "BEGIN:VEVENT",
+            `UID:${appt.appointmentId}@autoservice`,
+            `DTSTAMP:${now}`,
+            `DTSTART:${start}`,
+            `DTEND:${end}`,
+            `SUMMARY:${title}`,
+            `DESCRIPTION:${desc}`,
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ].join("\r\n")
+        Linking.openURL(
+            `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`,
+        )
     }
 
     const selectedServiceCenter = services.find(
@@ -544,20 +626,31 @@ export default function AppointmentScreen() {
             case 3: // Appointment Details
                 return (
                     <View>
-                        <WeeklyCalendar
-                            serviceCenterId={formData.serviceCenterId}
-                            selectedDate={formData.preferredDate}
-                            selectedTime={formData.preferredTime}
-                            onSelectSlot={(date, time) => {
-                                updateField("preferredDate", date)
-                                updateField("preferredTime", time)
-                            }}
-                            schedule={serviceConfig?.schedule}
-                            slotDuration={serviceConfig?.slotDuration ?? 30}
-                            bookingWindowWeeks={
-                                serviceConfig?.bookingWindowWeeks ?? 8
-                            }
-                        />
+                        {serviceConfigLoading ? (
+                            <NText
+                                style={[
+                                    styles.stepTitle,
+                                    { color: theme.textMuted, textAlign: "center" },
+                                ]}
+                            >
+                                {t("appointment.loadingSchedule")}
+                            </NText>
+                        ) : (
+                            <WeeklyCalendar
+                                serviceCenterId={formData.serviceCenterId}
+                                selectedDate={formData.preferredDate}
+                                selectedTime={formData.preferredTime}
+                                onSelectSlot={(date, time) => {
+                                    updateField("preferredDate", date)
+                                    updateField("preferredTime", time)
+                                }}
+                                schedule={serviceConfig?.schedule}
+                                slotDuration={serviceConfig?.slotDuration ?? 30}
+                                bookingWindowWeeks={
+                                    serviceConfig?.bookingWindowWeeks ?? 8
+                                }
+                            />
+                        )}
                         {(!!errors.preferredDate || !!errors.preferredTime) && (
                             <NText
                                 style={[
@@ -845,6 +938,32 @@ export default function AppointmentScreen() {
                 <NText style={styles.noticeText}>
                     {t("appointment.submitSuccessMessage")}
                 </NText>
+                {submittedAppointment && (
+                    <View style={styles.calendarButtons}>
+                        <NButton
+                            onPress={() =>
+                                Linking.openURL(
+                                    buildGoogleCalendarUrl(submittedAppointment),
+                                )
+                            }
+                            color="rgba(33,168,112,0.4)"
+                            style={{ width: "100%" }}
+                        >
+                            <NText style={styles.calendarBtnText}>
+                                {t("appointment.addToGoogleCalendar")}
+                            </NText>
+                        </NButton>
+                        <NButton
+                            onPress={() => openIcs(submittedAppointment)}
+                            color="rgba(255,255,255,0.08)"
+                            style={{ width: "100%" }}
+                        >
+                            <NText style={styles.calendarBtnText}>
+                                {t("appointment.downloadIcs")}
+                            </NText>
+                        </NButton>
+                    </View>
+                )}
             </NModal>
 
             <NModal
@@ -960,5 +1079,14 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,
+    },
+    calendarButtons: {
+        gap: 10,
+        marginTop: 8,
+    },
+    calendarBtnText: {
+        color: "#ffffff",
+        fontSize: 14,
+        fontWeight: "600",
     },
 })

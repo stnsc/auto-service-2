@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback } from "react"
+import React, { ReactNode, useCallback, useEffect } from "react"
 import { Pressable, StyleSheet, ViewStyle } from "react-native"
 import Animated, {
     useSharedValue,
@@ -16,6 +16,7 @@ interface NButtonProps {
     color?: string
     style?: ViewStyle
     intensity?: number
+    disabled?: boolean
 }
 
 export function NButton({
@@ -24,12 +25,19 @@ export function NButton({
     color = "rgba(255, 255, 255, 0.1)",
     intensity = 30,
     style,
+    disabled = false,
 }: NButtonProps) {
     const { theme } = useTheme()
 
     const isPressed = useSharedValue(false)
+    const isDisabled = useSharedValue(disabled)
+
+    useEffect(() => {
+        isDisabled.value = disabled
+    }, [disabled])
 
     const onPressIn = useCallback(() => {
+        if (isDisabled.value) return
         isPressed.value = true
     }, [])
 
@@ -39,6 +47,7 @@ export function NButton({
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: withSpring(isPressed.value ? 1.1 : 1) }],
+        opacity: withTiming(isDisabled.value ? 0.4 : 1, { duration: 150 }),
     }))
 
     // This handles the brightness increase
@@ -49,7 +58,7 @@ export function NButton({
 
     return (
         <Pressable
-            onPress={onPress}
+            onPress={disabled ? undefined : onPress}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
             style={style}

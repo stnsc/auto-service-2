@@ -4,19 +4,29 @@ import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../../components/replacements/NText"
+import { NInput } from "../../components/replacements/NInput"
+import { NModal } from "../../components/replacements/NModal"
 import { fonts } from "../../theme"
 import { useTranslation } from "react-i18next"
 import type { Appointment } from "../api/appointments+api"
 import { useAdminService } from "../../context/AdminServiceContext"
 import "../../i18n"
+import { NButton } from "../../components/replacements/NButton"
 
 type FilterKey = "all" | "today" | "upcoming" | "past"
 
 const STATUS_COLORS: Record<string, string> = {
-    pending: "rgba(245,158,11,0.85)",
-    confirmed: "rgba(59,130,246,0.85)",
-    completed: "rgba(33,168,112,0.85)",
-    cancelled: "rgba(150,150,150,0.7)",
+    pending: "#d97706",
+    confirmed: "#2563eb",
+    completed: "#16a34a",
+    cancelled: "#6b7280",
+}
+
+const STATUS_BORDER_COLORS: Record<string, string> = {
+    pending: "#f59e0b",
+    confirmed: "#60a5fa",
+    completed: "#4ade80",
+    cancelled: "#9ca3af",
 }
 
 const NEXT_STATUS: Record<string, string | null> = {
@@ -29,13 +39,16 @@ const NEXT_STATUS: Record<string, string | null> = {
 function BookingCard({
     booking,
     onStatusChange,
+    onCancelPress,
 }: {
     booking: Appointment
     onStatusChange: (id: string, status: string) => void
+    onCancelPress: (booking: Appointment) => void
 }) {
     const { t } = useTranslation()
     const [updating, setUpdating] = useState(false)
     const statusColor = STATUS_COLORS[booking.status] ?? STATUS_COLORS.pending
+    const statusBorderColor = STATUS_BORDER_COLORS[booking.status] ?? STATUS_BORDER_COLORS.pending
     const next = NEXT_STATUS[booking.status]
 
     const handleAdvance = async () => {
@@ -56,31 +69,13 @@ function BookingCard({
         setUpdating(false)
     }
 
-    const handleCancel = async () => {
-        if (booking.status === "cancelled") return
-        setUpdating(true)
-        try {
-            const res = await fetch("/api/appointments", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    appointmentId: booking.appointmentId,
-                    serviceId: booking.serviceId,
-                    status: "cancelled",
-                }),
-            })
-            if (res.ok) onStatusChange(booking.appointmentId, "cancelled")
-        } catch {}
-        setUpdating(false)
-    }
-
     return (
         <View style={styles.cardWrapper}>
             <LinearGradient
                 colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.04)"]}
                 style={styles.cardGradient}
             >
-                <BlurView intensity={20} tint="dark" style={styles.cardInner}>
+                <BlurView intensity={40} tint="dark" style={styles.cardInner}>
                     {/* Header */}
                     <View style={styles.cardHeader}>
                         <NText
@@ -94,7 +89,10 @@ function BookingCard({
                         <View
                             style={[
                                 styles.statusBadge,
-                                { backgroundColor: statusColor },
+                                {
+                                    backgroundColor: statusColor,
+                                    borderColor: statusBorderColor,
+                                },
                             ]}
                         >
                             <NText
@@ -152,19 +150,30 @@ function BookingCard({
                             : ""}
                     </NText>
 
+                    {/* Rating */}
+                    {booking.rating != null && (
+                        <View style={styles.ratingRow}>
+                            <NText style={[styles.ratingStars, { fontFamily: fonts.regular }]}>
+                                {"★".repeat(booking.rating)}{"☆".repeat(5 - booking.rating)}
+                            </NText>
+                            {booking.ratingComment ? (
+                                <NText style={[styles.ratingComment, { fontFamily: fonts.light }]}>
+                                    "{booking.ratingComment}"
+                                </NText>
+                            ) : null}
+                        </View>
+                    )}
+
                     {/* Actions */}
                     {booking.status !== "completed" &&
                         booking.status !== "cancelled" && (
                             <View style={styles.actions}>
                                 {next && (
-                                    <Pressable
+                                    <NButton
                                         onPress={handleAdvance}
                                         disabled={updating}
-                                        style={[
-                                            styles.actionBtn,
-                                            styles.advanceBtn,
-                                            updating && { opacity: 0.5 },
-                                        ]}
+                                        color="rgba(33,168,112,0.5)"
+                                        style={styles.actionBtn}
                                     >
                                         <NText
                                             style={[
@@ -174,16 +183,13 @@ function BookingCard({
                                         >
                                             {t(`bookings.advanceTo.${next}`)}
                                         </NText>
-                                    </Pressable>
+                                    </NButton>
                                 )}
-                                <Pressable
-                                    onPress={handleCancel}
+                                <NButton
+                                    onPress={() => onCancelPress(booking)}
                                     disabled={updating}
-                                    style={[
-                                        styles.actionBtn,
-                                        styles.cancelBtn,
-                                        updating && { opacity: 0.5 },
-                                    ]}
+                                    color="rgba(220,50,50,0.45)"
+                                    style={styles.actionBtn}
                                 >
                                     <NText
                                         style={[
@@ -193,7 +199,7 @@ function BookingCard({
                                     >
                                         {t("bookings.cancel")}
                                     </NText>
-                                </Pressable>
+                                </NButton>
                             </View>
                         )}
                 </BlurView>
@@ -214,6 +220,9 @@ export default function BookingsScreen() {
     const [activeFilter, setActiveFilter] = useState<FilterKey>("all")
     const [bookings, setBookings] = useState<Appointment[]>([])
     const [loading, setLoading] = useState(true)
+    const [cancelTarget, setCancelTarget] = useState<Appointment | null>(null)
+    const [cancelReason, setCancelReason] = useState("")
+    const [cancelling, setCancelling] = useState(false)
 
     const fetchBookings = useCallback(async (filter: FilterKey) => {
         if (!serviceId) return
@@ -243,7 +252,36 @@ export default function BookingsScreen() {
         )
     }
 
+    const handleCancelPress = (booking: Appointment) => {
+        setCancelTarget(booking)
+        setCancelReason("")
+    }
+
+    const handleCancelConfirm = async () => {
+        if (!cancelTarget || !cancelReason.trim()) return
+        setCancelling(true)
+        try {
+            const res = await fetch("/api/appointments", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    appointmentId: cancelTarget.appointmentId,
+                    serviceId: cancelTarget.serviceId,
+                    status: "cancelled",
+                    cancellationReason: cancelReason.trim(),
+                }),
+            })
+            if (res.ok) {
+                handleStatusChange(cancelTarget.appointmentId, "cancelled")
+                setCancelTarget(null)
+                setCancelReason("")
+            }
+        } catch {}
+        setCancelling(false)
+    }
+
     return (
+        <View style={{ flex: 1 }}>
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
@@ -288,7 +326,7 @@ export default function BookingsScreen() {
                         style={styles.emptyGradient}
                     >
                         <BlurView
-                            intensity={20}
+                            intensity={40}
                             tint="dark"
                             style={styles.emptyInner}
                         >
@@ -313,7 +351,7 @@ export default function BookingsScreen() {
                         style={styles.emptyGradient}
                     >
                         <BlurView
-                            intensity={20}
+                            intensity={40}
                             tint="dark"
                             style={styles.emptyInner}
                         >
@@ -340,11 +378,42 @@ export default function BookingsScreen() {
                             key={b.appointmentId}
                             booking={b}
                             onStatusChange={handleStatusChange}
+                            onCancelPress={handleCancelPress}
                         />
                     ))}
                 </View>
             )}
         </ScrollView>
+
+        <NModal
+            visible={!!cancelTarget}
+            onDismiss={() => { setCancelTarget(null); setCancelReason("") }}
+            title={t("bookings.cancelReasonTitle")}
+        >
+            <NText style={styles.cancelReasonDesc}>
+                {t("bookings.cancelReasonDesc")}
+            </NText>
+            <NInput
+                placeholder={t("bookings.cancelReasonPlaceholder")}
+                value={cancelReason}
+                onChangeText={setCancelReason}
+                multiline
+                containerStyle={styles.cancelReasonInput}
+            />
+            <NButton
+                onPress={handleCancelConfirm}
+                disabled={!cancelReason.trim() || cancelling}
+                color="rgba(220,50,50,0.45)"
+                style={{ width: "100%" }}
+            >
+                <NText style={[styles.confirmCancelText, { fontFamily: fonts.medium }]}>
+                    {cancelling
+                        ? t("bookings.cancelling")
+                        : t("bookings.confirmCancel")}
+                </NText>
+            </NButton>
+        </NModal>
+        </View>
     )
 }
 
@@ -424,9 +493,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 5,
         borderRadius: 10,
+        borderWidth: 1,
     },
     statusText: {
         color: "#ffffff",
@@ -450,21 +520,40 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 8,
         marginTop: 10,
+        flexWrap: "wrap",
     },
     actionBtn: {
-        flex: 1,
-        paddingVertical: 8,
-        borderRadius: 12,
-        alignItems: "center",
-    },
-    advanceBtn: {
-        backgroundColor: "rgba(33,168,112,0.4)",
-    },
-    cancelBtn: {
-        backgroundColor: "rgba(220,50,50,0.3)",
+        alignSelf: "flex-start",
     },
     actionBtnText: {
         color: "#ffffff",
         fontSize: 13,
+    },
+    cancelReasonDesc: {
+        color: "rgba(255,255,255,0.6)",
+        fontSize: 14,
+        marginBottom: 12,
+        lineHeight: 20,
+    },
+    cancelReasonInput: {
+        marginBottom: 16,
+    },
+    confirmCancelText: {
+        color: "#ffffff",
+        fontSize: 15,
+    },
+    ratingRow: {
+        marginTop: 4,
+        gap: 2,
+    },
+    ratingStars: {
+        color: "#f59e0b",
+        fontSize: 14,
+        letterSpacing: 1,
+    },
+    ratingComment: {
+        color: "rgba(255,255,255,0.45)",
+        fontSize: 13,
+        fontStyle: "italic",
     },
 })
