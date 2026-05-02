@@ -251,6 +251,11 @@ function AuthGatedLayout() {
                                     </>
                                 )}
 
+                                {isAdmin ? (
+                                    <View style={{ flex: 1 }}>
+                                        <Slot />
+                                    </View>
+                                ) : (
                                 <Animated.View
                                     style={{
                                         flex: 1,
@@ -260,6 +265,7 @@ function AuthGatedLayout() {
                                 >
                                     <Slot />
                                 </Animated.View>
+                                )}
 
                                 {showNav && (
                                     <View style={styles.bottomNav}>

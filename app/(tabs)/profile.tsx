@@ -15,6 +15,7 @@ import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { NModal } from "../../components/replacements/NModal"
+import { AccentPicker } from "../../components/AccentPicker"
 import { useAuthContext } from "../../context/AuthContext"
 import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
@@ -88,7 +89,7 @@ function VehicleCard({
             <NButton
                 color={
                     vehicle.isPrimary
-                        ? "rgba(33, 168, 112, 0.2)"
+                        ? theme.accentSubtle
                         : "rgba(0,0,0,0.3)"
                 }
                 style={styles.vehicleCard}
@@ -257,7 +258,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ProfileScreen() {
     const { t } = useTranslation()
-    const { theme } = useTheme()
+    const { theme, accentKey, setAccentKey, colorScheme } = useTheme()
     const { userEmail, user, signOut } = useAuthContext()
     const {
         profile,
@@ -616,8 +617,8 @@ export default function ProfileScreen() {
                 <NButton
                     color={
                         saveSuccess
-                            ? "rgba(33,168,112,0.4)"
-                            : "rgba(33,168,112,0.2)"
+                            ? theme.accent
+                            : theme.accentSubtle
                     }
                     style={styles.saveBtn}
                     onPress={handleSavePersonalInfo}
@@ -637,20 +638,20 @@ export default function ProfileScreen() {
                 <SectionHeader label={t("profile.myVehicles")} />
 
                 <NButton
-                    color="rgba(33,168,112,0.15)"
+                    color={theme.accentSubtle}
                     style={styles.addVehicleBtn}
                     onPress={openAddVehicle}
                 >
                     <Ionicons
                         name="add-circle-outline"
                         size={18}
-                        color="rgb(33,168,112)"
+                        color={theme.accentSolid}
                     />
                     <NText
                         style={[
                             styles.addVehicleBtnText,
                             {
-                                color: "rgb(33,168,112)",
+                                color: theme.accentSolid,
                                 fontFamily: fonts.medium,
                             },
                         ]}
@@ -765,6 +766,22 @@ export default function ProfileScreen() {
                     ))
                 )}
 
+                {/* - Appearance - */}
+                <SectionHeader label={t("profile.appearance")} />
+                <NText
+                    style={[
+                        styles.emptyText,
+                        { color: theme.textMuted, fontFamily: fonts.light },
+                    ]}
+                >
+                    {t("profile.accentColor")}
+                </NText>
+                <AccentPicker
+                    accentKey={accentKey}
+                    colorScheme={colorScheme}
+                    onSelect={setAccentKey}
+                />
+
                 {/* - Register Your Service - */}
                 <SectionHeader label={t("profile.registerServiceBanner")} />
                 <NText
@@ -827,20 +844,20 @@ export default function ProfileScreen() {
                 ))}
 
                 <NButton
-                    color="rgba(33,168,112,0.15)"
+                    color={theme.accentSubtle}
                     style={styles.addVehicleBtn}
                     onPress={() => router.push("/register-service" as any)}
                 >
                     <Ionicons
                         name="business-outline"
                         size={18}
-                        color="rgb(33,168,112)"
+                        color={theme.accentSolid}
                     />
                     <NText
                         style={[
                             styles.addVehicleBtnText,
                             {
-                                color: "rgb(33,168,112)",
+                                color: theme.accentSolid,
                                 fontFamily: fonts.medium,
                             },
                         ]}

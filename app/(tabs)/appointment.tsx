@@ -7,7 +7,7 @@ import { NModal } from "../../components/replacements/NModal"
 import { validators, validateForm, hasErrors } from "../../utils/validation"
 import { useChatContext } from "../../context/ChatContext"
 import { useCarServices } from "../../hooks/useCarServices"
-import { useRouter, useFocusEffect } from "expo-router"
+import { useRouter, useFocusEffect, useLocalSearchParams } from "expo-router"
 import {
     useAppointmentContext,
     AppointmentFormData,
@@ -101,6 +101,7 @@ export default function AppointmentScreen() {
         additionalNotes: [] as any[],
     }
     const router = useRouter()
+    const { serviceId: preselectedServiceId } = useLocalSearchParams<{ serviceId?: string }>()
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
     const { services, refresh } = useCarServices()
     useFocusEffect(useCallback(() => { refresh() }, [refresh]))
@@ -196,6 +197,15 @@ export default function AppointmentScreen() {
             customerEmail: prev.customerEmail || userEmail || "",
         }))
     }, [profile, userEmail])
+
+    // Pre-select service center when navigating from the map
+    useEffect(() => {
+        if (!preselectedServiceId) return
+        setFormData((prev) => ({
+            ...prev,
+            serviceCenterId: preselectedServiceId,
+        }))
+    }, [preselectedServiceId])
 
     // Use geolocation when available so the nearest center is shown first.
     useEffect(() => {
@@ -492,7 +502,7 @@ export default function AppointmentScreen() {
                                         },
                                     })
                                 }
-                                color="rgba(33, 168, 112, 0.51)"
+                                color={theme.accent}
                             >
                                 <NText
                                     style={{
@@ -511,7 +521,7 @@ export default function AppointmentScreen() {
                                     key={service.id}
                                     color={
                                         isSelected
-                                            ? "rgba(30, 212, 157, 0.4)"
+                                            ? theme.accent
                                             : "rgba(0, 0, 0, 0.4)"
                                     }
                                     onPress={() =>
@@ -544,7 +554,7 @@ export default function AppointmentScreen() {
                                                     style={{
                                                         fontFamily: fonts.bold,
                                                         fontSize: 16,
-                                                        color: "rgb(30, 212, 157)",
+                                                        color: theme.accentSolid,
                                                     }}
                                                 >
                                                     {t("appointment.nearest")}
@@ -896,7 +906,7 @@ export default function AppointmentScreen() {
                             styles.button,
                             isSubmitting && styles.buttonDisabled,
                         ]}
-                        color="rgba(33, 168, 112, 0.51)"
+                        color={theme.accent}
                     >
                         <NText style={styles.buttonText}>
                             {isSubmitting
@@ -908,7 +918,7 @@ export default function AppointmentScreen() {
                     <NButton
                         onPress={handleNext}
                         style={styles.button}
-                        color="rgba(33, 168, 112, 0.51)"
+                        color={theme.accent}
                     >
                         <NText style={styles.buttonText}>
                             {t("appointment.next")}
@@ -946,7 +956,7 @@ export default function AppointmentScreen() {
                                     buildGoogleCalendarUrl(submittedAppointment),
                                 )
                             }
-                            color="rgba(33,168,112,0.4)"
+                            color={theme.accent}
                             style={{ width: "100%" }}
                         >
                             <NText style={styles.calendarBtnText}>

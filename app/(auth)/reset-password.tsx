@@ -89,7 +89,7 @@ export default function ResetPasswordScreen() {
             <Ionicons
                 name="key-outline"
                 size={48}
-                color="rgba(33, 168, 112, 0.8)"
+                color={theme.accentIcon}
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("resetPassword.title")}</NText>
@@ -160,7 +160,7 @@ export default function ResetPasswordScreen() {
                     failedText={errors.confirmPassword || ""}
                 />
 
-                <NButton color="rgba(33, 168, 112, 0.51)" onPress={handleReset}>
+                <NButton color={theme.accent} onPress={handleReset}>
                     <NText style={styles.buttonText}>
                         {loading
                             ? t("resetPassword.resetting")

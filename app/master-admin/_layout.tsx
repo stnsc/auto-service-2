@@ -14,18 +14,21 @@ const TABS: SidebarItem[] = [
         icon: "document-text-outline",
     },
     { key: "appointments", label: "Appointments", icon: "calendar-outline" },
+    { key: "users", label: "Users", icon: "people-outline" },
 ]
 
 const ROUTES: Record<string, string> = {
     index: "/master-admin",
     applications: "/master-admin/applications",
     appointments: "/master-admin/appointments",
+    users: "/master-admin/users",
 }
 
 const PAGE_TITLES: Record<string, string> = {
     "/master-admin": "Overview",
     "/master-admin/applications": "Applications",
     "/master-admin/appointments": "Appointments",
+    "/master-admin/users": "Users",
 }
 
 export default function MasterAdminLayout() {

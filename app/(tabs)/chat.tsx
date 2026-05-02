@@ -751,7 +751,7 @@ export default function ChatScreen() {
                                                     {firstName || "You"}
                                                 </NText>
                                             </View>
-                                            <NButton color="rgba(33, 168, 112, 0.51)">
+                                            <NButton color={theme.accent}>
                                                 <NText
                                                     style={{
                                                         fontFamily: fonts.bold,
@@ -844,7 +844,7 @@ export default function ChatScreen() {
                     pointerEvents={showIntentRecommendation ? "auto" : "none"}
                 >
                     <NButton
-                        color="rgba(33, 168, 112, 0.51)"
+                        color={theme.accent}
                         onPress={() =>
                             router.push(`/(tabs)/${chatIntent}` as any)
                         }
@@ -908,7 +908,7 @@ export default function ChatScreen() {
                             color={
                                 loading
                                     ? "rgba(255,255,255,0.08)"
-                                    : "rgba(33, 168, 112, 0.51)"
+                                    : theme.accent
                             }
                             onPress={() => handleSubmit()}
                             style={{ paddingLeft: 10 }}
@@ -1036,7 +1036,6 @@ const styles = StyleSheet.create({
         width: 26,
         height: 26,
         borderRadius: 13,
-        backgroundColor: "rgba(33, 168, 112, 0.7)",
         alignItems: "center",
         justifyContent: "center",
     },

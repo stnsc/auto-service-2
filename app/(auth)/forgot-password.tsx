@@ -58,7 +58,7 @@ export default function ForgotPasswordScreen() {
             <Ionicons
                 name="lock-closed-outline"
                 size={48}
-                color="rgba(33, 168, 112, 0.8)"
+                color={theme.accentIcon}
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("forgotPassword.title")}</NText>
@@ -79,7 +79,7 @@ export default function ForgotPasswordScreen() {
                 />
 
                 <NButton
-                    color="rgba(33, 168, 112, 0.51)"
+                    color={theme.accent}
                     onPress={handleSubmit}
                 >
                     <NText style={styles.buttonText}>

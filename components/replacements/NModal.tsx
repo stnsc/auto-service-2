@@ -17,6 +17,7 @@ interface NModalProps {
     confirmLabel?: string
     onConfirm?: () => void
     color?: string
+    style?: object
 }
 
 export function NModal({
@@ -28,6 +29,7 @@ export function NModal({
     confirmLabel,
     onConfirm,
     color = "rgba(255, 255, 255, 0.15)",
+    style,
 }: NModalProps) {
     const { theme } = useTheme()
     if (!visible) return null
@@ -46,7 +48,7 @@ export function NModal({
             <Animated.View
                 entering={FadeIn.duration(200)}
                 exiting={FadeOut.duration(150)}
-                style={styles.cardWrapper}
+                style={[styles.cardWrapper, style]}
             >
                 <LinearGradient
                     colors={[color, "rgba(255,255,255,0.05)"]}
@@ -78,7 +80,7 @@ export function NModal({
                                     </NText>
                                 </NButton>
                                 <NButton
-                                    color="rgba(33, 168, 112, 0.51)"
+                                    color={theme.accent}
                                     onPress={onConfirm}
                                     style={styles.buttonRowItem}
                                 >
@@ -89,7 +91,7 @@ export function NModal({
                             </View>
                         ) : (
                             <NButton
-                                color="rgba(33, 168, 112, 0.51)"
+                                color={theme.accent}
                                 onPress={onDismiss}
                                 style={styles.dismissBtn}
                             >

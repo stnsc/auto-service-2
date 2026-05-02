@@ -87,6 +87,7 @@ const en = {
         message1: "Your account is currently under review. We're running a closed alpha and manually approving new users.",
         message2: "Check back soon! Once you are approved, you'll be able to log in and use the full app.",
         backToLogin: "Back to Login",
+        pickAccent: "While you wait, pick your accent color:",
     },
     forgotPassword: {
         title: "Forgot Password?",
@@ -381,6 +382,8 @@ const en = {
         registerServiceBtn: "Register Your Service",
         account: "Account",
         logout: "Sign Out",
+        appearance: "Appearance",
+        accentColor: "Accent Color",
         cancel: "Cancel",
         confirm: "Remove",
         confirmDelete: "Remove Vehicle",

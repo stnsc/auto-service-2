@@ -421,7 +421,7 @@ export default function ShopScreen() {
                         />
                     </View>
                     <NButton
-                        color="rgba(33, 168, 112, 0.51)"
+                        color={theme.accent}
                         onPress={() => performSearch(searchQuery)}
                     >
                         <Ionicons name="search" size={20} color={theme.icon} />

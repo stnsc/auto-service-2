@@ -2,6 +2,7 @@ import { View, StyleSheet } from "react-native"
 import { useRouter } from "expo-router"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
+import { AccentPicker } from "../../components/AccentPicker"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { useTheme } from "../../context/ThemeContext"
@@ -11,14 +12,14 @@ import "../../i18n"
 export default function PendingScreen() {
     const { t } = useTranslation()
     const router = useRouter()
-    const { theme } = useTheme()
+    const { theme, accentKey, setAccentKey, colorScheme } = useTheme()
 
     return (
         <View style={styles.container}>
             <Ionicons
                 name="hourglass"
                 size={48}
-                color="rgba(33, 168, 112, 0.8)"
+                color={theme.accentIcon}
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("pending.title")}</NText>
@@ -31,9 +32,19 @@ export default function PendingScreen() {
                 <NText style={styles.message}>{t("pending.message2")}</NText>
             </NButton>
 
+            <NText style={[styles.pickLabel, { color: theme.textMuted }]}>
+                {t("pending.pickAccent")}
+            </NText>
+            <AccentPicker
+                accentKey={accentKey}
+                colorScheme={colorScheme}
+                onSelect={setAccentKey}
+            />
+
             <NButton
                 color="rgba(255, 255, 255, 0.15)"
                 onPress={() => router.replace("/(auth)/login")}
+                style={styles.backBtn}
             >
                 <View style={styles.backRow}>
                     <Ionicons name="arrow-back" size={18} color={theme.icon} />
@@ -81,5 +92,15 @@ const styles = StyleSheet.create({
     buttonText: {
         fontFamily: fonts.bold,
         fontSize: 16,
+    },
+    pickLabel: {
+        fontFamily: fonts.regular,
+        fontSize: 14,
+        textAlign: "center",
+        marginTop: 24,
+        marginBottom: 8,
+    },
+    backBtn: {
+        marginTop: 20,
     },
 })

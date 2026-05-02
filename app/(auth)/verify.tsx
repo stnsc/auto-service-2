@@ -72,7 +72,7 @@ export default function VerifyScreen() {
             <Ionicons
                 name="mail-open"
                 size={48}
-                color="rgba(33, 168, 112, 0.8)"
+                color={theme.accentIcon}
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("verify.title")}</NText>
@@ -96,7 +96,7 @@ export default function VerifyScreen() {
                 />
 
                 <NButton
-                    color="rgba(33, 168, 112, 0.51)"
+                    color={theme.accent}
                     onPress={handleVerify}
                 >
                     <NText style={styles.buttonText}>

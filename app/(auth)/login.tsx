@@ -119,7 +119,7 @@ export default function LoginScreen() {
                     />
 
                     <NButton
-                        color="rgba(33, 168, 112, 0.51)"
+                        color={theme.accent}
                         onPress={handleLogin}
                     >
                         <NText style={styles.buttonText}>

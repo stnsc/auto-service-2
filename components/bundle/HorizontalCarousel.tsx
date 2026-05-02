@@ -221,7 +221,7 @@ export default function HorizontalCarousel({
                                                             }}
                                                             style={{
                                                                 backgroundColor:
-                                                                    "rgba(33, 168, 112, 0.50)",
+                                                                    theme.accent,
                                                                 paddingHorizontal: 8,
                                                                 paddingVertical: 4,
                                                                 borderRadius: 12,
@@ -287,9 +287,10 @@ export default function HorizontalCarousel({
                                                         <NButton
                                                             color={theme.accent}
                                                             onPress={() => {
-                                                                router.push(
-                                                                    `/appointment/`,
-                                                                )
+                                                                router.push({
+                                                                    pathname: "/appointment",
+                                                                    params: { serviceId: service.id },
+                                                                })
                                                             }}
                                                         >
                                                             <NText style={{}}>

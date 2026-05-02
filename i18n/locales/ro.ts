@@ -87,6 +87,7 @@ const ro = {
         message1: "Contul tău este în curs de verificare. Rulăm un Closed Alpha și aprobăm manual utilizatorii noi.",
         message2: "Revino curând! Odată aprobat, vei putea accesa aplicația complet.",
         backToLogin: "Înapoi la Autentificare",
+        pickAccent: "Cât aștepți, alege culoarea accentului:",
     },
     forgotPassword: {
         title: "Ai Uitat Parola?",
@@ -375,6 +376,8 @@ const ro = {
         registerServiceBtn: "Înregistrează Service-ul",
         account: "Cont",
         logout: "Deconectare",
+        appearance: "Aspect",
+        accentColor: "Culoare Accent",
         cancel: "Anulează",
         confirm: "Șterge",
         confirmDelete: "Șterge Vehiculul",

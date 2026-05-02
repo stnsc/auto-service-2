@@ -177,7 +177,7 @@ export function Suggestions({
                             ) : undefined
                         }
                         onPress={() => onSelect(`/(tabs)/${intent}`)}
-                        color={"rgba(33, 168, 112, 0.51)"}
+                        color={theme.accent}
                     />
                 </View>
             )}

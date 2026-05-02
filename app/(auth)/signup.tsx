@@ -102,7 +102,7 @@ export default function SignUpScreen() {
             <Ionicons
                 name="person-add"
                 size={48}
-                color="rgba(33, 168, 112, 0.8)"
+                color={theme.accentIcon}
                 style={styles.icon}
             />
             <NText style={styles.title}>{t("signup.title")}</NText>
@@ -145,7 +145,7 @@ export default function SignUpScreen() {
                 />
 
                 <NButton
-                    color="rgba(33, 168, 112, 0.51)"
+                    color={theme.accent}
                     onPress={handleSignUp}
                 >
                     <NText style={styles.buttonText}>
