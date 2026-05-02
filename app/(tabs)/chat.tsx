@@ -8,6 +8,7 @@ import {
     Platform,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { BlurView } from "expo-blur"
 import { NButton } from "../../components/replacements/NButton"
 import { NInput } from "../../components/replacements/NInput"
 import { NModal } from "../../components/replacements/NModal"
@@ -622,6 +623,18 @@ export default function ChatScreen() {
 
     return (
         <View style={styles.container}>
+            {/* AI disclaimer banner — hidden once chat begins */}
+            {!chatStarted && <BlurView
+                intensity={90}
+                tint={colorScheme === "dark" ? "dark" : "light"}
+                style={[styles.disclaimer, { borderColor: theme.borderEnd, overflow: "hidden" }]}
+            >
+                <Ionicons name="sparkles-outline" size={12} color={theme.iconMuted} />
+                <NText style={[styles.disclaimerText, { color: theme.textMuted, fontFamily: fonts.light }]}>
+                    {t("chat.disclaimer")}
+                </NText>
+            </BlurView>}
+
             {/* New Chat button — floats top-right, absolute so it never
                 participates in the flex layout */}
             {chatStarted && (
@@ -963,6 +976,24 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: "column",
     },
+    disclaimer: {
+        position: "absolute",
+        top: 90,
+        left: 20,
+        right: 20,
+        zIndex: 2,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingVertical: 7,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+    },
+    disclaimerText: {
+        fontSize: 11,
+        flex: 1,
+    },
     newChatButton: {
         marginTop: 90,
         alignSelf: "flex-end",
@@ -1007,6 +1038,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "flex-start",
         paddingHorizontal: 20,
+        paddingTop: 60,
     },
     inputWrapper: {
         flexDirection: "row",

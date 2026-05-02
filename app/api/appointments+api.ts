@@ -39,6 +39,7 @@ export interface Appointment {
     preferredTime: string
     additionalNotes: string
     status: "pending" | "confirmed" | "completed" | "cancelled"
+    cancelledBy?: "user" | "service"
     language?: string
     cancellationReason?: string
     ratingToken?: string
@@ -588,7 +589,7 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json()
-    const { appointmentId, serviceId, status, cancellationReason } = body
+    const { appointmentId, serviceId, status, cancellationReason, cancelledBy } = body
 
     if (!appointmentId || !status) {
         return Response.json(
@@ -642,6 +643,9 @@ export async function PATCH(request: Request) {
             ratingToken,
             ...(isCancellingNow && cancellationReason
                 ? { cancellationReason }
+                : {}),
+            ...(isCancellingNow && cancelledBy
+                ? { cancelledBy }
                 : {}),
             updatedAt: new Date().toISOString(),
         }

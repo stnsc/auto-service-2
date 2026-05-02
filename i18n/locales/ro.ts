@@ -132,6 +132,7 @@ const ro = {
         quickBook: "Programează un service",
         quickFind: "Găsește un atelier aproape",
         quickParts: "Caută piese de schimb",
+        disclaimer: "Acesta este un asistent AI și poate face ocazional greșeli. Verifică întotdeauna informațiile importante.",
     },
     history: {
         title: "Istoric Chat",
@@ -289,7 +290,9 @@ const ro = {
             confirmed: "Confirmată",
             completed: "Finalizată",
             cancelled: "Anulată",
+            cancelled_by_user: "Anulată de Client",
         },
+        cancelledByUser: "Anulată de Client",
         advanceTo: {
             confirmed: "Marchează Confirmată",
             completed: "Marchează Finalizată",
@@ -532,6 +535,18 @@ const ro = {
             thankYou: "Mulțumim pentru înțelegere,\nEchipa AutoService",
         },
         automated: "Acesta este un mesaj automat. Te rugăm să nu răspunzi la acest email.",
+    },
+    appointmentMenu: {
+        viewAppointments: "Vizualizează programările",
+        makeAppointment: "Fă o programare",
+        addToCalendar: "Adaugă în calendar",
+        cancelAppointment: "Anulează programarea",
+        cancelTitle: "De ce anulezi?",
+        cancelReasonPlaceholder: "Te rugăm să oferi un motiv...",
+        cancelConfirm: "Confirmă anularea",
+        cancelling: "Se anulează...",
+        keepAppointment: "Păstrează",
+        serviceCancelLabel: "Anulată de service",
     },
 } as const
 

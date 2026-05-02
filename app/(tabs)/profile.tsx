@@ -21,7 +21,6 @@ import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
 import { fonts } from "../../theme"
 import { Vehicle, FuelType, Transmission } from "../types/UserProfile"
-import type { Appointment } from "../api/appointments+api"
 import type { ServiceApplication } from "../api/service-applications+api"
 import "../../i18n"
 
@@ -249,12 +248,6 @@ function VehicleCard({
     )
 }
 
-const STATUS_COLORS: Record<string, string> = {
-    pending: "rgba(245,158,11,0.85)",
-    confirmed: "rgba(59,130,246,0.85)",
-    completed: "rgba(33,168,112,0.85)",
-    cancelled: "rgba(150,150,150,0.7)",
-}
 
 export default function ProfileScreen() {
     const { t } = useTranslation()
@@ -270,8 +263,6 @@ export default function ProfileScreen() {
     } = useProfileContext()
     const router = useRouter()
 
-    const [appointments, setAppointments] = useState<Appointment[]>([])
-    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
     const [serviceApps, setServiceApps] = useState<ServiceApplication[]>([])
 
     // Personal info state
@@ -300,15 +291,6 @@ export default function ProfileScreen() {
 
     useEffect(() => {
         if (!userEmail) return
-        setAppointmentsLoading(true)
-        fetch(
-            `/api/appointments?customerEmail=${encodeURIComponent(userEmail)}`,
-        )
-            .then((r) => r.json())
-            .then((data) => setAppointments(Array.isArray(data) ? data : []))
-            .catch(() => setAppointments([]))
-            .finally(() => setAppointmentsLoading(false))
-
         const uid = user?.getUsername() ?? userEmail
         fetch(`/api/service-applications?userId=${encodeURIComponent(uid)}`)
             .then((r) => r.json())
@@ -684,88 +666,6 @@ export default function ProfileScreen() {
                     />
                 ))}
 
-                {/* - My Appointments - */}
-                <SectionHeader label={t("profile.myAppointments")} />
-
-                {appointmentsLoading ? (
-                    <ActivityIndicator
-                        size="small"
-                        color={theme.accentSolid}
-                        style={{ marginVertical: 12 }}
-                    />
-                ) : appointments.length === 0 ? (
-                    <NText
-                        style={[
-                            styles.emptyText,
-                            {
-                                color: theme.textMuted,
-                                fontFamily: fonts.light,
-                            },
-                        ]}
-                    >
-                        {t("profile.noAppointments")}
-                    </NText>
-                ) : (
-                    appointments.slice(0, 5).map((appt) => (
-                        <View key={appt.appointmentId} style={styles.apptCard}>
-                            <View style={styles.apptHeader}>
-                                <NText
-                                    style={[
-                                        styles.apptService,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                    numberOfLines={1}
-                                >
-                                    {appt.serviceName ||
-                                        t("profile.unknownService")}
-                                </NText>
-                                <View
-                                    style={[
-                                        styles.apptBadge,
-                                        {
-                                            backgroundColor:
-                                                STATUS_COLORS[appt.status] ??
-                                                STATUS_COLORS.pending,
-                                        },
-                                    ]}
-                                >
-                                    <NText
-                                        style={[
-                                            styles.apptBadgeText,
-                                            { fontFamily: fonts.medium },
-                                        ]}
-                                    >
-                                        {t(`bookings.status.${appt.status}`)}
-                                    </NText>
-                                </View>
-                            </View>
-                            <NText
-                                style={[
-                                    styles.apptMeta,
-                                    {
-                                        color: theme.textMuted,
-                                        fontFamily: fonts.light,
-                                    },
-                                ]}
-                            >
-                                {appt.preferredDate} · {appt.preferredTime}
-                            </NText>
-                            <NText
-                                style={[
-                                    styles.apptMeta,
-                                    {
-                                        color: theme.textMuted,
-                                        fontFamily: fonts.light,
-                                    },
-                                ]}
-                            >
-                                {appt.vehicleYear} {appt.vehicleMake}{" "}
-                                {appt.vehicleModel}
-                            </NText>
-                        </View>
-                    ))
-                )}
-
                 {/* - Appearance - */}
                 <SectionHeader label={t("profile.appearance")} />
                 <NText
@@ -799,7 +699,7 @@ export default function ProfileScreen() {
                             <NText
                                 style={[
                                     styles.apptService,
-                                    { fontFamily: fonts.medium },
+                                    { fontFamily: fonts.medium, color: theme.text },
                                 ]}
                             >
                                 {app.serviceName}

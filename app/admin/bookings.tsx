@@ -101,7 +101,9 @@ function BookingCard({
                                     { fontFamily: fonts.medium },
                                 ]}
                             >
-                                {t(`bookings.status.${booking.status}`)}
+                                {booking.cancelledBy === "user"
+                                    ? t("bookings.cancelledByUser")
+                                    : t(`bookings.status.${booking.status}`)}
                             </NText>
                         </View>
                     </View>
@@ -163,6 +165,29 @@ function BookingCard({
                             ) : null}
                         </View>
                     )}
+
+                    {/* Cancellation reason */}
+                    {booking.status === "cancelled" &&
+                        booking.cancellationReason ? (
+                        <View style={styles.cancelReasonBox}>
+                            <NText
+                                style={[
+                                    styles.cancelReasonLabel,
+                                    { fontFamily: fonts.medium },
+                                ]}
+                            >
+                                {t("bookings.cancelReasonTitle")}
+                            </NText>
+                            <NText
+                                style={[
+                                    styles.cancelReasonText,
+                                    { fontFamily: fonts.light },
+                                ]}
+                            >
+                                {booking.cancellationReason}
+                            </NText>
+                        </View>
+                    ) : null}
 
                     {/* Actions */}
                     {booking.status !== "completed" &&
@@ -555,5 +580,24 @@ const styles = StyleSheet.create({
         color: "rgba(255,255,255,0.45)",
         fontSize: 13,
         fontStyle: "italic",
+    },
+    cancelReasonBox: {
+        marginTop: 8,
+        backgroundColor: "rgba(248,113,113,0.08)",
+        borderLeftWidth: 2,
+        borderLeftColor: "rgba(248,113,113,0.5)",
+        borderRadius: 6,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        gap: 2,
+    },
+    cancelReasonLabel: {
+        color: "rgba(248,113,113,0.9)",
+        fontSize: 11,
+        letterSpacing: 0.3,
+    },
+    cancelReasonText: {
+        color: "rgba(255,255,255,0.7)",
+        fontSize: 13,
     },
 })

@@ -15,6 +15,10 @@ import { NTabBar } from "../components/replacements/NTabBar"
 import { NButton } from "../components/replacements/NButton"
 import { Ionicons } from "@expo/vector-icons"
 import { TopNavBar } from "../components/bundle/TopNavBar"
+import {
+    AppointmentsOverlay,
+    type AppointmentOverlayState,
+} from "../components/bundle/AppointmentsOverlay"
 import maplibregl from "maplibre-gl"
 import { ChatProvider } from "../context/ChatContext"
 import { AppointmentProvider } from "../context/AppointmentContext"
@@ -55,7 +59,7 @@ export default function RootLayout() {
 
 function AuthGatedLayout() {
     const { t } = useTranslation()
-    const { isAuthenticated, isLoading } = useAuthContext()
+    const { isAuthenticated, isLoading, userEmail } = useAuthContext()
     const { theme } = useTheme()
     const segments = useSegments()
     const router = useRouter()
@@ -130,7 +134,15 @@ function AuthGatedLayout() {
             ([, route]) => pathname === route,
         )?.[0] ?? "chat"
 
+    const [appointmentMenuState, setAppointmentMenuState] =
+        useState<AppointmentOverlayState>(null)
+
     const handleTabPress = (key: string) => {
+        if (key === "appointment") {
+            setAppointmentMenuState("menu")
+            return
+        }
+        setAppointmentMenuState(null)
         router.push(TAB_ROUTES[key] as any)
     }
 
@@ -275,6 +287,25 @@ function AuthGatedLayout() {
                                             onTabPress={handleTabPress}
                                         />
                                     </View>
+                                )}
+
+                                {showNav && (
+                                    <AppointmentsOverlay
+                                        state={appointmentMenuState}
+                                        onClose={() =>
+                                            setAppointmentMenuState(null)
+                                        }
+                                        onMakeAppointment={() => {
+                                            setAppointmentMenuState(null)
+                                            router.push(
+                                                "/appointment" as any,
+                                            )
+                                        }}
+                                        onShowPanel={() =>
+                                            setAppointmentMenuState("panel")
+                                        }
+                                        userEmail={userEmail}
+                                    />
                                 )}
 
                                 {showNav && hasReplay && (

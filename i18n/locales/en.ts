@@ -132,6 +132,7 @@ const en = {
         quickBook: "Book a service appointment",
         quickFind: "Find a workshop near me",
         quickParts: "Browse spare parts",
+        disclaimer: "This is an AI assistant and may occasionally make mistakes. Always verify important information.",
     },
     history: {
         title: "Chat History",
@@ -289,7 +290,9 @@ const en = {
             confirmed: "Confirmed",
             completed: "Completed",
             cancelled: "Cancelled",
+            cancelled_by_user: "Cancelled by User",
         },
+        cancelledByUser: "Cancelled by User",
         advanceTo: {
             confirmed: "Mark Confirmed",
             completed: "Mark Completed",
@@ -531,6 +534,18 @@ const en = {
             thankYou: "Thank you for your understanding,\nAutoService Team",
         },
         automated: "This is an automated message. Please do not reply to this email.",
+    },
+    appointmentMenu: {
+        viewAppointments: "View your appointments",
+        makeAppointment: "Make an appointment",
+        addToCalendar: "Add to calendar",
+        cancelAppointment: "Cancel appointment",
+        cancelTitle: "Why are you cancelling?",
+        cancelReasonPlaceholder: "Please provide a reason...",
+        cancelConfirm: "Confirm cancellation",
+        cancelling: "Cancelling...",
+        keepAppointment: "Keep",
+        serviceCancelLabel: "Cancelled by service",
     },
 } as const
 
