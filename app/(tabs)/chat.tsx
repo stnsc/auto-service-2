@@ -11,7 +11,6 @@ import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { NButton } from "../../components/replacements/NButton"
 import { NInput } from "../../components/replacements/NInput"
-import { NModal } from "../../components/replacements/NModal"
 import { Ionicons } from "@expo/vector-icons"
 import { Suggestions } from "../../components/bundle/Suggestions"
 import React, { useRef, useState, useEffect } from "react"
@@ -22,8 +21,6 @@ import { useChatContext } from "../../context/ChatContext"
 import { useAuthContext } from "../../context/AuthContext"
 import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
-import { useAlphaNotice } from "../../hooks/useAlphaNotice"
-import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import "../../i18n"
 
@@ -320,14 +317,71 @@ interface Message {
     content: string
 }
 
+function TypewriterText({
+    text,
+    style,
+}: {
+    text: string
+    style?: object
+}) {
+    const { theme } = useTheme()
+    const [displayed, setDisplayed] = useState("")
+    const [showCursor, setShowCursor] = useState(true)
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const blinkRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+    useEffect(() => {
+        setDisplayed("")
+        setShowCursor(true)
+        if (timerRef.current) clearTimeout(timerRef.current)
+        if (blinkRef.current) clearInterval(blinkRef.current)
+
+        let i = 0
+        const type = () => {
+            i++
+            setDisplayed(text.slice(0, i))
+            if (i < text.length) {
+                timerRef.current = setTimeout(type, 35)
+            } else {
+                timerRef.current = setTimeout(() => {
+                    let blinks = 0
+                    blinkRef.current = setInterval(() => {
+                        setShowCursor((v) => !v)
+                        blinks++
+                        if (blinks >= 6) {
+                            clearInterval(blinkRef.current!)
+                            setShowCursor(false)
+                        }
+                    }, 400)
+                }, 300)
+            }
+        }
+        timerRef.current = setTimeout(type, 35)
+
+        return () => {
+            if (timerRef.current) clearTimeout(timerRef.current)
+            if (blinkRef.current) clearInterval(blinkRef.current)
+        }
+    }, [text])
+
+    return (
+        <NText style={style}>
+            {displayed}
+            {showCursor && (
+                <NText style={{ color: theme.accent }}>|</NText>
+            )}
+        </NText>
+    )
+}
+
 export default function ChatScreen() {
     // enabling router
     const router = useRouter()
-    const { t } = useTranslation()
+    const { t, i18n: i18nInstance } = useTranslation()
     const { theme, colorScheme } = useTheme()
 
     const { userEmail } = useAuthContext()
-    const { profile } = useProfileContext()
+    const { profile, isLoading: profileIsLoading } = useProfileContext()
     const firstName = profile?.firstName || ""
 
     // Derive vehicleInfo from the user's primary vehicle (if any)
@@ -354,13 +408,6 @@ export default function ChatScreen() {
     const intentHeightAnim = useRef(new Animated.Value(0)).current
     const intentOpacityAnim = useRef(new Animated.Value(0)).current
     const quickActionsOpacity = useRef(new Animated.Value(1)).current
-    const chatNotice = useAlphaNotice("chat-logging")
-    const { register } = useInfoNotice()
-
-    useEffect(() => {
-        register(chatNotice.show)
-        return () => register(null)
-    }, [])
 
     // Use global chat context
     const {
@@ -418,6 +465,36 @@ export default function ChatScreen() {
             }).start(() => setGreetingHidden(true))
         }
     }, [chatStarted])
+
+    // AI-powered greeting subtext
+    const [greetingSubtext, setGreetingSubtext] = useState<string | null>(null)
+    const [greetingKey, setGreetingKey] = useState(0)
+
+    useEffect(() => {
+        if (profileIsLoading) return
+        setGreetingSubtext(null)
+        const pv = profile?.vehicles?.find((v) => v.isPrimary) ?? null
+        const vehicle =
+            pv && (pv.make || pv.model)
+                ? { make: pv.make, model: pv.model, year: pv.year ?? null }
+                : null
+        fetch("/api/greeting", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                firstName: profile?.firstName ?? "",
+                vehicle,
+                language: i18nInstance.language,
+            }),
+        })
+            .then((r) => r.json())
+            .then((data) =>
+                setGreetingSubtext(
+                    data.text || t("chat.greetingSubFallback"),
+                ),
+            )
+            .catch(() => setGreetingSubtext(t("chat.greetingSubFallback")))
+    }, [greetingKey, profileIsLoading])
 
     // Seed vehicleInfo from the primary vehicle when profile loads,
     // but only if vehicleInfo is still empty (no data gathered yet)
@@ -566,6 +643,7 @@ export default function ChatScreen() {
         setChatIntent("")
         setChatConfidence(0)
         setQuery("")
+        setGreetingKey((k) => k + 1)
         // Reset animation back to initial state
         Animated.timing(transitionAnim, {
             toValue: 1,
@@ -659,12 +737,25 @@ export default function ChatScreen() {
                     pointerEvents={chatStarted ? "none" : "auto"}
                 >
                     <NText
-                        style={[styles.greeting, { fontFamily: fonts.regular }]}
+                        style={[styles.greeting, { fontFamily: fonts.bold }]}
                     >
                         {firstName
-                            ? t("chat.greeting", { name: firstName })
-                            : t("chat.greetingAnon")}
+                            ? t("chat.greetingName", { name: firstName })
+                            : t("chat.greetingNameAnon")}
                     </NText>
+                    {greetingSubtext !== null ? (
+                        <TypewriterText
+                            key={greetingSubtext}
+                            text={greetingSubtext}
+                            style={[styles.greetingSubtext, { fontFamily: fonts.light }]}
+                        />
+                    ) : (
+                        <ActivityIndicator
+                            size="small"
+                            color={theme.textMuted}
+                            style={{ marginLeft: 20, marginTop: 6 }}
+                        />
+                    )}
                     <Animated.View
                         style={[
                             styles.quickActions,
@@ -959,19 +1050,11 @@ export default function ChatScreen() {
                 />
             )}
 
-            <NModal
-                visible={chatNotice.visible}
-                onDismiss={chatNotice.dismiss}
-                title={t("chat.modalTitle")}
-            >
-                <NText style={styles.noticeText}>{t("chat.modalLine1")}</NText>
-                <NText style={styles.noticeText}>{t("chat.modalLine2")}</NText>
-            </NModal>
         </View>
     )
 }
 
-const styles = StyleSheet.create({
+const styles= StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: "column",
@@ -1047,7 +1130,15 @@ const styles = StyleSheet.create({
     greeting: {
         fontSize: 24,
         fontWeight: "100",
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 4,
+    },
+    greetingSubtext: {
+        fontSize: 18,
+        fontWeight: "300",
+        paddingHorizontal: 20,
+        paddingBottom: 20,
     },
     quickActions: {
         marginTop: 12,

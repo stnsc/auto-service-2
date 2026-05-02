@@ -122,6 +122,9 @@ const ro = {
     chat: {
         greeting: "Bună, {{name}}!\nCu ce te pot ajuta?",
         greetingAnon: "Bună!\nCu ce te pot ajuta?",
+        greetingName: "Bună, {{name}}!",
+        greetingNameAnon: "Bună!",
+        greetingSubFallback: "Cu ce te pot ajuta?",
         newChat: "Chat Nou",
         inputPlaceholder: "Care este întrebarea ta?",
         assistantLabel: "Inteligența AutoService",

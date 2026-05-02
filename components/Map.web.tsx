@@ -38,6 +38,11 @@ interface MapProps {
 
 const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? ""
 
+const MAP_STYLES = {
+    dark: `https://api.maptiler.com/maps/hybrid-v4-dark/style.json?key=${MAPTILER_KEY}`,
+    light: `https://api.maptiler.com/maps/hybrid-v4/style.json?key=${MAPTILER_KEY}`,
+} as const
+
 export interface MapHandle {
     flyTo: (lat: number, lon: number) => void
 }
@@ -57,7 +62,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     const mapRef = useRef<maplibregl.Map | null>(null)
     const markersRef = useRef<maplibregl.Marker[]>([])
     const [mapLoaded, setMapLoaded] = useState(false)
-    const { theme } = useTheme()
+    const { theme, colorScheme } = useTheme()
 
     // Always-current refs so event listeners never capture stale callbacks
     const onServicePressRef = useRef(onServicePress)
@@ -82,7 +87,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         const initMap = () => {
             mapRef.current = new maplibregl.Map({
                 container: containerRef.current!,
-                style: `https://api.maptiler.com/maps/019d49f9-3b3c-7cee-991d-87e447e8578e/style.json?key=${MAPTILER_KEY}`,
+                style: MAP_STYLES[colorScheme],
                 center: [longitude, latitude],
                 zoom,
                 pitch: 15,
@@ -116,6 +121,12 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
             }
         }
     }, []) // empty — map created once, refs handle callback freshness
+
+    // Swap map style when theme changes
+    useEffect(() => {
+        if (!mapRef.current || !mapLoaded) return
+        mapRef.current.setStyle(MAP_STYLES[colorScheme])
+    }, [colorScheme, mapLoaded])
 
     // Markers — recreated only when the services list changes, not on callback changes
     useEffect(() => {

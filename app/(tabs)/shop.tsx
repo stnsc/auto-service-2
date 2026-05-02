@@ -9,12 +9,9 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
-import { NModal } from "../../components/replacements/NModal"
 import { useChatContext } from "../../context/ChatContext"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
-import { useAlphaNotice } from "../../hooks/useAlphaNotice"
-import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
@@ -124,13 +121,6 @@ function isAutoRelated(query: string): boolean {
 export default function ShopScreen() {
     const { t } = useTranslation()
     const { partQuery, partPriceLimit } = useChatContext()
-    const shopNotice = useAlphaNotice("shop-alpha")
-    const { register } = useInfoNotice()
-
-    useEffect(() => {
-        register(shopNotice.show)
-        return () => register(null)
-    }, [])
     const { theme } = useTheme()
 
     const [searchQuery, setSearchQuery] = useState("")
@@ -429,20 +419,11 @@ export default function ShopScreen() {
                 </View>
             </View>
 
-            <NModal
-                visible={shopNotice.visible}
-                onDismiss={shopNotice.dismiss}
-                title={t("shop.modalTitle")}
-            >
-                <NText style={styles.noticeText}>{t("shop.modalLine1")}</NText>
-                <NText style={styles.noticeText}>{t("shop.modalLine2")}</NText>
-                <NText style={styles.noticeText}>{t("shop.modalLine3")}</NText>
-            </NModal>
         </View>
     )
 }
 
-const styles = StyleSheet.create({
+const styles= StyleSheet.create({
     root: {
         flex: 1,
         marginTop: "10%",

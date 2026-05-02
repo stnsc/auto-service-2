@@ -23,7 +23,7 @@ export interface TabItem {
 
 interface NTabBarProps {
     tabs: TabItem[]
-    activeKey: string
+    activeKey: string | null
     onTabPress?: (key: string) => void
     color?: string
     intensity?: number

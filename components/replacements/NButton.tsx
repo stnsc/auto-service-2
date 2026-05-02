@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     wrapper: {
         borderRadius: 25,
         overflow: "hidden",
+        width: "100%",
     },
     gradientStroke: {
         padding: 1.5,

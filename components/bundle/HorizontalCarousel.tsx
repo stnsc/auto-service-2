@@ -184,17 +184,29 @@ export default function HorizontalCarousel({
                                                 },
                                             ]}
                                         >
-                                            <NText
+                                            <View
                                                 style={{
-                                                    fontSize: 14,
-                                                    fontWeight: "bold",
-                                                    textAlign: "center",
-                                                    marginBottom: -8,
+                                                    alignSelf: "center",
+                                                    backgroundColor:
+                                                        theme.accent,
+                                                    paddingHorizontal: 10,
+                                                    paddingVertical: 4,
+                                                    borderRadius: 20,
+                                                    marginBottom: -14,
                                                     zIndex: 1,
                                                 }}
                                             >
-                                                {service.type}
-                                            </NText>
+                                                <NText
+                                                    style={{
+                                                        fontSize: 12,
+                                                        fontFamily: fonts.bold,
+                                                    }}
+                                                >
+                                                    {t(
+                                                        `settings.types.${service.type}`,
+                                                    )}
+                                                </NText>
+                                            </View>
                                             <NButton color={theme.overlayBg}>
                                                 <View
                                                     style={{
@@ -286,6 +298,7 @@ export default function HorizontalCarousel({
                                                     >
                                                         <NButton
                                                             color={theme.accent}
+                                                            style={{ flex: 1 }}
                                                             onPress={() => {
                                                                 router.push({
                                                                     pathname: "/appointment",
@@ -303,6 +316,12 @@ export default function HorizontalCarousel({
                                                             color={
                                                                 theme.surfaceMid
                                                             }
+                                                            style={{ flex: 1 }}
+                                                            onPress={() => {
+                                                                Linking.openURL(
+                                                                    `tel:${service.phone}`,
+                                                                )
+                                                            }}
                                                         >
                                                             <View
                                                                 style={{

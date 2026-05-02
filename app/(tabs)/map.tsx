@@ -4,10 +4,6 @@ import HorizontalCarousel from "../../components/bundle/HorizontalCarousel"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { CarService } from "../../app/types/CarService"
 import { useLocalSearchParams, useFocusEffect } from "expo-router"
-import { NModal } from "../../components/replacements/NModal"
-import { NText } from "../../components/replacements/NText"
-import { useAlphaNotice } from "../../hooks/useAlphaNotice"
-import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useCarServices } from "../../hooks/useCarServices"
 import { useTranslation } from "react-i18next"
 import "../../i18n"
@@ -40,13 +36,6 @@ export default function MapScreen() {
         latitude?: string
         longitude?: string
     }>()
-    const mapNotice = useAlphaNotice("map-alpha")
-    const { register } = useInfoNotice()
-
-    useEffect(() => {
-        register(mapNotice.show)
-        return () => register(null)
-    }, [])
     const { t } = useTranslation()
 
     const initialLatitude = useMemo(() => {
@@ -161,19 +150,11 @@ export default function MapScreen() {
                 />
             </View>
 
-            <NModal
-                visible={mapNotice.visible}
-                onDismiss={mapNotice.dismiss}
-                title={t("map.modalTitle")}
-            >
-                <NText style={noticeStyles.text}>{t("map.modalLine1")}</NText>
-                <NText style={noticeStyles.text}>{t("map.modalLine2")}</NText>
-            </NModal>
         </View>
     )
 }
 
-const noticeStyles = StyleSheet.create({
+const noticeStyles= StyleSheet.create({
     text: {
         fontSize: 14,
         lineHeight: 20,
@@ -190,7 +171,7 @@ const styles = StyleSheet.create({
     },
     carousel: {
         position: "absolute",
-        bottom: 20,
+        bottom: 35,
         left: 0,
         right: 0,
     },

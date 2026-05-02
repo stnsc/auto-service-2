@@ -16,8 +16,6 @@ import { useProfileContext } from "../../context/ProfileContext"
 import { useAuthContext } from "../../context/AuthContext"
 import { fonts } from "../../theme"
 import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
-import { useAlphaNotice } from "../../hooks/useAlphaNotice"
-import { useInfoNotice } from "../../context/InfoNoticeContext"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
 import type { ServiceConfig } from "../api/service-config+api"
@@ -105,8 +103,6 @@ export default function AppointmentScreen() {
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
     const { services, refresh } = useCarServices()
     useFocusEffect(useCallback(() => { refresh() }, [refresh]))
-    const appointmentNotice = useAlphaNotice("appointment-alpha")
-    const { register } = useInfoNotice()
     const {
         currentStep,
         setCurrentStep,
@@ -133,11 +129,6 @@ export default function AppointmentScreen() {
         problemDescription: string
         appointmentId: string
     } | null>(null)
-
-    useEffect(() => {
-        register(appointmentNotice.show)
-        return () => register(null)
-    }, [])
 
     // Fetch service schedule config for the selected service center
     useEffect(() => {
@@ -927,18 +918,6 @@ export default function AppointmentScreen() {
                 )}
             </View>
 
-            <NModal
-                visible={appointmentNotice.visible}
-                onDismiss={appointmentNotice.dismiss}
-                title={t("appointment.modalTitle")}
-            >
-                <NText style={styles.noticeText}>
-                    {t("appointment.modalLine1")}
-                </NText>
-                <NText style={styles.noticeText}>
-                    {t("appointment.modalLine2")}
-                </NText>
-            </NModal>
 
             <NModal
                 visible={submitSuccess}

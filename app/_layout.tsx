@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { Slot, usePathname, useRouter, useSegments } from "expo-router"
 import Head from "expo-router/head"
+import { LinearGradient } from "expo-linear-gradient"
 import { NTabBar } from "../components/replacements/NTabBar"
 import { NButton } from "../components/replacements/NButton"
 import { Ionicons } from "@expo/vector-icons"
@@ -24,11 +25,11 @@ import { ChatProvider } from "../context/ChatContext"
 import { AppointmentProvider } from "../context/AppointmentContext"
 import { AuthProvider, useAuthContext } from "../context/AuthContext"
 import { ThemeProvider, useTheme } from "../context/ThemeContext"
+import type { AccentKey } from "../theme"
 import { ProfileProvider } from "../context/ProfileContext"
 import { NModal } from "../components/replacements/NModal"
 import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
-import { InfoNoticeProvider, useInfoNotice } from "../context/InfoNoticeContext"
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { useTranslation } from "react-i18next"
@@ -49,9 +50,7 @@ export default function RootLayout() {
     return (
         <ThemeProvider>
             <AuthProvider>
-                <InfoNoticeProvider>
-                    <AuthGatedLayout />
-                </InfoNoticeProvider>
+                <AuthGatedLayout />
             </AuthProvider>
         </ThemeProvider>
     )
@@ -60,11 +59,10 @@ export default function RootLayout() {
 function AuthGatedLayout() {
     const { t } = useTranslation()
     const { isAuthenticated, isLoading, userEmail } = useAuthContext()
-    const { theme } = useTheme()
+    const { theme, colorScheme, accentKey } = useTheme()
     const segments = useSegments()
     const router = useRouter()
     const welcomeNotice = useAlphaNotice("alpha-welcome")
-    const { replay, hasReplay } = useInfoNotice()
 
     // Auth guard — redirect based on auth state
     useEffect(() => {
@@ -100,7 +98,7 @@ function AuthGatedLayout() {
     const pathname = usePathname()
 
     const TAB_ROUTES: Record<string, string> = {
-        chat: "/",
+        chat: "/chat",
         appointment: "/appointment",
         shop: "/shop",
         map: "/map",
@@ -132,7 +130,7 @@ function AuthGatedLayout() {
     const activeKey =
         Object.entries(TAB_ROUTES).find(
             ([, route]) => pathname === route,
-        )?.[0] ?? "chat"
+        )?.[0] ?? null
 
     const [appointmentMenuState, setAppointmentMenuState] =
         useState<AppointmentOverlayState>(null)
@@ -142,6 +140,7 @@ function AuthGatedLayout() {
             setAppointmentMenuState("menu")
             return
         }
+        if (key === activeKey) return
         setAppointmentMenuState(null)
         router.push(TAB_ROUTES[key] as any)
     }
@@ -180,8 +179,14 @@ function AuthGatedLayout() {
 
     const { width: windowWidth } = useWindowDimensions()
 
-    const [hue, setHue] = useState(80)
-    const [sat, setSat] = useState(70)
+    const ACCENT_FILTER: Record<AccentKey, { hue: number; sat: number }> = {
+        green:  { hue: 80,   sat: 70 },
+        teal:   { hue: 60,  sat: 75 },
+        blue:   { hue: 290,  sat: 80 },
+        purple: { hue: 130, sat: 70 },
+        amber:  { hue: 0,  sat: 90 },
+    }
+    const { hue, sat } = ACCENT_FILTER[accentKey]
 
     const fadeAnim = useRef(new Animated.Value(1)).current
     const slideAnim = useRef(new Animated.Value(0)).current
@@ -257,6 +262,11 @@ function AuthGatedLayout() {
                             <View style={{ flex: 1 }}>
                                 {showTopBar && (
                                     <>
+                                        <LinearGradient
+                                            colors={colorScheme === "dark" ? ["rgba(0,0,0,0.45)", "transparent"] : ["rgba(255,255,255,0.6)", "transparent"]}
+                                            style={styles.topNavGradient}
+                                            pointerEvents="none"
+                                        />
                                         <View style={styles.topNav}>
                                             <TopNavBar />
                                         </View>
@@ -307,19 +317,6 @@ function AuthGatedLayout() {
                                         userEmail={userEmail}
                                     />
                                 )}
-
-                                {showNav && hasReplay && (
-                                    <NButton
-                                        onPress={replay}
-                                        style={styles.infoButton}
-                                    >
-                                        <Ionicons
-                                            name="information-circle-outline"
-                                            size={25}
-                                            color={theme.icon}
-                                        />
-                                    </NButton>
-                                )}
                             </View>
                         </View>
 
@@ -360,6 +357,14 @@ const styles = StyleSheet.create({
         width: "100%",
         zIndex: 100,
         position: "absolute",
+    },
+    topNavGradient: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 100,
+        zIndex: 99,
     },
     bottomNav: {
         position: "absolute",

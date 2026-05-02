@@ -122,6 +122,9 @@ const en = {
     chat: {
         greeting: "Hello, {{name}}!\nHow can I help?",
         greetingAnon: "Hello!\nHow can I help?",
+        greetingName: "Hello, {{name}}!",
+        greetingNameAnon: "Hello!",
+        greetingSubFallback: "How can I help?",
         newChat: "New Chat",
         inputPlaceholder: "What's your question?",
         assistantLabel: "AutoService Intelligence",
