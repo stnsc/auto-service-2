@@ -15,6 +15,7 @@ import {
     useAdminService,
 } from "../../context/AdminServiceContext"
 import { fonts } from "../../theme"
+import { useTheme } from "../../context/ThemeContext"
 import type { ServiceApplication } from "../api/service-applications+api"
 
 const ADMIN_TABS: SidebarItem[] = [
@@ -45,6 +46,7 @@ function AdminLayoutInner() {
     const { width } = useWindowDimensions()
     const { userEmail, user } = useAuthContext()
     const { serviceId, serviceName, setService, clearService } = useAdminService()
+    const { theme } = useTheme()
 
     const adminNotice = useAlphaNotice("admin-notice")
 
@@ -112,14 +114,14 @@ function AdminLayoutInner() {
             <View style={styles.pickerContainer}>
                 <ScrollView contentContainerStyle={styles.pickerContent}>
                     <NText
-                        style={[styles.pickerTitle, { fontFamily: fonts.bold }]}
+                        style={[styles.pickerTitle, { fontFamily: fonts.bold, color: theme.text }]}
                     >
                         Select a Service
                     </NText>
                     <NText
                         style={[
                             styles.pickerSubtitle,
-                            { fontFamily: fonts.light },
+                            { fontFamily: fonts.light, color: theme.textSubtle },
                         ]}
                     >
                         Choose which service you want to manage
@@ -141,28 +143,28 @@ function AdminLayoutInner() {
                             >
                                 <LinearGradient
                                     colors={[
-                                        "rgba(255,255,255,0.14)",
-                                        "rgba(255,255,255,0.05)",
+                                        theme.surfaceHigh,
+                                        theme.surface,
                                     ]}
                                     style={styles.serviceCardGradient}
                                 >
                                     <BlurView
                                         intensity={20}
-                                        tint="dark"
+                                        tint={theme.blurTint}
                                         style={styles.serviceCardInner}
                                     >
-                                        <View style={styles.serviceCardIcon}>
+                                        <View style={[styles.serviceCardIcon, { backgroundColor: theme.accentSubtle }]}>
                                             <Ionicons
                                                 name="business-outline"
                                                 size={28}
-                                                color="rgba(255,255,255,0.8)"
+                                                color={theme.icon}
                                             />
                                         </View>
                                         <View style={styles.serviceCardText}>
                                             <NText
                                                 style={[
                                                     styles.serviceCardName,
-                                                    { fontFamily: fonts.medium },
+                                                    { fontFamily: fonts.medium, color: theme.text },
                                                 ]}
                                             >
                                                 {svc.serviceName}
@@ -170,7 +172,7 @@ function AdminLayoutInner() {
                                             <NText
                                                 style={[
                                                     styles.serviceCardAddress,
-                                                    { fontFamily: fonts.light },
+                                                    { fontFamily: fonts.light, color: theme.textMuted },
                                                 ]}
                                             >
                                                 {svc.address}
@@ -182,7 +184,7 @@ function AdminLayoutInner() {
                                         <Ionicons
                                             name="chevron-forward"
                                             size={18}
-                                            color="rgba(255,255,255,0.4)"
+                                            color={theme.iconMuted}
                                         />
                                     </BlurView>
                                 </LinearGradient>
@@ -220,12 +222,12 @@ function AdminLayoutInner() {
                 onDismiss={adminNotice.dismiss}
                 title="Admin Preview"
             >
-                <NText style={styles.noticeText}>
+                <NText style={[styles.noticeText, { color: theme.textMuted }]}>
                     This is only a skeleton admin panel that will be purposed
                     only for registered service centers
                 </NText>
 
-                <NText style={styles.noticeText}>
+                <NText style={[styles.noticeText, { color: theme.textMuted }]}>
                     You can go back by hitting the "Customer View" button.
                 </NText>
             </NModal>
@@ -246,7 +248,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
     },
     noticeText: {
-        color: "rgba(255,255,255,0.8)",
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,
@@ -264,13 +265,11 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     pickerTitle: {
-        color: "#ffffff",
         fontSize: 28,
         marginBottom: 8,
         textAlign: "center",
     },
     pickerSubtitle: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 15,
         marginBottom: 32,
         textAlign: "center",
@@ -299,7 +298,6 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 14,
-        backgroundColor: "rgba(33,168,112,0.2)",
         justifyContent: "center",
         alignItems: "center",
     },
@@ -308,11 +306,9 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     serviceCardName: {
-        color: "#ffffff",
         fontSize: 16,
     },
     serviceCardAddress: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 13,
     },
 })

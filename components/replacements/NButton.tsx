@@ -1,5 +1,5 @@
 import React, { ReactNode, useCallback, useEffect } from "react"
-import { Pressable, StyleSheet, ViewStyle } from "react-native"
+import { Pressable, StyleProp, StyleSheet, ViewStyle } from "react-native"
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -14,7 +14,8 @@ interface NButtonProps {
     onPress?: () => void
     children?: ReactNode
     color?: string
-    style?: ViewStyle
+    style?: StyleProp<ViewStyle>
+    innerStyle?: StyleProp<ViewStyle>
     intensity?: number
     disabled?: boolean
 }
@@ -25,6 +26,7 @@ export function NButton({
     color = "rgba(255, 255, 255, 0.1)",
     intensity = 30,
     style,
+    innerStyle,
     disabled = false,
 }: NButtonProps) {
     const { theme } = useTheme()
@@ -71,7 +73,7 @@ export function NButton({
                     <BlurView
                         intensity={intensity}
                         tint={theme.blurTint}
-                        style={[styles.innerButton]}
+                        style={[styles.innerButton, innerStyle]}
                     >
                         <Animated.View
                             style={[StyleSheet.absoluteFill, brightnessStyle]}
@@ -89,10 +91,9 @@ const styles = StyleSheet.create({
     wrapper: {
         borderRadius: 25,
         overflow: "hidden",
-        width: "100%",
     },
     gradientStroke: {
-        padding: 1.5,
+        paddingVertical: 1,
         borderRadius: 25,
     },
     innerButton: {

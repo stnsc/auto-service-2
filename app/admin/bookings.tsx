@@ -10,6 +10,7 @@ import { fonts } from "../../theme"
 import { useTranslation } from "react-i18next"
 import type { Appointment } from "../api/appointments+api"
 import { useAdminService } from "../../context/AdminServiceContext"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 import { NButton } from "../../components/replacements/NButton"
 
@@ -46,9 +47,11 @@ function BookingCard({
     onCancelPress: (booking: Appointment) => void
 }) {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const [updating, setUpdating] = useState(false)
     const statusColor = STATUS_COLORS[booking.status] ?? STATUS_COLORS.pending
-    const statusBorderColor = STATUS_BORDER_COLORS[booking.status] ?? STATUS_BORDER_COLORS.pending
+    const statusBorderColor =
+        STATUS_BORDER_COLORS[booking.status] ?? STATUS_BORDER_COLORS.pending
     const next = NEXT_STATUS[booking.status]
 
     const handleAdvance = async () => {
@@ -72,16 +75,19 @@ function BookingCard({
     return (
         <View style={styles.cardWrapper}>
             <LinearGradient
-                colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.04)"]}
+                colors={[theme.surfaceMid, theme.borderEnd]}
                 style={styles.cardGradient}
             >
-                <BlurView intensity={40} tint="dark" style={styles.cardInner}>
-                    {/* Header */}
+                <BlurView
+                    intensity={40}
+                    tint={theme.blurTint}
+                    style={styles.cardInner}
+                >
                     <View style={styles.cardHeader}>
                         <NText
                             style={[
                                 styles.customerName,
-                                { fontFamily: fonts.medium },
+                                { color: theme.text, fontFamily: fonts.medium },
                             ]}
                         >
                             {booking.customerName}
@@ -98,7 +104,7 @@ function BookingCard({
                             <NText
                                 style={[
                                     styles.statusText,
-                                    { fontFamily: fonts.medium },
+                                    { color: theme.text, fontFamily: fonts.medium },
                                 ]}
                             >
                                 {booking.cancelledBy === "user"
@@ -108,9 +114,11 @@ function BookingCard({
                         </View>
                     </View>
 
-                    {/* Vehicle */}
                     <NText
-                        style={[styles.metaLine, { fontFamily: fonts.light }]}
+                        style={[
+                            styles.metaLine,
+                            { color: theme.textMuted, fontFamily: fonts.light },
+                        ]}
                     >
                         {booking.vehicleYear} {booking.vehicleMake}{" "}
                         {booking.vehicleModel}
@@ -119,19 +127,23 @@ function BookingCard({
                             : ""}
                     </NText>
 
-                    {/* Date & time */}
                     <NText
-                        style={[styles.metaLine, { fontFamily: fonts.light }]}
+                        style={[
+                            styles.metaLine,
+                            { color: theme.textMuted, fontFamily: fonts.light },
+                        ]}
                     >
                         {booking.preferredDate} · {booking.preferredTime}
                     </NText>
 
-                    {/* Problem */}
                     {booking.problemDescription ? (
                         <NText
                             style={[
                                 styles.problemText,
-                                { fontFamily: fonts.light },
+                                {
+                                    color: theme.textMuted,
+                                    fontFamily: fonts.light,
+                                },
                             ]}
                             numberOfLines={2}
                         >
@@ -139,11 +151,13 @@ function BookingCard({
                         </NText>
                     ) : null}
 
-                    {/* Contact */}
                     <NText
                         style={[
                             styles.contactLine,
-                            { fontFamily: fonts.light },
+                            {
+                                color: theme.textSubtle,
+                                fontFamily: fonts.light,
+                            },
                         ]}
                     >
                         {booking.customerPhone}
@@ -152,23 +166,34 @@ function BookingCard({
                             : ""}
                     </NText>
 
-                    {/* Rating */}
                     {booking.rating != null && (
                         <View style={styles.ratingRow}>
-                            <NText style={[styles.ratingStars, { fontFamily: fonts.regular }]}>
+                            <NText
+                                style={[
+                                    styles.ratingStars,
+                                    { fontFamily: fonts.regular },
+                                ]}
+                            >
                                 {"★".repeat(booking.rating)}{"☆".repeat(5 - booking.rating)}
                             </NText>
                             {booking.ratingComment ? (
-                                <NText style={[styles.ratingComment, { fontFamily: fonts.light }]}>
+                                <NText
+                                    style={[
+                                        styles.ratingComment,
+                                        {
+                                            color: theme.textMuted,
+                                            fontFamily: fonts.light,
+                                        },
+                                    ]}
+                                >
                                     "{booking.ratingComment}"
                                 </NText>
                             ) : null}
                         </View>
                     )}
 
-                    {/* Cancellation reason */}
                     {booking.status === "cancelled" &&
-                        booking.cancellationReason ? (
+                    booking.cancellationReason ? (
                         <View style={styles.cancelReasonBox}>
                             <NText
                                 style={[
@@ -181,7 +206,7 @@ function BookingCard({
                             <NText
                                 style={[
                                     styles.cancelReasonText,
-                                    { fontFamily: fonts.light },
+                                    { color: theme.text, fontFamily: fonts.light },
                                 ]}
                             >
                                 {booking.cancellationReason}
@@ -189,7 +214,6 @@ function BookingCard({
                         </View>
                     ) : null}
 
-                    {/* Actions */}
                     {booking.status !== "completed" &&
                         booking.status !== "cancelled" && (
                             <View style={styles.actions}>
@@ -197,13 +221,16 @@ function BookingCard({
                                     <NButton
                                         onPress={handleAdvance}
                                         disabled={updating}
-                                        color="rgba(33,168,112,0.5)"
+                                        color={theme.accentSubtle}
                                         style={styles.actionBtn}
                                     >
                                         <NText
                                             style={[
                                                 styles.actionBtnText,
-                                                { fontFamily: fonts.medium },
+                                                {
+                                                    color: theme.text,
+                                                    fontFamily: fonts.medium,
+                                                },
                                             ]}
                                         >
                                             {t(`bookings.advanceTo.${next}`)}
@@ -219,7 +246,10 @@ function BookingCard({
                                     <NText
                                         style={[
                                             styles.actionBtnText,
-                                            { fontFamily: fonts.medium },
+                                            {
+                                                color: theme.text,
+                                                fontFamily: fonts.medium,
+                                            },
                                         ]}
                                     >
                                         {t("bookings.cancel")}
@@ -235,6 +265,7 @@ function BookingCard({
 
 export default function BookingsScreen() {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const { serviceId } = useAdminService()
     const FILTERS: { key: FilterKey; label: string }[] = [
         { key: "all", label: t("bookings.filterAll") },
@@ -313,52 +344,60 @@ export default function BookingsScreen() {
         >
             {/* Filter pills */}
             <View style={styles.filterRow}>
-                {FILTERS.map((f) => (
-                    <Pressable
-                        key={f.key}
-                        onPress={() => setActiveFilter(f.key)}
-                        style={[
-                            styles.filterPill,
-                            activeFilter === f.key && styles.filterPillActive,
-                        ]}
-                    >
-                        <NText
+                {FILTERS.map((f) => {
+                    const isActive = activeFilter === f.key
+
+                    return (
+                        <Pressable
+                            key={f.key}
+                            onPress={() => setActiveFilter(f.key)}
                             style={[
-                                styles.filterText,
-                                activeFilter === f.key &&
-                                    styles.filterTextActive,
+                                styles.filterPill,
                                 {
-                                    fontFamily:
-                                        activeFilter === f.key
-                                            ? fonts.medium
-                                            : fonts.regular,
+                                    backgroundColor: isActive
+                                        ? theme.accentSubtle
+                                        : theme.surface,
                                 },
                             ]}
                         >
-                            {f.label}
-                        </NText>
-                    </Pressable>
-                ))}
+                            <NText
+                                style={[
+                                    styles.filterText,
+                                    {
+                                        color: isActive
+                                            ? theme.text
+                                            : theme.textMuted,
+                                        fontFamily: isActive
+                                            ? fonts.medium
+                                            : fonts.regular,
+                                    },
+                                ]}
+                            >
+                                {f.label}
+                            </NText>
+                        </Pressable>
+                    )
+                })}
             </View>
 
             {loading ? (
                 <View style={styles.emptyState}>
                     <LinearGradient
-                        colors={[
-                            "rgba(255,255,255,0.15)",
-                            "rgba(255,255,255,0.05)",
-                        ]}
+                        colors={[theme.surfaceHigh, theme.surface]}
                         style={styles.emptyGradient}
                     >
                         <BlurView
                             intensity={40}
-                            tint="dark"
+                            tint={theme.blurTint}
                             style={styles.emptyInner}
                         >
                             <NText
                                 style={[
                                     styles.emptyText,
-                                    { fontFamily: fonts.light },
+                                    {
+                                        color: theme.textSubtle,
+                                        fontFamily: fonts.light,
+                                    },
                                 ]}
                             >
                                 {t("bookings.loading")}
@@ -369,26 +408,26 @@ export default function BookingsScreen() {
             ) : bookings.length === 0 ? (
                 <View style={styles.emptyState}>
                     <LinearGradient
-                        colors={[
-                            "rgba(255,255,255,0.15)",
-                            "rgba(255,255,255,0.05)",
-                        ]}
+                        colors={[theme.surfaceHigh, theme.surface]}
                         style={styles.emptyGradient}
                     >
                         <BlurView
                             intensity={40}
-                            tint="dark"
+                            tint={theme.blurTint}
                             style={styles.emptyInner}
                         >
                             <Ionicons
                                 name="calendar-outline"
                                 size={32}
-                                color="rgba(255,255,255,0.3)"
+                                color={theme.textSubtle}
                             />
                             <NText
                                 style={[
                                     styles.emptyText,
-                                    { fontFamily: fonts.light },
+                                    {
+                                        color: theme.textSubtle,
+                                        fontFamily: fonts.light,
+                                    },
                                 ]}
                             >
                                 {t("bookings.noBookings")}
@@ -412,10 +451,18 @@ export default function BookingsScreen() {
 
         <NModal
             visible={!!cancelTarget}
-            onDismiss={() => { setCancelTarget(null); setCancelReason("") }}
+            onDismiss={() => {
+                setCancelTarget(null)
+                setCancelReason("")
+            }}
             title={t("bookings.cancelReasonTitle")}
         >
-            <NText style={styles.cancelReasonDesc}>
+            <NText
+                style={[
+                    styles.cancelReasonDesc,
+                    { color: theme.textMuted, fontFamily: fonts.regular },
+                ]}
+            >
                 {t("bookings.cancelReasonDesc")}
             </NText>
             <NInput
@@ -431,7 +478,12 @@ export default function BookingsScreen() {
                 color="rgba(220,50,50,0.45)"
                 style={{ width: "100%" }}
             >
-                <NText style={[styles.confirmCancelText, { fontFamily: fonts.medium }]}>
+                <NText
+                    style={[
+                        styles.confirmCancelText,
+                        { color: theme.text, fontFamily: fonts.medium },
+                    ]}
+                >
                     {cancelling
                         ? t("bookings.cancelling")
                         : t("bookings.confirmCancel")}
@@ -459,18 +511,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 20,
-        backgroundColor: "rgba(255,255,255,0.08)",
     },
-    filterPillActive: {
-        backgroundColor: "rgba(33,168,112,0.4)",
-    },
+    filterPillActive: {},
     filterText: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 14,
     },
-    filterTextActive: {
-        color: "#ffffff",
-    },
+    filterTextActive: {},
     emptyState: {
         borderRadius: 20,
         overflow: "hidden",
@@ -487,7 +533,6 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     emptyText: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 15,
     },
     list: {
@@ -514,7 +559,6 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     customerName: {
-        color: "#ffffff",
         fontSize: 16,
     },
     statusBadge: {
@@ -524,20 +568,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     statusText: {
-        color: "#ffffff",
         fontSize: 12,
     },
     metaLine: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 13,
     },
     problemText: {
-        color: "rgba(255,255,255,0.45)",
         fontSize: 13,
         marginTop: 4,
     },
     contactLine: {
-        color: "rgba(255,255,255,0.35)",
         fontSize: 12,
         marginTop: 2,
     },
@@ -551,11 +591,9 @@ const styles = StyleSheet.create({
         alignSelf: "flex-start",
     },
     actionBtnText: {
-        color: "#ffffff",
         fontSize: 13,
     },
     cancelReasonDesc: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 14,
         marginBottom: 12,
         lineHeight: 20,
@@ -564,7 +602,6 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     confirmCancelText: {
-        color: "#ffffff",
         fontSize: 15,
     },
     ratingRow: {
@@ -577,7 +614,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     ratingComment: {
-        color: "rgba(255,255,255,0.45)",
         fontSize: 13,
         fontStyle: "italic",
     },
@@ -597,7 +633,6 @@ const styles = StyleSheet.create({
         letterSpacing: 0.3,
     },
     cancelReasonText: {
-        color: "rgba(255,255,255,0.7)",
         fontSize: 13,
     },
 })

@@ -25,7 +25,7 @@ export interface ServiceApplication {
     serviceName: string
     address: string
     phone: string
-    type: string
+    type: string[]
     latitude: number | null
     longitude: number | null
     description: string
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
         serviceName,
         address,
         phone: phone ?? "",
-        type: type ?? "",
+        type: Array.isArray(type) ? type : type ? [type] : [],
         latitude: latitude ?? null,
         longitude: longitude ?? null,
         description: description ?? "",

@@ -18,6 +18,7 @@ import { NButton } from "../replacements/NButton"
 import { GestureContext } from "../../context/GestureContext"
 import { NText } from "../replacements/NText"
 import { CarService } from "../../app/types/CarService"
+import { TYPE_COLORS } from "../../data/carServicesMock"
 import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useRouter } from "expo-router"
@@ -187,25 +188,34 @@ export default function HorizontalCarousel({
                                             <View
                                                 style={{
                                                     alignSelf: "center",
-                                                    backgroundColor:
-                                                        theme.accent,
-                                                    paddingHorizontal: 10,
-                                                    paddingVertical: 4,
-                                                    borderRadius: 20,
+                                                    flexDirection: "row",
+                                                    gap: 4,
                                                     marginBottom: -14,
                                                     zIndex: 1,
                                                 }}
                                             >
-                                                <NText
-                                                    style={{
-                                                        fontSize: 12,
-                                                        fontFamily: fonts.bold,
-                                                    }}
-                                                >
-                                                    {t(
-                                                        `settings.types.${service.type}`,
-                                                    )}
-                                                </NText>
+                                                {(service.type ?? []).map((st) => (
+                                                    <View
+                                                        key={st}
+                                                        style={{
+                                                            backgroundColor: TYPE_COLORS[st as keyof typeof TYPE_COLORS] ?? theme.accent,
+                                                            paddingHorizontal: 10,
+                                                            paddingVertical: 4,
+                                                            borderRadius: 20,
+                                                        }}
+                                                    >
+                                                        <NText
+                                                            style={{
+                                                                fontSize: 12,
+                                                                fontFamily: fonts.bold,
+                                                            }}
+                                                        >
+                                                            {t(
+                                                                `settings.types.${st}`,
+                                                            )}
+                                                        </NText>
+                                                    </View>
+                                                ))}
                                             </View>
                                             <NButton color={theme.overlayBg}>
                                                 <View

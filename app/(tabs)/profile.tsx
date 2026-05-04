@@ -89,7 +89,7 @@ function VehicleCard({
                 color={
                     vehicle.isPrimary
                         ? theme.accentSubtle
-                        : "rgba(0,0,0,0.3)"
+                        : theme.overlayBg
                 }
                 style={styles.vehicleCard}
                 onPress={onEdit}
@@ -102,8 +102,7 @@ function VehicleCard({
                                     style={[
                                         styles.primaryBadge,
                                         {
-                                            backgroundColor:
-                                                "rgba(33,168,112,0.3)",
+                                            backgroundColor: theme.accentSubtle,
                                         },
                                     ]}
                                 >
@@ -111,7 +110,7 @@ function VehicleCard({
                                         style={[
                                             styles.primaryBadgeText,
                                             {
-                                                color: "rgb(33,168,112)",
+                                                color: theme.accentSolid,
                                                 fontFamily: fonts.bold,
                                             },
                                         ]}
@@ -574,7 +573,7 @@ export default function ProfileScreen() {
                 />
 
                 <NButton
-                    color="rgba(255,255,255,0.06)"
+                    color={theme.surface}
                     style={{ marginBottom: 8 }}
                     onPress={() => {}}
                 >
@@ -694,7 +693,7 @@ export default function ProfileScreen() {
                 </NText>
 
                 {serviceApps.map((app) => (
-                    <View key={app.applicationId} style={styles.apptCard}>
+                    <View key={app.applicationId} style={[styles.apptCard, { backgroundColor: theme.surface }]}>
                         <View style={styles.apptHeader}>
                             <NText
                                 style={[
@@ -909,8 +908,8 @@ export default function ProfileScreen() {
                             key={type}
                             color={
                                 vehicleForm.fuelType === type
-                                    ? "rgba(33,168,112,0.45)"
-                                    : "rgba(255,255,255,0.06)"
+                                    ? theme.accentSubtle
+                                    : theme.surface
                             }
                             style={styles.chip}
                             onPress={() => updateVehicleField("fuelType", type)}
@@ -947,8 +946,8 @@ export default function ProfileScreen() {
                             key={type}
                             color={
                                 vehicleForm.transmission === type
-                                    ? "rgba(33,168,112,0.45)"
-                                    : "rgba(255,255,255,0.06)"
+                                    ? theme.accentSubtle
+                                    : theme.surface
                             }
                             style={styles.chip}
                             onPress={() =>
@@ -984,8 +983,8 @@ export default function ProfileScreen() {
                 <NButton
                     color={
                         vehicleForm.isPrimary
-                            ? "rgba(33,168,112,0.35)"
-                            : "rgba(255,255,255,0.06)"
+                            ? theme.accentSubtle
+                            : theme.surface
                     }
                     style={styles.primaryToggle}
                     onPress={() =>
@@ -997,7 +996,7 @@ export default function ProfileScreen() {
                         size={16}
                         color={
                             vehicleForm.isPrimary
-                                ? "rgb(33,168,112)"
+                                ? theme.accentSolid
                                 : theme.textMuted
                         }
                     />
@@ -1009,7 +1008,7 @@ export default function ProfileScreen() {
                                     ? fonts.bold
                                     : fonts.light,
                                 color: vehicleForm.isPrimary
-                                    ? "rgb(33,168,112)"
+                                    ? theme.accentSolid
                                     : theme.textMuted,
                             },
                         ]}
@@ -1153,7 +1152,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
     },
     apptCard: {
-        backgroundColor: "rgba(255,255,255,0.05)",
         borderRadius: 12,
         padding: 12,
         marginBottom: 8,
@@ -1166,7 +1164,6 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     apptService: {
-        color: "#ffffff",
         fontSize: 14,
         flex: 1,
         marginRight: 8,

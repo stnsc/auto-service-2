@@ -9,6 +9,8 @@ import { fonts } from "../../theme"
 import { useTranslation } from "react-i18next"
 import type { ServiceConfig } from "../api/service-config+api"
 import { useAdminService } from "../../context/AdminServiceContext"
+import { useTheme } from "../../context/ThemeContext"
+import LocationPicker from "../../components/LocationPicker"
 import "../../i18n"
 
 const SERVICE_TYPES = [
@@ -35,11 +37,18 @@ function FieldRow({
     onChangeText: (text: string) => void
     keyboardType?: "default" | "phone-pad" | "decimal-pad"
 }) {
+    const { theme } = useTheme()
+
     return (
         <View style={styles.fieldRow}>
             <View style={styles.fieldLabel}>
-                <Ionicons name={icon} size={18} color="rgba(255,255,255,0.5)" />
-                <NText style={[styles.labelText, { fontFamily: fonts.medium }]}>
+                <Ionicons name={icon} size={18} color={theme.iconMuted} />
+                <NText
+                    style={[
+                        styles.labelText,
+                        { color: theme.text, fontFamily: fonts.medium },
+                    ]}
+                >
                     {label}
                 </NText>
             </View>
@@ -56,12 +65,13 @@ function FieldRow({
 
 export default function SettingsScreen() {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const { serviceId } = useAdminService()
 
     const [name, setName] = useState("")
     const [address, setAddress] = useState("")
     const [phone, setPhone] = useState("")
-    const [type, setType] = useState("")
+    const [types, setTypes] = useState<string[]>([])
     const [latitude, setLatitude] = useState("")
     const [longitude, setLongitude] = useState("")
     const [isSaving, setIsSaving] = useState(false)
@@ -79,7 +89,13 @@ export default function SettingsScreen() {
                 setName(config.name ?? "")
                 setAddress(config.address ?? "")
                 setPhone(config.phone ?? "")
-                setType(config.type ?? "")
+                setTypes(
+                    Array.isArray(config.type)
+                        ? config.type
+                        : config.type
+                          ? [config.type as unknown as string]
+                          : [],
+                )
                 setLatitude(
                     config.latitude != null ? String(config.latitude) : "",
                 )
@@ -103,7 +119,7 @@ export default function SettingsScreen() {
                     name,
                     address,
                     phone,
-                    type,
+                    type: types,
                     latitude: latitude ? parseFloat(latitude) : null,
                     longitude: longitude ? parseFloat(longitude) : null,
                 }),
@@ -128,24 +144,31 @@ export default function SettingsScreen() {
             style={styles.container}
             contentContainerStyle={styles.content}
         >
-            <NText style={[styles.sectionTitle, { fontFamily: fonts.medium }]}>
+            <NText
+                style={[
+                    styles.sectionTitle,
+                    { color: theme.text, fontFamily: fonts.medium },
+                ]}
+            >
                 {t("settings.serviceProfile")}
             </NText>
-            <NText style={styles.subtitle}>
+            <NText
+                style={[
+                    styles.subtitle,
+                    { color: theme.textMuted, fontFamily: fonts.regular },
+                ]}
+            >
                 {t("settings.serviceProfileDesc")}
             </NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={[
-                        "rgba(255,255,255,0.15)",
-                        "rgba(255,255,255,0.05)",
-                    ]}
+                    colors={[theme.surfaceHigh, theme.surface]}
                     style={styles.cardGradient}
                 >
                     <BlurView
                         intensity={40}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={styles.cardInner}
                     >
                         <FieldRow
@@ -155,7 +178,12 @@ export default function SettingsScreen() {
                             value={name}
                             onChangeText={setName}
                         />
-                        <View style={styles.separator} />
+                        <View
+                            style={[
+                                styles.separator,
+                                { backgroundColor: theme.surfaceMid },
+                            ]}
+                        />
                         <FieldRow
                             label={t("settings.address")}
                             icon="location-outline"
@@ -163,7 +191,12 @@ export default function SettingsScreen() {
                             value={address}
                             onChangeText={setAddress}
                         />
-                        <View style={styles.separator} />
+                        <View
+                            style={[
+                                styles.separator,
+                                { backgroundColor: theme.surfaceMid },
+                            ]}
+                        />
                         <FieldRow
                             label={t("settings.phone")}
                             icon="call-outline"
@@ -172,51 +205,72 @@ export default function SettingsScreen() {
                             onChangeText={setPhone}
                             keyboardType="phone-pad"
                         />
-                        <View style={styles.separator} />
+                        <View
+                            style={[
+                                styles.separator,
+                                { backgroundColor: theme.surfaceMid },
+                            ]}
+                        />
                         <View style={styles.fieldRow}>
                             <View style={styles.fieldLabel}>
                                 <Ionicons
                                     name="construct-outline"
                                     size={18}
-                                    color="rgba(255,255,255,0.5)"
+                                    color={theme.iconMuted}
                                 />
                                 <NText
                                     style={[
                                         styles.labelText,
-                                        { fontFamily: fonts.medium },
+                                        {
+                                            color: theme.text,
+                                            fontFamily: fonts.medium,
+                                        },
                                     ]}
                                 >
                                     {t("settings.type")}
                                 </NText>
                             </View>
                             <View style={styles.typeChipRow}>
-                                {SERVICE_TYPES.map((st) => (
-                                    <Pressable
-                                        key={st}
-                                        onPress={() => setType(st)}
-                                        style={[
-                                            styles.typeChip,
-                                            type === st &&
-                                                styles.typeChipActive,
-                                        ]}
-                                    >
-                                        <NText
+                                {SERVICE_TYPES.map((st) => {
+                                    const isActive = types.includes(st)
+
+                                    return (
+                                        <Pressable
+                                            key={st}
+                                            onPress={() =>
+                                                setTypes((prev) =>
+                                                    prev.includes(st)
+                                                        ? prev.filter((t) => t !== st)
+                                                        : [...prev, st],
+                                                )
+                                            }
                                             style={[
-                                                styles.typeChipText,
-                                                type === st &&
-                                                    styles.typeChipTextActive,
+                                                styles.typeChip,
                                                 {
-                                                    fontFamily:
-                                                        type === st
-                                                            ? fonts.medium
-                                                            : fonts.regular,
+                                                    backgroundColor: isActive
+                                                        ? theme.accentSubtle
+                                                        : theme.surfaceMid,
                                                 },
                                             ]}
                                         >
-                                            {t(`settings.types.${st}`)}
-                                        </NText>
-                                    </Pressable>
-                                ))}
+                                            <NText
+                                                style={[
+                                                    styles.typeChipText,
+                                                    {
+                                                        color: isActive
+                                                            ? theme.text
+                                                            : theme.textMuted,
+                                                        fontFamily: isActive
+                                                            ? fonts.medium
+                                                            : fonts.regular,
+                                                    },
+                                                ]}
+                                            >
+                                                {t(`settings.types.${st}`)}
+                                            </NText>
+                                        </Pressable>
+                                    )
+                                })}
                             </View>
                         </View>
                     </BlurView>
@@ -226,65 +280,33 @@ export default function SettingsScreen() {
             <NText
                 style={[
                     styles.sectionTitle,
-                    { fontFamily: fonts.medium, marginTop: 32 },
+                    {
+                        color: theme.text,
+                        fontFamily: fonts.medium,
+                        marginTop: 32,
+                    },
                 ]}
             >
                 {t("settings.location")}
             </NText>
-            <NText style={styles.subtitle}>{t("settings.locationDesc")}</NText>
+            <NText
+                style={[
+                    styles.subtitle,
+                    { color: theme.textMuted, fontFamily: fonts.regular },
+                ]}
+            >
+                {t("settings.locationDesc")}
+            </NText>
 
-            <View style={styles.cardWrapper}>
-                <LinearGradient
-                    colors={[
-                        "rgba(255,255,255,0.15)",
-                        "rgba(255,255,255,0.05)",
-                    ]}
-                    style={styles.cardGradient}
-                >
-                    <BlurView
-                        intensity={40}
-                        tint="dark"
-                        style={styles.cardInner}
-                    >
-                        <View style={styles.coordRow}>
-                            <View style={styles.coordItem}>
-                                <NText
-                                    style={[
-                                        styles.coordLabel,
-                                        { fontFamily: fonts.light },
-                                    ]}
-                                >
-                                    {t("settings.latitude")}
-                                </NText>
-                                <NInput
-                                    placeholder="45.0000"
-                                    value={latitude}
-                                    onChangeText={setLatitude}
-                                    keyboardType="decimal-pad"
-                                    style={styles.coordInput}
-                                />
-                            </View>
-                            <View style={styles.coordItem}>
-                                <NText
-                                    style={[
-                                        styles.coordLabel,
-                                        { fontFamily: fonts.light },
-                                    ]}
-                                >
-                                    {t("settings.longitude")}
-                                </NText>
-                                <NInput
-                                    placeholder="25.0000"
-                                    value={longitude}
-                                    onChangeText={setLongitude}
-                                    keyboardType="decimal-pad"
-                                    style={styles.coordInput}
-                                />
-                            </View>
-                        </View>
-                    </BlurView>
-                </LinearGradient>
-            </View>
+            <LocationPicker
+                latitude={latitude}
+                longitude={longitude}
+                onLocationChange={(lat, lon) => {
+                    setLatitude(String(lat))
+                    setLongitude(String(lon))
+                }}
+                addressHint={address}
+            />
 
             {/* Save button */}
             <Pressable
@@ -295,25 +317,22 @@ export default function SettingsScreen() {
                 <LinearGradient
                     colors={
                         saveStatus === "ok"
-                            ? ["rgba(33,168,112,0.6)", "rgba(33,168,112,0.3)"]
+                            ? [theme.accentIcon, theme.accentSubtle]
                             : saveStatus === "err"
                               ? ["rgba(220,50,50,0.5)", "rgba(220,50,50,0.2)"]
-                              : [
-                                    "rgba(33,168,112,0.4)",
-                                    "rgba(33,168,112,0.15)",
-                                ]
+                              : [theme.accent, theme.accentSubtle]
                     }
                     style={styles.saveGradient}
                 >
                     <BlurView
                         intensity={40}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={styles.saveInner}
                     >
                         <NText
                             style={[
                                 styles.saveText,
-                                { fontFamily: fonts.medium },
+                                { color: theme.text, fontFamily: fonts.medium },
                             ]}
                         >
                             {isSaving
@@ -339,12 +358,10 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     sectionTitle: {
-        color: "#ffffff",
         fontSize: 18,
         marginBottom: 4,
     },
     subtitle: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 14,
         marginBottom: 16,
     },
@@ -371,13 +388,11 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     labelText: {
-        color: "rgba(255,255,255,0.7)",
         fontSize: 13,
     },
     fieldInput: {},
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "rgba(255,255,255,0.12)",
         marginVertical: 4,
     },
     typeChipRow: {
@@ -389,31 +404,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.1)",
     },
-    typeChipActive: {
-        backgroundColor: "rgba(33,168,112,0.45)",
-    },
+    typeChipActive: {},
     typeChipText: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 12,
     },
-    typeChipTextActive: {
-        color: "#ffffff",
-    },
-    coordRow: {
-        flexDirection: "row",
-        gap: 16,
-    },
-    coordItem: {
-        flex: 1,
-        gap: 6,
-    },
-    coordLabel: {
-        color: "rgba(255,255,255,0.5)",
-        fontSize: 13,
-    },
-    coordInput: {},
+    typeChipTextActive: {},
     saveWrapper: {
         marginTop: 32,
         borderRadius: 20,
@@ -430,7 +426,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     saveText: {
-        color: "#ffffff",
         fontSize: 16,
     },
 })

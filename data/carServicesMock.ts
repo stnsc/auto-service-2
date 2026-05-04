@@ -1,20 +1,8 @@
-// data/carServices.ts
-import { CarService } from "../app/types/CarService"
+import { CarService, ServiceType } from "../app/types/CarService"
 
-export const CAR_SERVICES: CarService[] = [
-  {
-    id: "1",
-    name: "AutoFix Brasov",
-    latitude: 45.6500,
-    longitude: 25.6000,
-    type: "mechanic",
-    rating: 4.5,
-    address: "Str. Republicii 12",
-    phone: "0268 123 456",
-  },
-]
+export const CAR_SERVICES: CarService[] = []
 
-export const TYPE_COLORS: Record<CarService["type"], string> = {
+export const TYPE_COLORS: Record<ServiceType, string> = {
   mechanic:   "#3B82F6",
   tire_shop:  "#F59E0B",
   car_wash:   "#06B6D4",

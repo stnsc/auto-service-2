@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
         overflow: "hidden",
     },
     gradientStroke: {
-        padding: 1.5,
+        paddingVertical: 1.25,
         borderRadius: 32,
         flex: 1,
     },

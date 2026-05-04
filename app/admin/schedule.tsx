@@ -14,6 +14,7 @@ import type {
     DayConfig,
 } from "../api/service-config+api"
 import { useAdminService } from "../../context/AdminServiceContext"
+import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
 const SCHEDULE_DAYS: DayKey[] = [
@@ -45,10 +46,17 @@ function DayRow({
     onChange: (updated: DayConfig) => void
 }) {
     const { t } = useTranslation()
+    const { theme } = useTheme()
+
     return (
         <View>
             <View style={styles.scheduleRow}>
-                <NText style={[styles.dayName, { fontFamily: fonts.medium }]}>
+                <NText
+                    style={[
+                        styles.dayName,
+                        { color: theme.text, fontFamily: fonts.medium },
+                    ]}
+                >
                     {dayLabel}
                 </NText>
                 <View style={styles.hoursSection}>
@@ -56,7 +64,7 @@ function DayRow({
                         <NText
                             style={[
                                 styles.hoursText,
-                                { fontFamily: fonts.light },
+                                { color: theme.text, fontFamily: fonts.light },
                             ]}
                         >
                             {config.open} – {config.close}
@@ -65,7 +73,10 @@ function DayRow({
                         <NText
                             style={[
                                 styles.closedText,
-                                { fontFamily: fonts.light },
+                                {
+                                    color: theme.textSubtle,
+                                    fontFamily: fonts.light,
+                                },
                             ]}
                         >
                             {t("schedule.closed")}
@@ -77,9 +88,7 @@ function DayRow({
                         name={isEditing ? "checkmark-circle" : "create-outline"}
                         size={18}
                         color={
-                            isEditing
-                                ? "rgba(33,168,112,0.9)"
-                                : "rgba(255,255,255,0.3)"
+                            isEditing ? theme.accentIcon : theme.textSubtle
                         }
                     />
                 </Pressable>
@@ -91,7 +100,10 @@ function DayRow({
                         <NText
                             style={[
                                 styles.editLabel,
-                                { fontFamily: fonts.medium },
+                                {
+                                    color: theme.textMuted,
+                                    fontFamily: fonts.medium,
+                                },
                             ]}
                         >
                             {config.isOpen
@@ -104,10 +116,10 @@ function DayRow({
                                 onChange({ ...config, isOpen: val })
                             }
                             trackColor={{
-                                false: "rgba(255,255,255,0.15)",
-                                true: "rgba(33,168,112,0.7)",
+                                false: theme.surfaceHigh,
+                                true: theme.accentIcon,
                             }}
-                            thumbColor="#ffffff"
+                            thumbColor={theme.text}
                         />
                     </View>
                     {config.isOpen && (
@@ -116,7 +128,10 @@ function DayRow({
                                 <NText
                                     style={[
                                         styles.editLabel,
-                                        { fontFamily: fonts.light },
+                                        {
+                                            color: theme.textMuted,
+                                            fontFamily: fonts.light,
+                                        },
                                     ]}
                                 >
                                     {t("schedule.openTime")}
@@ -134,7 +149,10 @@ function DayRow({
                                 <NText
                                     style={[
                                         styles.editLabel,
-                                        { fontFamily: fonts.light },
+                                        {
+                                            color: theme.textMuted,
+                                            fontFamily: fonts.light,
+                                        },
                                     ]}
                                 >
                                     {t("schedule.closeTime")}
@@ -158,6 +176,7 @@ function DayRow({
 
 export default function ScheduleScreen() {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const { serviceId } = useAdminService()
     const DAYS = t("schedule.days", { returnObjects: true }) as string[]
 
@@ -219,24 +238,31 @@ export default function ScheduleScreen() {
             style={styles.container}
             contentContainerStyle={styles.content}
         >
-            <NText style={[styles.sectionTitle, { fontFamily: fonts.medium }]}>
+            <NText
+                style={[
+                    styles.sectionTitle,
+                    { color: theme.text, fontFamily: fonts.medium },
+                ]}
+            >
                 {t("schedule.operatingHours")}
             </NText>
-            <NText style={styles.subtitle}>
+            <NText
+                style={[
+                    styles.subtitle,
+                    { color: theme.textMuted, fontFamily: fonts.regular },
+                ]}
+            >
                 {t("schedule.operatingHoursDesc")}
             </NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={[
-                        "rgba(255,255,255,0.15)",
-                        "rgba(255,255,255,0.05)",
-                    ]}
+                    colors={[theme.surfaceHigh, theme.surface]}
                     style={styles.cardGradient}
                 >
                     <BlurView
                         intensity={40}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={styles.cardInner}
                     >
                         {SCHEDULE_DAYS.map((dayKey, index) => (
@@ -264,7 +290,12 @@ export default function ScheduleScreen() {
                                     }
                                 />
                                 {index < SCHEDULE_DAYS.length - 1 && (
-                                    <View style={styles.separator} />
+                                    <View
+                                        style={[
+                                            styles.separator,
+                                            { backgroundColor: theme.surfaceMid },
+                                        ]}
+                                    />
                                 )}
                             </React.Fragment>
                         ))}
@@ -275,114 +306,154 @@ export default function ScheduleScreen() {
             <NText
                 style={[
                     styles.sectionTitle,
-                    { fontFamily: fonts.medium, marginTop: 32 },
+                    {
+                        color: theme.text,
+                        fontFamily: fonts.medium,
+                        marginTop: 32,
+                    },
                 ]}
             >
                 {t("schedule.slotConfiguration")}
             </NText>
-            <NText style={styles.subtitle}>
+            <NText
+                style={[
+                    styles.subtitle,
+                    { color: theme.textMuted, fontFamily: fonts.regular },
+                ]}
+            >
                 {t("schedule.slotConfigurationDesc")}
             </NText>
 
             <View style={styles.cardWrapper}>
                 <LinearGradient
-                    colors={[
-                        "rgba(255,255,255,0.15)",
-                        "rgba(255,255,255,0.05)",
-                    ]}
+                    colors={[theme.surfaceHigh, theme.surface]}
                     style={styles.cardGradient}
                 >
                     <BlurView
                         intensity={40}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={styles.cardInner}
                     >
                         <View style={styles.configSection}>
                             <NText
                                 style={[
                                     styles.configLabel,
-                                    { fontFamily: fonts.medium },
+                                    { color: theme.text, fontFamily: fonts.medium },
                                 ]}
                             >
                                 {t("schedule.slotDuration")}
                             </NText>
-                            <NText style={styles.configDesc}>
+                            <NText
+                                style={[
+                                    styles.configDesc,
+                                    {
+                                        color: theme.textMuted,
+                                        fontFamily: fonts.regular,
+                                    },
+                                ]}
+                            >
                                 {t("schedule.slotDurationDesc")}
                             </NText>
                             <View style={styles.chipRow}>
-                                {SLOT_OPTIONS.map((opt) => (
-                                    <Pressable
-                                        key={opt}
-                                        onPress={() => setSlotDuration(opt)}
-                                        style={[
-                                            styles.chip,
-                                            slotDuration === opt &&
-                                                styles.chipActive,
-                                        ]}
-                                    >
-                                        <NText
+                                {SLOT_OPTIONS.map((opt) => {
+                                    const isActive = slotDuration === opt
+
+                                    return (
+                                        <Pressable
+                                            key={opt}
+                                            onPress={() => setSlotDuration(opt)}
                                             style={[
-                                                styles.chipText,
-                                                slotDuration === opt &&
-                                                    styles.chipTextActive,
+                                                styles.chip,
                                                 {
-                                                    fontFamily:
-                                                        slotDuration === opt
-                                                            ? fonts.medium
-                                                            : fonts.regular,
+                                                    backgroundColor: isActive
+                                                        ? theme.accentSubtle
+                                                        : theme.surfaceMid,
                                                 },
                                             ]}
                                         >
-                                            {opt} {t("schedule.min")}
-                                        </NText>
-                                    </Pressable>
-                                ))}
+                                            <NText
+                                                style={[
+                                                    styles.chipText,
+                                                    {
+                                                        color: isActive
+                                                            ? theme.text
+                                                            : theme.textMuted,
+                                                        fontFamily: isActive
+                                                            ? fonts.medium
+                                                            : fonts.regular,
+                                                    },
+                                                ]}
+                                            >
+                                                {opt} {t("schedule.min")}
+                                            </NText>
+                                        </Pressable>
+                                    )
+                                })}
                             </View>
                         </View>
-                        <View style={styles.separator} />
+                        <View
+                            style={[
+                                styles.separator,
+                                { backgroundColor: theme.surfaceMid },
+                            ]}
+                        />
                         <View style={styles.configSection}>
                             <NText
                                 style={[
                                     styles.configLabel,
-                                    { fontFamily: fonts.medium },
+                                    { color: theme.text, fontFamily: fonts.medium },
                                 ]}
                             >
                                 {t("schedule.bookingWindow")}
                             </NText>
-                            <NText style={styles.configDesc}>
+                            <NText
+                                style={[
+                                    styles.configDesc,
+                                    {
+                                        color: theme.textMuted,
+                                        fontFamily: fonts.regular,
+                                    },
+                                ]}
+                            >
                                 {t("schedule.bookingWindowDesc")}
                             </NText>
                             <View style={styles.chipRow}>
-                                {WINDOW_OPTIONS.map((opt) => (
-                                    <Pressable
-                                        key={opt}
-                                        onPress={() =>
-                                            setBookingWindowWeeks(opt)
-                                        }
-                                        style={[
-                                            styles.chip,
-                                            bookingWindowWeeks === opt &&
-                                                styles.chipActive,
-                                        ]}
-                                    >
-                                        <NText
+                                {WINDOW_OPTIONS.map((opt) => {
+                                    const isActive = bookingWindowWeeks === opt
+
+                                    return (
+                                        <Pressable
+                                            key={opt}
+                                            onPress={() =>
+                                                setBookingWindowWeeks(opt)
+                                            }
                                             style={[
-                                                styles.chipText,
-                                                bookingWindowWeeks === opt &&
-                                                    styles.chipTextActive,
+                                                styles.chip,
                                                 {
-                                                    fontFamily:
-                                                        bookingWindowWeeks ===
-                                                        opt
-                                                            ? fonts.medium
-                                                            : fonts.regular,
+                                                    backgroundColor: isActive
+                                                        ? theme.accentSubtle
+                                                        : theme.surfaceMid,
                                                 },
                                             ]}
                                         >
-                                            {opt} {t("schedule.weeks")}
-                                        </NText>
-                                    </Pressable>
-                                ))}
+                                            <NText
+                                                style={[
+                                                    styles.chipText,
+                                                    {
+                                                        color: isActive
+                                                            ? theme.text
+                                                            : theme.textMuted,
+                                                        fontFamily: isActive
+                                                            ? fonts.medium
+                                                            : fonts.regular,
+                                                    },
+                                                ]}
+                                            >
+                                                {opt} {t("schedule.weeks")}
+                                            </NText>
+                                        </Pressable>
+                                    )
+                                })}
                             </View>
                         </View>
                     </BlurView>
@@ -401,25 +472,22 @@ export default function ScheduleScreen() {
                 <LinearGradient
                     colors={
                         saveStatus === "ok"
-                            ? ["rgba(33,168,112,0.6)", "rgba(33,168,112,0.3)"]
+                            ? [theme.accentIcon, theme.accentSubtle]
                             : saveStatus === "err"
                               ? ["rgba(220,50,50,0.5)", "rgba(220,50,50,0.2)"]
-                              : [
-                                    "rgba(33,168,112,0.4)",
-                                    "rgba(33,168,112,0.15)",
-                                ]
+                              : [theme.accent, theme.accentSubtle]
                     }
                     style={styles.saveGradient}
                 >
                     <BlurView
                         intensity={40}
-                        tint="dark"
+                        tint={theme.blurTint}
                         style={styles.saveInner}
                     >
                         <NText
                             style={[
                                 styles.saveText,
-                                { fontFamily: fonts.medium },
+                                { color: theme.text, fontFamily: fonts.medium },
                             ]}
                         >
                             {isSaving
@@ -445,12 +513,10 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     sectionTitle: {
-        color: "#ffffff",
         fontSize: 18,
         marginBottom: 4,
     },
     subtitle: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 14,
         marginBottom: 16,
     },
@@ -474,7 +540,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
     },
     dayName: {
-        color: "#ffffff",
         fontSize: 15,
         width: 110,
     },
@@ -482,11 +547,9 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     hoursText: {
-        color: "rgba(255,255,255,0.8)",
         fontSize: 14,
     },
     closedText: {
-        color: "rgba(255,255,255,0.3)",
         fontSize: 14,
     },
     editIconBtn: {
@@ -504,7 +567,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     editLabel: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 13,
     },
     editTimeRow: {
@@ -520,7 +582,6 @@ const styles = StyleSheet.create({
     },
     separator: {
         height: StyleSheet.hairlineWidth,
-        backgroundColor: "rgba(255,255,255,0.12)",
         marginHorizontal: 12,
     },
     configSection: {
@@ -529,11 +590,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     configLabel: {
-        color: "#ffffff",
         fontSize: 15,
     },
     configDesc: {
-        color: "rgba(255,255,255,0.45)",
         fontSize: 13,
     },
     chipRow: {
@@ -546,18 +605,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 7,
         borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.1)",
     },
-    chipActive: {
-        backgroundColor: "rgba(33,168,112,0.45)",
-    },
+    chipActive: {},
     chipText: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 13,
     },
-    chipTextActive: {
-        color: "#ffffff",
-    },
+    chipTextActive: {},
     saveWrapper: {
         marginTop: 32,
         borderRadius: 20,
@@ -574,7 +627,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     saveText: {
-        color: "#ffffff",
         fontSize: 16,
     },
 })

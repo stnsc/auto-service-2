@@ -35,7 +35,7 @@ export interface ServiceConfig {
     name: string
     address: string
     phone: string
-    type: string
+    type: string[]
     latitude: number | null
     longitude: number | null
     schedule: WeekSchedule
@@ -59,7 +59,7 @@ export const DEFAULT_CONFIG: ServiceConfig = {
     name: "",
     address: "",
     phone: "",
-    type: "",
+    type: [],
     latitude: null,
     longitude: null,
     schedule: DEFAULT_SCHEDULE,
@@ -85,10 +85,17 @@ export async function GET(request: Request) {
         const item = result.Item as ServiceConfig | undefined
         const defaults = { ...DEFAULT_CONFIG, serviceId }
         if (!item) return Response.json(defaults)
+        // Normalize legacy string type to array
+        const normalizedType = Array.isArray(item.type)
+            ? item.type
+            : item.type
+              ? [item.type]
+              : []
         // Ensure schedule has all days (handles partial configs)
         return Response.json({
             ...defaults,
             ...item,
+            type: normalizedType,
             schedule: { ...DEFAULT_SCHEDULE, ...item.schedule },
         })
     } catch (err) {

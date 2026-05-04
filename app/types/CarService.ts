@@ -1,9 +1,11 @@
+export type ServiceType = "mechanic" | "tire_shop" | "car_wash" | "body_shop" | "oil_change" | "towing"
+
 export interface CarService {
     id: string
     name: string
     latitude: number
     longitude: number
-    type: "mechanic" | "tire_shop" | "car_wash" | "body_shop" | "oil_change" | "towing"
+    type: ServiceType[]
     rating: number
     address: string
     phone: string

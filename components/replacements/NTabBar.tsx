@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
         alignSelf: "center",
     },
     gradientStroke: {
-        padding: 1.5,
+        paddingVertical: 1.5,
         borderRadius: 50,
     },
     bar: {

@@ -122,6 +122,9 @@ export const NInput = React.memo(function NInput({
     }, [focusValue])
 
     const pan = Gesture.Pan()
+        // Disabled on web — GestureDetector sets touch-action:none which blocks
+        // page scroll; the jiggle effect is a native-only touch delight anyway.
+        .enabled(Platform.OS !== "web")
         // Fail if the user moves more than 10 px vertically — that's a scroll,
         // not an input interaction — so the native scroll view can take over.
         .failOffsetY([-10, 10])
@@ -350,7 +353,7 @@ const styles = StyleSheet.create({
         borderRadius: 25,
     },
     gradientStroke: {
-        padding: 1,
+        paddingVertical: 1,
         borderRadius: 25,
     },
     innerInputContainer: {

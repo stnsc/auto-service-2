@@ -11,6 +11,7 @@ import type { ServiceConfig } from "../api/service-config+api"
 import type { CarService } from "../types/CarService"
 import type { WeekSchedule } from "../../data/serviceAvailability"
 import { useAdminService } from "../../context/AdminServiceContext"
+import { useTheme } from "../../context/ThemeContext"
 import { useFocusEffect } from "expo-router"
 import "../../i18n"
 
@@ -44,26 +45,35 @@ function StatCard({
     value: string
     color: string
 }) {
+    const { theme } = useTheme()
+
     return (
         <View style={styles.statCard}>
-            <LinearGradient
-                colors={[color, "rgba(255,255,255,0.05)"]}
-                style={styles.statGradient}
-            >
-                <BlurView intensity={40} tint="dark" style={styles.statInner}>
+            <LinearGradient colors={[color, theme.surface]} style={styles.statGradient}>
+                <BlurView
+                    intensity={40}
+                    tint={theme.blurTint}
+                    style={styles.statInner}
+                >
                     <Ionicons
                         name={icon}
                         size={24}
-                        color="white"
+                        color={theme.icon}
                         style={{ opacity: 0.8 }}
                     />
                     <NText
-                        style={[styles.statValue, { fontFamily: fonts.bold }]}
+                        style={[
+                            styles.statValue,
+                            { color: theme.text, fontFamily: fonts.bold },
+                        ]}
                     >
                         {value}
                     </NText>
                     <NText
-                        style={[styles.statLabel, { fontFamily: fonts.light }]}
+                        style={[
+                            styles.statLabel,
+                            { color: theme.textMuted, fontFamily: fonts.light },
+                        ]}
                     >
                         {label}
                     </NText>
@@ -82,39 +92,73 @@ const STATUS_COLORS: Record<string, string> = {
 
 function BookingRow({ booking }: { booking: Appointment }) {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const statusColor = STATUS_COLORS[booking.status] ?? STATUS_COLORS.pending
+
     return (
         <View style={styles.bookingCardWrapper}>
             <LinearGradient
-                colors={["rgba(255,255,255,0.12)", "rgba(255,255,255,0.04)"]}
+                colors={[theme.surfaceMid, theme.borderEnd]}
                 style={styles.bookingCardGradient}
             >
-                <BlurView intensity={40} tint="dark" style={styles.bookingCardInner}>
+                <BlurView
+                    intensity={40}
+                    tint={theme.blurTint}
+                    style={styles.bookingCardInner}
+                >
                     <View style={styles.bookingRow}>
                         <View style={styles.bookingMain}>
                             <NText
-                                style={[styles.bookingName, { fontFamily: fonts.medium }]}
+                                style={[
+                                    styles.bookingName,
+                                    { color: theme.text, fontFamily: fonts.medium },
+                                ]}
                             >
                                 {booking.customerName}
                             </NText>
                             <NText
-                                style={[styles.bookingMeta, { fontFamily: fonts.light }]}
+                                style={[
+                                    styles.bookingMeta,
+                                    {
+                                        color: theme.textMuted,
+                                        fontFamily: fonts.light,
+                                    },
+                                ]}
                             >
                                 {booking.vehicleYear} {booking.vehicleMake}{" "}
                                 {booking.vehicleModel}
                             </NText>
                             <NText
-                                style={[styles.bookingDate, { fontFamily: fonts.light }]}
+                                style={[
+                                    styles.bookingDate,
+                                    {
+                                        color: theme.textSubtle,
+                                        fontFamily: fonts.light,
+                                    },
+                                ]}
                             >
                                 {booking.preferredDate} · {booking.preferredTime}
                             </NText>
                             {booking.rating != null && (
                                 <View style={styles.ratingRow}>
-                                    <NText style={[styles.ratingStars, { fontFamily: fonts.regular }]}>
+                                    <NText
+                                        style={[
+                                            styles.ratingStars,
+                                            { fontFamily: fonts.regular },
+                                        ]}
+                                    >
                                         {"★".repeat(booking.rating)}{"☆".repeat(5 - booking.rating)}
                                     </NText>
                                     {booking.ratingComment ? (
-                                        <NText style={[styles.ratingComment, { fontFamily: fonts.light }]}>
+                                        <NText
+                                            style={[
+                                                styles.ratingComment,
+                                                {
+                                                    color: theme.textMuted,
+                                                    fontFamily: fonts.light,
+                                                },
+                                            ]}
+                                        >
                                             "{booking.ratingComment}"
                                         </NText>
                                     ) : null}
@@ -125,7 +169,10 @@ function BookingRow({ booking }: { booking: Appointment }) {
                             style={[styles.statusBadge, { backgroundColor: statusColor }]}
                         >
                             <NText
-                                style={[styles.statusText, { fontFamily: fonts.medium }]}
+                                style={[
+                                    styles.statusText,
+                                    { color: theme.text, fontFamily: fonts.medium },
+                                ]}
                             >
                                 {t(`bookings.status.${booking.status}`)}
                             </NText>
@@ -139,6 +186,7 @@ function BookingRow({ booking }: { booking: Appointment }) {
 
 export default function DashboardScreen() {
     const { t } = useTranslation()
+    const { theme } = useTheme()
     const { serviceId } = useAdminService()
     const [todayCount, setTodayCount] = useState<number | null>(null)
     const [serviceConfig, setServiceConfig] = useState<ServiceConfig | null>(null)
@@ -179,7 +227,12 @@ export default function DashboardScreen() {
             style={styles.container}
             contentContainerStyle={styles.content}
         >
-            <NText style={[styles.sectionTitle, { fontFamily: fonts.medium }]}>
+            <NText
+                style={[
+                    styles.sectionTitle,
+                    { color: theme.text, fontFamily: fonts.medium },
+                ]}
+            >
                 {t("dashboard.serviceOverview")}
             </NText>
 
@@ -188,7 +241,7 @@ export default function DashboardScreen() {
                     icon="calendar"
                     label={t("dashboard.todaysBookings")}
                     value={loading ? "…" : String(todayCount ?? 0)}
-                    color="rgba(33,168,112,0.3)"
+                    color={theme.accentSubtle}
                 />
                 <StatCard
                     icon="star"
@@ -215,7 +268,7 @@ export default function DashboardScreen() {
                                 : t("dashboard.closed")
                     }
                     color={
-                        isOpen ? "rgba(33,168,112,0.3)" : "rgba(245,158,11,0.3)"
+                        isOpen ? theme.accentSubtle : "rgba(245,158,11,0.3)"
                     }
                 />
             </View>
@@ -223,7 +276,11 @@ export default function DashboardScreen() {
             <NText
                 style={[
                     styles.sectionTitle,
-                    { fontFamily: fonts.medium, marginTop: 32 },
+                    {
+                        color: theme.text,
+                        fontFamily: fonts.medium,
+                        marginTop: 32,
+                    },
                 ]}
             >
                 {t("dashboard.recentBookings")}
@@ -232,26 +289,26 @@ export default function DashboardScreen() {
             {recentBookings.length === 0 ? (
                 <View style={styles.emptyState}>
                     <LinearGradient
-                        colors={[
-                            "rgba(255,255,255,0.15)",
-                            "rgba(255,255,255,0.05)",
-                        ]}
+                        colors={[theme.surfaceHigh, theme.surface]}
                         style={styles.emptyGradient}
                     >
                         <BlurView
                             intensity={40}
-                            tint="dark"
+                            tint={theme.blurTint}
                             style={styles.emptyInner}
                         >
                             <Ionicons
                                 name="calendar-outline"
                                 size={32}
-                                color="rgba(255,255,255,0.3)"
+                                color={theme.textSubtle}
                             />
                             <NText
                                 style={[
                                     styles.emptyText,
-                                    { fontFamily: fonts.light },
+                                    {
+                                        color: theme.textSubtle,
+                                        fontFamily: fonts.light,
+                                    },
                                 ]}
                             >
                                 {loading
@@ -280,7 +337,6 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     sectionTitle: {
-        color: "#ffffff",
         fontSize: 18,
         marginBottom: 16,
     },
@@ -307,11 +363,9 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     statValue: {
-        color: "#ffffff",
         fontSize: 28,
     },
     statLabel: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 13,
     },
     emptyState: {
@@ -330,7 +384,6 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     emptyText: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 15,
     },
     bookingsList: {
@@ -359,15 +412,12 @@ const styles = StyleSheet.create({
         gap: 2,
     },
     bookingName: {
-        color: "#ffffff",
         fontSize: 15,
     },
     bookingMeta: {
-        color: "rgba(255,255,255,0.5)",
         fontSize: 13,
     },
     bookingDate: {
-        color: "rgba(255,255,255,0.4)",
         fontSize: 12,
         marginTop: 2,
     },
@@ -377,7 +427,6 @@ const styles = StyleSheet.create({
         borderRadius: 10,
     },
     statusText: {
-        color: "#ffffff",
         fontSize: 12,
     },
     ratingRow: {
@@ -390,7 +439,6 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     ratingComment: {
-        color: "rgba(255,255,255,0.45)",
         fontSize: 12,
         fontStyle: "italic",
     },

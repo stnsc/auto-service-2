@@ -26,7 +26,14 @@ export async function GET() {
             new ScanCommand({ TableName: tableName }),
         )
 
-        const services = (result.Items ?? []) as CarService[]
+        const services = (result.Items ?? []).map((item) => ({
+            ...item,
+            type: Array.isArray(item.type)
+                ? item.type
+                : item.type
+                  ? [item.type]
+                  : [],
+        })) as CarService[]
 
         return new Response(JSON.stringify(services), {
             status: 200,

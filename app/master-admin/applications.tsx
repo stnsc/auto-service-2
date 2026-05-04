@@ -106,7 +106,9 @@ function ApplicationCard({
                         style={[styles.metaLine, { fontFamily: fonts.light }]}
                     >
                         {application.address}
-                        {application.type ? ` · ${application.type}` : ""}
+                        {application.type?.length > 0
+                            ? ` · ${Array.isArray(application.type) ? application.type.join(", ") : application.type}`
+                            : ""}
                     </NText>
 
                     {/* Applicant */}

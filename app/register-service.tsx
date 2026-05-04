@@ -15,8 +15,17 @@ import { NInput } from "../components/replacements/NInput"
 import { useAuthContext } from "../context/AuthContext"
 import { useProfileContext } from "../context/ProfileContext"
 import { fonts } from "../theme"
+import { useTheme } from "../context/ThemeContext"
 import { useTranslation } from "react-i18next"
 import "../i18n"
+import { NButton } from "../components/replacements/NButton"
+import LocationPicker from "../components/LocationPicker"
+import {
+    validators,
+    validateForm,
+    hasErrors,
+    ValidationRule,
+} from "../utils/validation"
 
 const SERVICE_TYPES = [
     "mechanic",
@@ -31,6 +40,7 @@ export default function RegisterServiceScreen() {
     const { t } = useTranslation()
     const { user, userEmail } = useAuthContext()
     const { profile } = useProfileContext()
+    const { theme } = useTheme()
     const router = useRouter()
 
     const [step, setStep] = useState(1)
@@ -42,6 +52,7 @@ export default function RegisterServiceScreen() {
     const [checkingExisting, setCheckingExisting] = useState(true)
     const [submitError, setSubmitError] = useState("")
     const [submitSuccess, setSubmitSuccess] = useState(false)
+    const [errors, setErrors] = useState<Record<string, string | null>>({})
 
     // Step 1
     const [serviceName, setServiceName] = useState("")
@@ -50,7 +61,7 @@ export default function RegisterServiceScreen() {
     const [description, setDescription] = useState("")
 
     // Step 2
-    const [type, setType] = useState("")
+    const [types, setTypes] = useState<string[]>([])
     const [latitude, setLatitude] = useState("")
     const [longitude, setLongitude] = useState("")
 
@@ -66,9 +77,7 @@ export default function RegisterServiceScreen() {
             .then((r) => r.json())
             .then((data) => {
                 if (Array.isArray(data) && data.length > 0) {
-                    const active = data.find(
-                        (a: any) => a.status === "pending",
-                    )
+                    const active = data.find((a: any) => a.status === "pending")
                     if (active) {
                         setExistingApp({
                             status: active.status,
@@ -80,6 +89,26 @@ export default function RegisterServiceScreen() {
             .catch(() => {})
             .finally(() => setCheckingExisting(false))
     }, [userId])
+
+    const handleNext = () => {
+        if (step === 1) {
+            const rules: Record<string, ValidationRule[]> = {
+                serviceName: [validators.required(t("registerService.serviceNamePlaceholder"), t("common.isRequired"))],
+                address: [validators.required(t("registerService.addressPlaceholder"), t("common.isRequired"))],
+                phone: [validators.required(t("registerService.phonePlaceholder"), t("common.isRequired")), validators.phone(t("validation.invalidPhone"))],
+                description: [validators.required(t("registerService.descriptionPlaceholder"), t("common.isRequired"))],
+            }
+            const newErrors = validateForm({ serviceName, address, phone, description }, rules)
+            setErrors(newErrors)
+            if (hasErrors(newErrors)) return
+        }
+        if (step === 2 && types.length === 0) {
+            setErrors({ types: t("registerService.serviceTypeRequired") })
+            return
+        }
+        setErrors({})
+        setStep((s) => s + 1)
+    }
 
     const handleSubmit = async () => {
         setSubmitting(true)
@@ -95,7 +124,7 @@ export default function RegisterServiceScreen() {
                     serviceName,
                     address,
                     phone,
-                    type,
+                    type: types,
                     latitude: latitude ? parseFloat(latitude) : null,
                     longitude: longitude ? parseFloat(longitude) : null,
                     description,
@@ -117,7 +146,7 @@ export default function RegisterServiceScreen() {
     if (checkingExisting) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator color="rgba(33,168,112,0.8)" />
+            <ActivityIndicator color={theme.accentIcon} />
             </View>
         )
     }
@@ -129,48 +158,35 @@ export default function RegisterServiceScreen() {
                     <Ionicons
                         name="checkmark-circle-outline"
                         size={48}
-                        color="rgba(33,168,112,0.9)"
+                        color={theme.accentIcon}
                     />
                     <NText
                         style={[
                             styles.successTitle,
-                            { fontFamily: fonts.medium },
+                            { fontFamily: fonts.medium, color: theme.text },
                         ]}
                     >
                         {t("registerService.successTitle")}
                     </NText>
                     <NText
-                        style={[styles.successSub, { fontFamily: fonts.light }]}
+                        style={[styles.successSub, { fontFamily: fonts.light, color: theme.textMuted }]}
                     >
                         {t("registerService.successDesc")}
                     </NText>
-                    <Pressable
+                    <NButton
                         onPress={() => router.push("/profile" as any)}
+                        color={theme.accent}
                         style={styles.backBtn}
                     >
-                        <LinearGradient
-                            colors={[
-                                "rgba(33,168,112,0.4)",
-                                "rgba(33,168,112,0.15)",
+                        <NText
+                            style={[
+                                styles.backBtnText,
+                                { fontFamily: fonts.medium, color: theme.text },
                             ]}
-                            style={styles.backBtnGradient}
                         >
-                            <BlurView
-                                intensity={20}
-                                tint="dark"
-                                style={styles.backBtnInner}
-                            >
-                                <NText
-                                    style={[
-                                        styles.backBtnText,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                >
-                                    {t("registerService.backToProfile")}
-                                </NText>
-                            </BlurView>
-                        </LinearGradient>
-                    </Pressable>
+                            {t("registerService.backToProfile")}
+                        </NText>
+                    </NButton>
                 </View>
             </View>
         )
@@ -190,14 +206,14 @@ export default function RegisterServiceScreen() {
                         size={48}
                         color={
                             isApproved
-                                ? "rgba(33,168,112,0.9)"
+                                ? theme.accentIcon
                                 : "rgba(245,158,11,0.9)"
                         }
                     />
                     <NText
                         style={[
                             styles.successTitle,
-                            { fontFamily: fonts.medium },
+                            { fontFamily: fonts.medium, color: theme.text },
                         ]}
                     >
                         {isApproved
@@ -205,37 +221,23 @@ export default function RegisterServiceScreen() {
                             : t("registerService.alreadyPending")}
                     </NText>
                     <NText
-                        style={[styles.successSub, { fontFamily: fonts.light }]}
+                        style={[styles.successSub, { fontFamily: fonts.light, color: theme.textMuted }]}
                     >
                         {existingApp.serviceName}
                     </NText>
-                    <Pressable
+                    <NButton
                         onPress={() => router.back()}
                         style={styles.backBtn}
                     >
-                        <LinearGradient
-                            colors={[
-                                "rgba(255,255,255,0.15)",
-                                "rgba(255,255,255,0.05)",
+                        <NText
+                            style={[
+                                styles.backBtnText,
+                                { fontFamily: fonts.medium, color: theme.text },
                             ]}
-                            style={styles.backBtnGradient}
                         >
-                            <BlurView
-                                intensity={20}
-                                tint="dark"
-                                style={styles.backBtnInner}
-                            >
-                                <NText
-                                    style={[
-                                        styles.backBtnText,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                >
-                                    {t("registerService.backToProfile")}
-                                </NText>
-                            </BlurView>
-                        </LinearGradient>
-                    </Pressable>
+                            {t("registerService.backToProfile")}
+                        </NText>
+                    </NButton>
                 </View>
             </View>
         )
@@ -253,21 +255,21 @@ export default function RegisterServiceScreen() {
                         <View
                             style={[
                                 styles.stepDot,
-                                s === step && styles.stepDotActive,
-                                s < step && styles.stepDotDone,
+                                s === step && { backgroundColor: theme.accent },
+                                s < step && { backgroundColor: theme.accentSubtle },
                             ]}
                         >
                             {s < step ? (
                                 <Ionicons
                                     name="checkmark"
                                     size={12}
-                                    color="#fff"
+                                    color={theme.text}
                                 />
                             ) : (
                                 <NText
                                     style={[
                                         styles.stepDotText,
-                                        { fontFamily: fonts.medium },
+                                        { fontFamily: fonts.medium, color: theme.textMuted },
                                     ]}
                                 >
                                     {s}
@@ -278,7 +280,8 @@ export default function RegisterServiceScreen() {
                             <View
                                 style={[
                                     styles.stepLine,
-                                    s < step && styles.stepLineDone,
+                                    { backgroundColor: theme.surfaceMid },
+                                    s < step && { backgroundColor: theme.accentSubtle },
                                 ]}
                             />
                         )}
@@ -286,7 +289,7 @@ export default function RegisterServiceScreen() {
                 ))}
             </View>
 
-            <NText style={[styles.stepTitle, { fontFamily: fonts.medium }]}>
+            <NText style={[styles.stepTitle, { fontFamily: fonts.medium, color: theme.text }]}>
                 {step === 1
                     ? t("registerService.step1Title")
                     : step === 2
@@ -302,26 +305,34 @@ export default function RegisterServiceScreen() {
                             "registerService.serviceNamePlaceholder",
                         )}
                         value={serviceName}
-                        onChangeText={setServiceName}
+                        onChangeText={(v) => { setServiceName(v); setErrors((e) => ({ ...e, serviceName: null })) }}
+                        failed={!!errors.serviceName}
+                        failedText={errors.serviceName || ""}
                     />
                     <NInput
                         placeholder={t("registerService.addressPlaceholder")}
                         value={address}
-                        onChangeText={setAddress}
+                        onChangeText={(v) => { setAddress(v); setErrors((e) => ({ ...e, address: null })) }}
+                        failed={!!errors.address}
+                        failedText={errors.address || ""}
                     />
                     <NInput
                         placeholder={t("registerService.phonePlaceholder")}
                         value={phone}
-                        onChangeText={setPhone}
+                        onChangeText={(v) => { setPhone(v); setErrors((e) => ({ ...e, phone: null })) }}
                         keyboardType="phone-pad"
+                        failed={!!errors.phone}
+                        failedText={errors.phone || ""}
                     />
                     <NInput
                         placeholder={t(
                             "registerService.descriptionPlaceholder",
                         )}
                         value={description}
-                        onChangeText={setDescription}
+                        onChangeText={(v) => { setDescription(v); setErrors((e) => ({ ...e, description: null })) }}
                         multiline
+                        failed={!!errors.description}
+                        failedText={errors.description || ""}
                     />
                 </View>
             )}
@@ -330,63 +341,64 @@ export default function RegisterServiceScreen() {
             {step === 2 && (
                 <View style={styles.formGroup}>
                     <NText
-                        style={[styles.fieldLabel, { fontFamily: fonts.light }]}
+                        style={[styles.fieldLabel, { fontFamily: fonts.light, color: theme.textMuted }]}
                     >
                         {t("registerService.serviceTypeLabel")}
                     </NText>
                     <View style={styles.typeChipRow}>
-                        {SERVICE_TYPES.map((st) => (
-                            <Pressable
-                                key={st}
-                                onPress={() => setType(st)}
-                                style={[
-                                    styles.typeChip,
-                                    type === st && styles.typeChipActive,
-                                ]}
-                            >
-                                <NText
+                        {SERVICE_TYPES.map((st) => {
+                            const active = types.includes(st)
+                            return (
+                                <Pressable
+                                    key={st}
+                                    onPress={() => {
+                                        setErrors((e) => ({ ...e, types: null }))
+                                        setTypes((prev) =>
+                                            prev.includes(st)
+                                                ? prev.filter((t) => t !== st)
+                                                : [...prev, st],
+                                        )
+                                    }}
                                     style={[
-                                        styles.typeChipText,
-                                        type === st &&
-                                            styles.typeChipTextActive,
-                                        {
-                                            fontFamily:
-                                                type === st
-                                                    ? fonts.medium
-                                                    : fonts.regular,
-                                        },
+                                        styles.typeChip,
+                                        { backgroundColor: active ? theme.accent : theme.surfaceMid },
                                     ]}
                                 >
-                                    {t(`settings.types.${st}`)}
-                                </NText>
-                            </Pressable>
-                        ))}
+                                    <NText
+                                        style={[
+                                            styles.typeChipText,
+                                            { fontFamily: active ? fonts.medium : fonts.regular, color: theme.text },
+                                        ]}
+                                    >
+                                        {t(`settings.types.${st}`)}
+                                    </NText>
+                                </Pressable>
+                            )
+                        })}
                     </View>
+                    {errors.types ? (
+                        <NText style={[styles.errorText, { fontFamily: fonts.light, color: theme.error }]}>
+                            {errors.types}
+                        </NText>
+                    ) : null}
 
                     <NText
                         style={[
                             styles.fieldLabel,
-                            { fontFamily: fonts.light, marginTop: 16 },
+                            { fontFamily: fonts.light, marginTop: 16, color: theme.textMuted },
                         ]}
                     >
                         {t("registerService.locationLabel")}
                     </NText>
-                    <View style={styles.coordRow}>
-                        <NInput
-                            placeholder={t("settings.latitude")}
-                            value={latitude}
-                            onChangeText={setLatitude}
-                            keyboardType="decimal-pad"
-                            style={styles.flex1}
-                        />
-                        <NInput
-                            placeholder={t("settings.longitude")}
-                            value={longitude}
-                            onChangeText={setLongitude}
-                            keyboardType="decimal-pad"
-                            style={styles.flex1}
-                        />
-                    </View>
+                    <LocationPicker
+                        latitude={latitude}
+                        longitude={longitude}
+                        addressHint={address}
+                        onLocationChange={(lat, lon) => {
+                            setLatitude(lat.toFixed(6))
+                            setLongitude(lon.toFixed(6))
+                        }}
+                    />
                 </View>
             )}
 
@@ -395,14 +407,14 @@ export default function RegisterServiceScreen() {
                 <View style={styles.reviewCard}>
                     <LinearGradient
                         colors={[
-                            "rgba(255,255,255,0.12)",
-                            "rgba(255,255,255,0.04)",
+                            theme.borderStart,
+                            theme.borderEnd,
                         ]}
                         style={styles.reviewGradient}
                     >
                         <BlurView
                             intensity={20}
-                            tint="dark"
+                            tint={theme.blurTint}
                             style={styles.reviewInner}
                         >
                             <ReviewRow
@@ -420,8 +432,14 @@ export default function RegisterServiceScreen() {
                             <ReviewRow
                                 label={t("settings.type")}
                                 value={
-                                    type
-                                        ? t(`settings.types.${type}` as any)
+                                    types.length > 0
+                                        ? types
+                                              .map((ty) =>
+                                                  t(
+                                                      `settings.types.${ty}` as any,
+                                                  ),
+                                              )
+                                              .join(", ")
                                         : "—"
                                 }
                             />
@@ -445,7 +463,7 @@ export default function RegisterServiceScreen() {
             )}
 
             {submitError ? (
-                <NText style={[styles.errorText, { fontFamily: fonts.light }]}>
+                <NText style={[styles.errorText, { fontFamily: fonts.light, color: theme.error }]}>
                     {submitError}
                 </NText>
             ) : null}
@@ -453,96 +471,55 @@ export default function RegisterServiceScreen() {
             {/* Navigation buttons */}
             <View style={styles.navRow}>
                 {step > 1 && (
-                    <Pressable
-                        onPress={() => setStep((s) => s - 1)}
+                    <NButton
+                        onPress={() => { setErrors({}); setStep((s) => s - 1) }}
                         style={[styles.navBtn, styles.navBtnBack]}
                     >
-                        <LinearGradient
-                            colors={[
-                                "rgba(255,255,255,0.12)",
-                                "rgba(255,255,255,0.04)",
+                        <NText
+                            style={[
+                                styles.navBtnText,
+                                { fontFamily: fonts.medium, color: theme.text },
                             ]}
-                            style={styles.navBtnGradient}
                         >
-                            <BlurView
-                                intensity={20}
-                                tint="dark"
-                                style={styles.navBtnInner}
-                            >
-                                <NText
-                                    style={[
-                                        styles.navBtnText,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                >
-                                    {t("registerService.back")}
-                                </NText>
-                            </BlurView>
-                        </LinearGradient>
-                    </Pressable>
+                            {t("registerService.back")}
+                        </NText>
+                    </NButton>
                 )}
 
-                <Pressable
-                    onPress={
-                        step < 3 ? () => setStep((s) => s + 1) : handleSubmit
-                    }
-                    disabled={
-                        submitting ||
-                        (step === 1 && (!serviceName || !address)) ||
-                        (step === 2 && !type)
-                    }
-                    style={[
-                        styles.navBtn,
-                        styles.navBtnNext,
-                        (submitting ||
-                            (step === 1 && (!serviceName || !address)) ||
-                            (step === 2 && !type)) && { opacity: 0.45 },
-                    ]}
+                <NButton
+                    onPress={step < 3 ? handleNext : handleSubmit}
+                    disabled={submitting}
+                    color={theme.accent}
+                    style={[styles.navBtn, styles.navBtnNext]}
                 >
-                    <LinearGradient
-                        colors={[
-                            "rgba(33,168,112,0.5)",
-                            "rgba(33,168,112,0.2)",
-                        ]}
-                        style={styles.navBtnGradient}
-                    >
-                        <BlurView
-                            intensity={20}
-                            tint="dark"
-                            style={styles.navBtnInner}
+                    {submitting ? (
+                        <ActivityIndicator size="small" color={theme.text} />
+                    ) : (
+                        <NText
+                            style={[
+                                styles.navBtnText,
+                                { fontFamily: fonts.medium, color: theme.text },
+                            ]}
                         >
-                            {submitting ? (
-                                <ActivityIndicator
-                                    size="small"
-                                    color="#ffffff"
-                                />
-                            ) : (
-                                <NText
-                                    style={[
-                                        styles.navBtnText,
-                                        { fontFamily: fonts.medium },
-                                    ]}
-                                >
-                                    {step < 3
-                                        ? t("registerService.next")
-                                        : t("registerService.submit")}
-                                </NText>
-                            )}
-                        </BlurView>
-                    </LinearGradient>
-                </Pressable>
+                            {step < 3
+                                ? t("registerService.next")
+                                : t("registerService.submit")}
+                        </NText>
+                    )}
+                </NButton>
             </View>
         </ScrollView>
     )
 }
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
+    const { theme } = useTheme()
     return (
         <View style={styles.reviewRow}>
-            <NText style={[styles.reviewLabel, { fontFamily: fonts.light }]}>
+            <NText style={[styles.reviewLabel, { fontFamily: fonts.light, color: theme.textSubtle }]}>
                 {label}
             </NText>
-            <NText style={[styles.reviewValue, { fontFamily: fonts.regular }]}>
+            <NText style={[styles.reviewValue, { fontFamily: fonts.regular, color: theme.text }]}>
                 {value || "—"}
             </NText>
         </View>
@@ -551,7 +528,7 @@ function ReviewRow({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    content: { padding: 24, paddingBottom: 60 },
+    content: { padding: 24, paddingBottom: 60, paddingTop: 80 },
     center: {
         flex: 1,
         justifyContent: "center",
@@ -565,29 +542,18 @@ const styles = StyleSheet.create({
         width: "100%",
     },
     successTitle: {
-        color: "#ffffff",
         fontSize: 20,
         textAlign: "center",
     },
     successSub: {
-        color: "rgba(255,255,255,0.6)",
         fontSize: 15,
         textAlign: "center",
     },
     backBtn: {
         marginTop: 16,
-        borderRadius: 16,
-        overflow: "hidden",
         alignSelf: "stretch",
     },
-    backBtnGradient: { padding: 1.5, borderRadius: 16 },
-    backBtnInner: {
-        borderRadius: 14,
-        overflow: "hidden",
-        paddingVertical: 14,
-        alignItems: "center",
-    },
-    backBtnText: { color: "#ffffff", fontSize: 15 },
+    backBtnText: { fontSize: 15 },
     stepRow: {
         flexDirection: "row",
         alignItems: "center",
@@ -603,29 +569,22 @@ const styles = StyleSheet.create({
         width: 28,
         height: 28,
         borderRadius: 14,
-        backgroundColor: "rgba(255,255,255,0.1)",
         alignItems: "center",
         justifyContent: "center",
     },
-    stepDotActive: { backgroundColor: "rgba(33,168,112,0.5)" },
-    stepDotDone: { backgroundColor: "rgba(33,168,112,0.3)" },
-    stepDotText: { color: "rgba(255,255,255,0.7)", fontSize: 13 },
+    stepDotText: { fontSize: 13 },
     stepLine: {
         width: 40,
         height: 2,
-        backgroundColor: "rgba(255,255,255,0.1)",
         marginHorizontal: 4,
     },
-    stepLineDone: { backgroundColor: "rgba(33,168,112,0.4)" },
     stepTitle: {
-        color: "#ffffff",
         fontSize: 18,
         marginBottom: 20,
         textAlign: "center",
     },
     formGroup: { gap: 10 },
     fieldLabel: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 13,
         marginBottom: 6,
     },
@@ -638,16 +597,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 7,
         borderRadius: 12,
-        backgroundColor: "rgba(255,255,255,0.1)",
     },
-    typeChipActive: { backgroundColor: "rgba(33,168,112,0.45)" },
     typeChipText: {
-        color: "rgba(255,255,255,0.55)",
         fontSize: 13,
     },
-    typeChipTextActive: { color: "#ffffff" },
-    coordRow: { flexDirection: "row", gap: 10 },
-    flex1: { flex: 1 },
     reviewCard: { borderRadius: 20, overflow: "hidden", marginBottom: 16 },
     reviewGradient: { padding: 1.5, borderRadius: 20 },
     reviewInner: {
@@ -658,14 +611,12 @@ const styles = StyleSheet.create({
     },
     reviewRow: { gap: 2 },
     reviewLabel: {
-        color: "rgba(255,255,255,0.45)",
         fontSize: 12,
         textTransform: "uppercase",
         letterSpacing: 0.5,
     },
-    reviewValue: { color: "#ffffff", fontSize: 14 },
+    reviewValue: { fontSize: 14 },
     errorText: {
-        color: "rgba(220,80,80,0.9)",
         fontSize: 13,
         textAlign: "center",
         marginBottom: 8,
@@ -675,15 +626,8 @@ const styles = StyleSheet.create({
         gap: 10,
         marginTop: 24,
     },
-    navBtn: { flex: 1, borderRadius: 16, overflow: "hidden" },
+    navBtn: { flex: 1 },
     navBtnBack: {},
     navBtnNext: {},
-    navBtnGradient: { padding: 1.5, borderRadius: 16 },
-    navBtnInner: {
-        borderRadius: 14,
-        overflow: "hidden",
-        paddingVertical: 14,
-        alignItems: "center",
-    },
-    navBtnText: { color: "#ffffff", fontSize: 15 },
+    navBtnText: { fontSize: 15 },
 })
