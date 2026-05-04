@@ -75,7 +75,12 @@ function AuthGatedLayout() {
         // Rating page is public — accessible without login from email links
         const isRatePage = segments[0] === "rate"
 
-        if (!isAuthenticated && !inAuthGroup && !isOAuthCallback && !isRatePage) {
+        if (
+            !isAuthenticated &&
+            !inAuthGroup &&
+            !isOAuthCallback &&
+            !isRatePage
+        ) {
             router.replace("/(auth)/login")
         } else if (isAuthenticated && inAuthGroup) {
             router.replace("/")
@@ -175,16 +180,16 @@ function AuthGatedLayout() {
         "/verify": t("pageTitles.verify"),
         "/pending": t("pageTitles.pending"),
     }
-    const pageTitle = `${PAGE_TITLES[pathname] || t("pageTitles.home")} - AutoService Closed Alpha ${process.env.EXPO_PUBLIC_APP_TYPE}`
+    const pageTitle = `${PAGE_TITLES[pathname] || t("pageTitles.home")} - AutoService OPEN BETA`
 
     const { width: windowWidth } = useWindowDimensions()
 
     const ACCENT_FILTER: Record<AccentKey, { hue: number; sat: number }> = {
-        green:  { hue: 80,   sat: 70 },
-        teal:   { hue: 60,  sat: 75 },
-        blue:   { hue: 290,  sat: 80 },
+        green: { hue: 80, sat: 70 },
+        teal: { hue: 60, sat: 75 },
+        blue: { hue: 290, sat: 80 },
         purple: { hue: 130, sat: 70 },
-        amber:  { hue: 0,  sat: 90 },
+        amber: { hue: 0, sat: 90 },
     }
     const { hue, sat } = ACCENT_FILTER[accentKey]
 
@@ -263,7 +268,17 @@ function AuthGatedLayout() {
                                 {showTopBar && (
                                     <>
                                         <LinearGradient
-                                            colors={colorScheme === "dark" ? ["rgba(0,0,0,0.45)", "transparent"] : ["rgba(255,255,255,0.6)", "transparent"]}
+                                            colors={
+                                                colorScheme === "dark"
+                                                    ? [
+                                                          "rgba(0,0,0,0.45)",
+                                                          "transparent",
+                                                      ]
+                                                    : [
+                                                          "rgba(255,255,255,0.6)",
+                                                          "transparent",
+                                                      ]
+                                            }
                                             style={styles.topNavGradient}
                                             pointerEvents="none"
                                         />
@@ -278,15 +293,17 @@ function AuthGatedLayout() {
                                         <Slot />
                                     </View>
                                 ) : (
-                                <Animated.View
-                                    style={{
-                                        flex: 1,
-                                        opacity: fadeAnim,
-                                        transform: [{ translateY: slideAnim }],
-                                    }}
-                                >
-                                    <Slot />
-                                </Animated.View>
+                                    <Animated.View
+                                        style={{
+                                            flex: 1,
+                                            opacity: fadeAnim,
+                                            transform: [
+                                                { translateY: slideAnim },
+                                            ],
+                                        }}
+                                    >
+                                        <Slot />
+                                    </Animated.View>
                                 )}
 
                                 {showNav && (
@@ -307,9 +324,7 @@ function AuthGatedLayout() {
                                         }
                                         onMakeAppointment={() => {
                                             setAppointmentMenuState(null)
-                                            router.push(
-                                                "/appointment" as any,
-                                            )
+                                            router.push("/appointment" as any)
                                         }}
                                         onShowPanel={() =>
                                             setAppointmentMenuState("panel")

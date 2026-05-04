@@ -1,7 +1,6 @@
 import {
     CognitoIdentityProviderClient,
     AdminGetUserCommand,
-    AdminDisableUserCommand,
 } from "@aws-sdk/client-cognito-identity-provider"
 
 const cognitoClient = new CognitoIdentityProviderClient({
@@ -13,9 +12,7 @@ const cognitoClient = new CognitoIdentityProviderClient({
 })
 
 // Called after a successful Cognito Hosted UI OAuth flow.
-// Checks whether the federated user is new (never signed in before) or
-// already pending/approved, then disables new users so they go through
-// the same manual-approval queue as email/password sign-ups.
+// Returns "approved" for enabled users, "pending" for manually disabled ones.
 export async function POST(request: Request) {
     const { username } = await request.json()
 
@@ -39,29 +36,7 @@ export async function POST(request: Request) {
             userResult.UserAttributes?.find((a) => a.Name === "email")
                 ?.Value ?? username
 
-        // Already disabled → still pending approval, admin hasn't re-enabled yet
         if (!isEnabled) {
-            return new Response(
-                JSON.stringify({ status: "pending", email }),
-                { status: 200, headers: { "Content-Type": "application/json" } },
-            )
-        }
-
-        // Use a tight 30-second window to detect a truly first-time sign-in.
-        // Our auto-disable runs within milliseconds of account creation, so any
-        // enabled user older than 30 seconds has been deliberately re-enabled by
-        // an admin and should be treated as approved.
-        const createdAt = userResult.UserCreateDate
-        const isFirstSignIn =
-            createdAt && Date.now() - createdAt.getTime() < 30_000
-
-        if (isFirstSignIn) {
-            await cognitoClient.send(
-                new AdminDisableUserCommand({
-                    UserPoolId: process.env.EXPO_PUBLIC_COGNITO_USER_POOL_ID,
-                    Username: username,
-                }),
-            )
             return new Response(
                 JSON.stringify({ status: "pending", email }),
                 { status: 200, headers: { "Content-Type": "application/json" } },

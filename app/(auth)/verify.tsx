@@ -48,7 +48,7 @@ export default function VerifyScreen() {
 
         try {
             await confirmSignUp(email!, formData.code)
-            router.replace("/(auth)/pending")
+            router.replace("/(auth)/login")
         } catch (err: any) {
             setErrors({ code: err.message || t("verify.verificationFailed") })
         } finally {

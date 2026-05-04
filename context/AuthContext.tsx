@@ -137,19 +137,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             reject(err)
                             return
                         }
-                        // Auto-disable user for closed alpha approval
-                        try {
-                            await fetch("/api/auth/disable-user", {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({ email }),
-                            })
-                        } catch (disableErr) {
-                            console.error("Failed to disable user:", disableErr)
-                        }
-                        setIsPendingApproval(true)
                         resolve()
                     },
                 )
