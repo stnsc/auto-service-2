@@ -5,6 +5,8 @@ const en = {
         continueWithGoogle: "Continue with Google",
         closedAlpha: "OPEN BETA",
         isRequired: "is required",
+        close: "Close",
+        cancel: "Cancel",
     },
     tabs: {
         chat: "Chat",
@@ -259,6 +261,18 @@ const en = {
         reportBug: "Report Bug / Feedback",
         adminPanel: "Admin Panel",
         logout: "Logout",
+    },
+    feedback: {
+        title: "Report Bug / Feedback",
+        ratingLabel: "How would you rate your experience?",
+        messagePlaceholder: "Describe your feedback or bug in detail...",
+        submit: "Submit",
+        submitting: "Submitting...",
+        successTitle: "Thank you!",
+        successMessage: "Your feedback has been received.",
+        errorMessage: "Failed to submit feedback. Please try again.",
+        githubLink: "Or open a GitHub issue",
+        messageLabel: "Your feedback",
     },
     adminNav: {
         dashboard: "Dashboard",

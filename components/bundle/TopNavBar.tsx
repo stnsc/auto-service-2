@@ -3,7 +3,6 @@ import {
     View,
     StyleSheet,
     Image,
-    Linking,
     TouchableOpacity,
 } from "react-native"
 import { useRouter } from "expo-router"
@@ -15,6 +14,7 @@ import { useAuthContext } from "../../context/AuthContext"
 import { useTheme } from "../../context/ThemeContext"
 import { useTranslation } from "react-i18next"
 import i18n from "../../i18n"
+import { FeedbackModal } from "./FeedbackModal"
 
 export const TopNavBar = () => {
     const { t, i18n: i18nInstance } = useTranslation()
@@ -24,6 +24,7 @@ export const TopNavBar = () => {
     const currentLang = i18nInstance.language
 
     const [hasApprovedService, setHasApprovedService] = useState(false)
+    const [feedbackVisible, setFeedbackVisible] = useState(false)
 
     useEffect(() => {
         if (!userEmail) return
@@ -95,8 +96,7 @@ export const TopNavBar = () => {
             return
         }
         if (key === "github") {
-            const url = "https://github.com/stnsc/auto-service-2/issues"
-            Linking.openURL(url)
+            setFeedbackVisible(true)
             return
         }
         if (key === "admin") {
@@ -193,6 +193,10 @@ export const TopNavBar = () => {
                     actions={CONTEXT}
                 />
             </View>
+            <FeedbackModal
+                visible={feedbackVisible}
+                onDismiss={() => setFeedbackVisible(false)}
+            />
         </View>
     )
 }

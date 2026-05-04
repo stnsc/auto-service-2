@@ -5,6 +5,8 @@ const ro = {
         continueWithGoogle: "Continuă cu Google",
         closedAlpha: "Closed Alpha",
         isRequired: "este obligatoriu",
+        close: "Închide",
+        cancel: "Anulează",
     },
     tabs: {
         chat: "Chat",
@@ -259,6 +261,18 @@ const ro = {
         reportBug: "Raportează Eroare / Feedback",
         adminPanel: "Panou Admin",
         logout: "Deconectare",
+    },
+    feedback: {
+        title: "Raportează Eroare / Feedback",
+        ratingLabel: "Cum ți s-a părut experiența?",
+        messagePlaceholder: "Descrie feedback-ul sau eroarea în detaliu...",
+        submit: "Trimite",
+        submitting: "Se trimite...",
+        successTitle: "Mulțumim!",
+        successMessage: "Feedback-ul tău a fost primit.",
+        errorMessage: "Trimiterea a eșuat. Încearcă din nou.",
+        githubLink: "Sau deschide un issue pe GitHub",
+        messageLabel: "Feedback-ul tău",
     },
     adminNav: {
         dashboard: "Panou de Control",
