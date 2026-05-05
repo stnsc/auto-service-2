@@ -1,5 +1,7 @@
 import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native"
 import { useState, useEffect, useMemo, useCallback } from "react"
+import type { ServiceType } from "../types/CarService"
+import { TYPE_COLORS } from "../../data/carServicesMock"
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
@@ -29,6 +31,8 @@ const STEPS_KEYS = [
     "contactInfo",
     "confirmation",
 ] as const
+
+const SERVICE_TYPE_COLORS: Record<string, string> = TYPE_COLORS
 
 const DEFAULT_CENTER = { latitude: 45.6427, longitude: 25.5887 }
 
@@ -99,10 +103,16 @@ export default function AppointmentScreen() {
         additionalNotes: [] as any[],
     }
     const router = useRouter()
-    const { serviceId: preselectedServiceId } = useLocalSearchParams<{ serviceId?: string }>()
+    const { serviceId: preselectedServiceId } = useLocalSearchParams<{
+        serviceId?: string
+    }>()
     const [userLocation, setUserLocation] = useState(DEFAULT_CENTER)
     const { services, refresh } = useCarServices()
-    useFocusEffect(useCallback(() => { refresh() }, [refresh]))
+    useFocusEffect(
+        useCallback(() => {
+            refresh()
+        }, [refresh]),
+    )
     const {
         currentStep,
         setCurrentStep,
@@ -117,6 +127,8 @@ export default function AppointmentScreen() {
     )
     const [serviceConfigLoading, setServiceConfigLoading] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [selectedTypeFilter, setSelectedTypeFilter] =
+        useState<ServiceType | null>(null)
     const [submitSuccess, setSubmitSuccess] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [submittedAppointment, setSubmittedAppointment] = useState<{
@@ -146,7 +158,11 @@ export default function AppointmentScreen() {
 
     // Reset date/time when the user switches service centers
     useEffect(() => {
-        setFormData((prev) => ({ ...prev, preferredDate: "", preferredTime: "" }))
+        setFormData((prev) => ({
+            ...prev,
+            preferredDate: "",
+            preferredTime: "",
+        }))
     }, [formData.serviceCenterId])
 
     // Get vehicle info from chat context
@@ -239,6 +255,13 @@ export default function AppointmentScreen() {
         })
     }, [userLocation.latitude, userLocation.longitude, services])
 
+    const filteredServicesByDistance = useMemo(() => {
+        if (!selectedTypeFilter) return servicesByDistance
+        return servicesByDistance.filter(
+            (s) => Array.isArray(s.type) && s.type.includes(selectedTypeFilter),
+        )
+    }, [servicesByDistance, selectedTypeFilter])
+
     const updateField = (field: keyof AppointmentFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
         // Validate field as user types
@@ -309,8 +332,12 @@ export default function AppointmentScreen() {
                 body: JSON.stringify({
                     userId: user?.getUsername() ?? userEmail ?? "anonymous",
                     serviceId: formData.serviceCenterId,
-                    serviceName: services.find((s) => s.id === formData.serviceCenterId)?.name ?? "",
-                    servicePhone: services.find((s) => s.id === formData.serviceCenterId)?.phone ?? "",
+                    serviceName:
+                        services.find((s) => s.id === formData.serviceCenterId)
+                            ?.name ?? "",
+                    servicePhone:
+                        services.find((s) => s.id === formData.serviceCenterId)
+                            ?.phone ?? "",
                     customerName: formData.customerName,
                     customerPhone: formData.customerPhone,
                     customerEmail: formData.customerEmail,
@@ -332,7 +359,8 @@ export default function AppointmentScreen() {
                 preferredTime: appt.preferredTime ?? formData.preferredTime,
                 serviceName:
                     appt.serviceName ??
-                    services.find((s) => s.id === formData.serviceCenterId)?.name ??
+                    services.find((s) => s.id === formData.serviceCenterId)
+                        ?.name ??
                     "",
                 vehicleYear: appt.vehicleYear ?? formData.vehicleYear,
                 vehicleMake: appt.vehicleMake ?? formData.vehicleMake,
@@ -374,7 +402,8 @@ export default function AppointmentScreen() {
         const start = `${y}${m}${d}T${hh}${mm}00`
         const endHour = String(parseInt(hh, 10) + 1).padStart(2, "0")
         const end = `${y}${m}${d}T${endHour}${mm}00`
-        const now = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z"
+        const now =
+            new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z"
         const title = `AutoService${appt.serviceName ? ` — ${appt.serviceName}` : ""}`
         const desc = `Vehicle: ${appt.vehicleYear} ${appt.vehicleMake} ${appt.vehicleModel}\\nProblem: ${appt.problemDescription}`
         const ics = [
@@ -504,7 +533,90 @@ export default function AppointmentScreen() {
                                 </NText>
                             </NButton>
                         </View>
-                        {servicesByDistance.map((service, index) => {
+
+                        {/* Type filter pills */}
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            style={{ marginBottom: 14 }}
+                            contentContainerStyle={{
+                                gap: 8,
+                                paddingHorizontal: 2,
+                            }}
+                        >
+                            {(
+                                [
+                                    null,
+                                    "mechanic",
+                                    "tire_shop",
+                                    "car_wash",
+                                    "body_shop",
+                                    "oil_change",
+                                    "towing",
+                                ] as (ServiceType | null)[]
+                            ).map((type) => {
+                                const active = selectedTypeFilter === type
+                                const color = type
+                                    ? SERVICE_TYPE_COLORS[type]
+                                    : theme.accentSolid
+                                const label = type
+                                    ? t(
+                                          `map.type${type
+                                              .split("_")
+                                              .map(
+                                                  (w: string) =>
+                                                      w[0].toUpperCase() +
+                                                      w.slice(1),
+                                              )
+                                              .join("")}`,
+                                      )
+                                    : t("map.filterAll")
+                                return (
+                                    <Pressable
+                                        key={type ?? "all"}
+                                        onPress={() =>
+                                            setSelectedTypeFilter(type)
+                                        }
+                                        style={[
+                                            styles.typePill,
+                                            {
+                                                backgroundColor: active
+                                                    ? color
+                                                    : theme.borderStart,
+                                            },
+                                        ]}
+                                    >
+                                        <View style={styles.typePillContent}>
+                                            <View
+                                                style={[
+                                                    styles.typePillDot,
+                                                    {
+                                                        backgroundColor: color,
+                                                        opacity: active
+                                                            ? 1
+                                                            : 0.5,
+                                                    },
+                                                ]}
+                                            />
+                                            <NText
+                                                style={[
+                                                    styles.typePillText,
+                                                    {
+                                                        color: active
+                                                            ? theme.text
+                                                            : theme.textMuted,
+                                                    },
+                                                ]}
+                                            >
+                                                {label}
+                                            </NText>
+                                        </View>
+                                    </Pressable>
+                                )
+                            })}
+                        </ScrollView>
+
+                        {filteredServicesByDistance.map((service, index) => {
                             const isSelected =
                                 formData.serviceCenterId === service.id
                             return (
@@ -606,6 +718,39 @@ export default function AppointmentScreen() {
                                                 </NText>
                                             </View>
                                         </View>
+                                        {/* Service type badges */}
+                                        {Array.isArray(service.type) &&
+                                            service.type.length > 0 && (
+                                                <View
+                                                    style={styles.typeBadgeRow}
+                                                >
+                                                    {service.type.map((tp) => (
+                                                        <View
+                                                            key={tp}
+                                                            style={[
+                                                                styles.typeBadge,
+                                                                {
+                                                                    backgroundColor:
+                                                                        SERVICE_TYPE_COLORS[
+                                                                            tp
+                                                                        ] ??
+                                                                        theme.accentSolid,
+                                                                },
+                                                            ]}
+                                                        >
+                                                            <NText
+                                                                style={
+                                                                    styles.typeBadgeText
+                                                                }
+                                                            >
+                                                                {t(
+                                                                    `settings.types.${tp}`,
+                                                                )}
+                                                            </NText>
+                                                        </View>
+                                                    ))}
+                                                </View>
+                                            )}
                                     </View>
                                 </NButton>
                             )
@@ -631,7 +776,10 @@ export default function AppointmentScreen() {
                             <NText
                                 style={[
                                     styles.stepTitle,
-                                    { color: theme.textMuted, textAlign: "center" },
+                                    {
+                                        color: theme.textMuted,
+                                        textAlign: "center",
+                                    },
                                 ]}
                             >
                                 {t("appointment.loadingSchedule")}
@@ -918,7 +1066,6 @@ export default function AppointmentScreen() {
                 )}
             </View>
 
-
             <NModal
                 visible={submitSuccess}
                 onDismiss={handleSuccessDismiss}
@@ -932,7 +1079,9 @@ export default function AppointmentScreen() {
                         <NButton
                             onPress={() =>
                                 Linking.openURL(
-                                    buildGoogleCalendarUrl(submittedAppointment),
+                                    buildGoogleCalendarUrl(
+                                        submittedAppointment,
+                                    ),
                                 )
                             }
                             color={theme.accent}
@@ -1077,5 +1226,40 @@ const styles = StyleSheet.create({
         color: "#ffffff",
         fontSize: 14,
         fontWeight: "600",
+    },
+    typePill: {
+        paddingHorizontal: 13,
+        paddingVertical: 7,
+        borderRadius: 20,
+    },
+    typePillContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    typePillDot: {
+        width: 7,
+        height: 7,
+        borderRadius: 4,
+    },
+    typePillText: {
+        fontSize: 13,
+        fontFamily: fonts.medium,
+    },
+    typeBadgeRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        gap: 6,
+        marginTop: 8,
+    },
+    typeBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 3,
+        borderRadius: 12,
+    },
+    typeBadgeText: {
+        fontSize: 11,
+        fontFamily: fonts.bold,
+        color: "#fff",
     },
 })

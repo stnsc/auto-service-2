@@ -17,6 +17,13 @@ import { NButton } from "./replacements/NButton"
 import { BlurView } from "expo-blur"
 import { useTheme } from "../context/ThemeContext"
 
+export interface MapBounds {
+    north: number
+    south: number
+    east: number
+    west: number
+}
+
 interface MapProps {
     latitude?: number
     longitude?: number
@@ -24,6 +31,7 @@ interface MapProps {
     carServices?: CarService[]
     onServicePress?: (service: CarService) => void
     onCenterChange?: (lat: number, lon: number) => void
+    onBoundsChange?: (bounds: MapBounds) => void
 }
 
 const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? ""
@@ -45,6 +53,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
         carServices = CAR_SERVICES,
         onServicePress,
         onCenterChange,
+        onBoundsChange,
     }: MapProps,
     ref,
 ) {
@@ -57,6 +66,7 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     // Always-current refs so event listeners never capture stale callbacks
     const onServicePressRef = useRef(onServicePress)
     const onCenterChangeRef = useRef(onCenterChange)
+    const onBoundsChangeRef = useRef(onBoundsChange)
     useEffect(() => {
         onServicePressRef.current = onServicePress
     }, [onServicePress])
@@ -64,6 +74,20 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
     useEffect(() => {
         onCenterChangeRef.current = onCenterChange
     }, [onCenterChange])
+
+    useEffect(() => {
+        onBoundsChangeRef.current = onBoundsChange
+    }, [onBoundsChange])
+
+    function emitBounds(map: maplibregl.Map) {
+        const b = map.getBounds()
+        onBoundsChangeRef.current?.({
+            north: b.getNorth(),
+            south: b.getSouth(),
+            east: b.getEast(),
+            west: b.getWest(),
+        })
+    }
 
     // Map init — runs once, refs keep callbacks fresh without recreating the map
     useEffect(() => {
@@ -85,12 +109,16 @@ const Map = forwardRef<MapHandle, MapProps>(function Map(
                 maxPitch: 50,
             })
 
-            mapRef.current.on("load", () => setMapLoaded(true))
+            mapRef.current.on("load", () => {
+                setMapLoaded(true)
+                emitBounds(mapRef.current!)
+            })
 
             // Reads from ref at call time — always has the latest onCenterChange
             mapRef.current.on("moveend", () => {
                 const center = mapRef.current!.getCenter()
                 onCenterChangeRef.current?.(center.lat, center.lng)
+                emitBounds(mapRef.current!)
             })
         }
 

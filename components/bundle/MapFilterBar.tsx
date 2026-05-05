@@ -1,12 +1,10 @@
 import React from "react"
-import { ScrollView, StyleSheet, View } from "react-native"
-import { NButton } from "../replacements/NButton"
-import { NText } from "../replacements/NText"
-import { CarService, ServiceType } from "../../app/types/CarService"
+import { ScrollView, StyleSheet } from "react-native"
+import { ServiceType } from "../../app/types/CarService"
 import { TYPE_COLORS } from "../../data/carServicesMock"
 import { useTheme } from "../../context/ThemeContext"
 import { useTranslation } from "react-i18next"
-import { fonts } from "../../theme"
+import { FilterChip } from "./FilterChip"
 import "../../i18n"
 
 const SERVICE_TYPES: ServiceType[] = [
@@ -21,37 +19,6 @@ const SERVICE_TYPES: ServiceType[] = [
 interface MapFilterBarProps {
     activeFilter: ServiceType | null
     onFilterChange: (filter: ServiceType | null) => void
-}
-
-function FilterChip({
-    label,
-    active,
-    color,
-    onPress,
-}: {
-    label: string
-    active: boolean
-    color: string
-    onPress: () => void
-}) {
-    const { theme } = useTheme()
-
-    return (
-        <NButton
-            onPress={onPress}
-            color={active ? color : theme.borderStart}
-            intensity={50}
-            style={styles.chipOuter}
-            innerStyle={styles.chipInner}
-        >
-            <View style={styles.chipContent}>
-                <View style={[styles.dot, { backgroundColor: color, opacity: active ? 1 : 0.5 }]} />
-                <NText style={[styles.chipLabel, { color: active ? theme.text : theme.textMuted }]}>
-                    {label}
-                </NText>
-            </View>
-        </NButton>
-    )
 }
 
 export default function MapFilterBar({
@@ -105,26 +72,4 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
     },
-    chipOuter: {
-        alignSelf: "flex-start",
-    },
-    chipInner: {
-        paddingVertical: 7,
-        paddingHorizontal: 13,
-    },
-    chipContent: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 6,
-    },
-    dot: {
-        width: 7,
-        height: 7,
-        borderRadius: 4,
-    },
-    chipLabel: {
-        fontSize: 13,
-        fontFamily: fonts.medium,
-    },
 })
-

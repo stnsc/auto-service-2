@@ -1,5 +1,5 @@
 import { StyleSheet, View, TextInput, Pressable } from "react-native"
-import Map, { MapHandle } from "../../components/Map.web"
+import Map, { MapHandle, MapBounds } from "../../components/Map.web"
 import HorizontalCarousel from "../../components/bundle/HorizontalCarousel"
 import MapFilterBar from "../../components/bundle/MapFilterBar"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
@@ -115,6 +115,8 @@ export default function MapScreen() {
 
     const [activeFilter, setActiveFilter] = useState<ServiceType | null>(null)
 
+    const [mapBounds, setMapBounds] = useState<MapBounds | null>(null)
+
     const filteredServices = useMemo(
         () =>
             activeFilter
@@ -122,6 +124,30 @@ export default function MapScreen() {
                 : services,
         [services, activeFilter],
     )
+
+    // Only pass services visible in the current viewport to the Map component
+    // (with a 30% buffer so markers don't pop in/out at the exact edge).
+    // The carousel keeps the full sorted list.
+    const viewportServices = useMemo(() => {
+        if (!mapBounds) return filteredServices
+        const latSpan = mapBounds.north - mapBounds.south
+        const lonSpan = mapBounds.east - mapBounds.west
+        const n = mapBounds.north + latSpan * 0.3
+        const s = mapBounds.south - latSpan * 0.3
+        const e = mapBounds.east + lonSpan * 0.3
+        const w = mapBounds.west - lonSpan * 0.3
+        return filteredServices.filter(
+            (sv) =>
+                sv.latitude <= n &&
+                sv.latitude >= s &&
+                sv.longitude <= e &&
+                sv.longitude >= w,
+        )
+    }, [filteredServices, mapBounds])
+
+    const handleBoundsChange = useCallback((bounds: MapBounds) => {
+        setMapBounds(bounds)
+    }, [])
 
     const servicesRef = useRef<CarService[]>(filteredServices)
     useEffect(() => {
@@ -211,9 +237,10 @@ export default function MapScreen() {
                     latitude={initialLatitude}
                     longitude={initialLongitude}
                     zoom={14}
-                    carServices={filteredServices}
+                    carServices={viewportServices}
                     onServicePress={handleServicePress}
                     onCenterChange={handleCenterChange}
+                    onBoundsChange={handleBoundsChange}
                 />
             </View>
 

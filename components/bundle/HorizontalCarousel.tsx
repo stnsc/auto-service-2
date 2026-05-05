@@ -23,6 +23,7 @@ import { fonts } from "../../theme"
 import { Ionicons } from "@expo/vector-icons"
 import { router, useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
+import { StarRating } from "./StarRating"
 import { useTheme } from "../../context/ThemeContext"
 import "../../i18n"
 
@@ -173,6 +174,17 @@ export default function HorizontalCarousel({
                                         extrapolate: "clamp",
                                     })
 
+                                    // Only render card content for active ± 1 neighbours.
+                                    // All other slots are empty spacers to preserve layout math.
+                                    if (Math.abs(index - activeIndex) > 1) {
+                                        return (
+                                            <View
+                                                key={service.id}
+                                                style={{ width: cardWidth }}
+                                            />
+                                        )
+                                    }
+
                                     return (
                                         <Animated.View
                                             key={service.id}
@@ -259,17 +271,7 @@ export default function HorizontalCarousel({
                                                                 )}
                                                             </NText>
                                                         </Pressable>
-                                                        <NText
-                                                            style={{
-                                                                fontFamily:
-                                                                    fonts.bold,
-                                                            }}
-                                                        >
-                                                            {service.rating}{" "}
-                                                            {t(
-                                                                "carousel.stars",
-                                                            )}
-                                                        </NText>
+                                                        <StarRating rating={service.rating} />
                                                     </View>
                                                     <NText
                                                         style={{

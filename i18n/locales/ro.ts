@@ -210,6 +210,8 @@ const ro = {
         loadingSchedule: "Se încarcă programul...",
         addToGoogleCalendar: "Adaugă în Google Calendar",
         downloadIcs: "Descarcă .ics (Apple / Outlook)",
+        filterByType: "Filtrează după tip",
+        allTypes: "Toate",
     },
     shop: {
         title: "Piese & Accesorii",

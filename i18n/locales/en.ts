@@ -210,6 +210,8 @@ const en = {
         loadingSchedule: "Loading schedule...",
         addToGoogleCalendar: "Add to Google Calendar",
         downloadIcs: "Download .ics (Apple / Outlook)",
+        filterByType: "Filter by type",
+        allTypes: "All",
     },
     shop: {
         title: "Parts & Accessories",
