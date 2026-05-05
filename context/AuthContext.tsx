@@ -54,6 +54,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isPendingApproval, setIsPendingApproval] = useState(false)
 
+    // Fire-and-forget account status check. If the account has been disabled
+    // in Cognito since the session was created, sign the user out and flag
+    // them as pending so the layout redirects to the pending page.
+    const runStatusCheck = useCallback((email: string) => {
+        fetch(`/api/auth/check-status?email=${encodeURIComponent(email)}`)
+            .then((r) => r.json())
+            .then(({ enabled }) => {
+                if (enabled === false) {
+                    userPool.getCurrentUser()?.signOut()
+                    clearOAuthSession()
+                    setUser(null)
+                    setUserEmail(null)
+                    setIsAuthenticated(false)
+                    setIsPendingApproval(true)
+                }
+            })
+            .catch(() => {}) // fail open — network errors don't lock users out
+    }, [])
+
     // Check for existing session on mount — OAuth (Google) session takes
     // priority since it lives in localStorage, then fall back to Cognito SDK.
     useEffect(() => {
@@ -62,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserEmail(oauthSession.email)
             setIsAuthenticated(true)
             setIsLoading(false)
+            runStatusCheck(oauthSession.email)
             return
         }
 
@@ -77,13 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             const email = attributes?.find(
                                 (a) => a.getName() === "email",
                             )
-                            setUserEmail(
-                                email
-                                    ? email.getValue()
-                                    : currentUser.getUsername(),
-                            )
+                            const resolvedEmail = email
+                                ? email.getValue()
+                                : currentUser.getUsername()
+                            setUserEmail(resolvedEmail)
                             setIsAuthenticated(true)
                             setIsLoading(false)
+                            runStatusCheck(resolvedEmail)
                         })
                         return
                     }

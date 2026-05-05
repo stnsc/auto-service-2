@@ -58,7 +58,7 @@ export default function RootLayout() {
 
 function AuthGatedLayout() {
     const { t } = useTranslation()
-    const { isAuthenticated, isLoading, userEmail } = useAuthContext()
+    const { isAuthenticated, isLoading, userEmail, isPendingApproval } = useAuthContext()
     const { theme, colorScheme, accentKey } = useTheme()
     const segments = useSegments()
     const router = useRouter()
@@ -74,18 +74,53 @@ function AuthGatedLayout() {
         const isOAuthCallback = segments[0] === "oauth-callback"
         // Rating page is public — accessible without login from email links
         const isRatePage = segments[0] === "rate"
+        // Onboarding is public — shown to first-time visitors before login
+        const isOnboarding = segments[0] === "onboarding"
+        // Setup wizard — shown once after first login
+        const isSetup = segments[0] === "setup"
+
+        const hasSeenOnboarding =
+            Platform.OS !== "web" ||
+            (() => {
+                try {
+                    return localStorage.getItem("onboarding_seen") === "1"
+                } catch {
+                    return true
+                }
+            })()
+
+        const hasCompletedSetup =
+            Platform.OS !== "web" ||
+            (() => {
+                try {
+                    return (
+                        localStorage.getItem(`setup_done_${userEmail}`) === "1"
+                    )
+                } catch {
+                    return true
+                }
+            })()
 
         if (
             !isAuthenticated &&
             !inAuthGroup &&
             !isOAuthCallback &&
-            !isRatePage
+            !isRatePage &&
+            !isOnboarding
         ) {
-            router.replace("/(auth)/login")
+            if (isPendingApproval) {
+                router.replace("/(auth)/pending")
+            } else if (!hasSeenOnboarding) {
+                router.replace("/onboarding")
+            } else {
+                router.replace("/(auth)/login")
+            }
         } else if (isAuthenticated && inAuthGroup) {
             router.replace("/")
+        } else if (isAuthenticated && !isSetup && !hasCompletedSetup) {
+            router.replace("/setup")
         }
-    }, [isAuthenticated, isLoading, segments])
+    }, [isAuthenticated, isLoading, isPendingApproval, segments])
 
     useEffect(() => {
         maplibregl.prewarm()
@@ -160,6 +195,8 @@ function AuthGatedLayout() {
         "/forgot-password",
         "/reset-password",
         "/oauth-callback",
+        "/onboarding",
+        "/setup",
     ].includes(pathname)
     const isRate = pathname === "/rate"
     const showContainer = !isAdmin

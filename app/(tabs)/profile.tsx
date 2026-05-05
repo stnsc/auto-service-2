@@ -3,53 +3,31 @@ import {
     StyleSheet,
     ScrollView,
     TouchableOpacity,
-    ActivityIndicator,
 } from "react-native"
 import { useState, useEffect } from "react"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
-import * as Crypto from "expo-crypto"
 
 import { NInput } from "../../components/replacements/NInput"
 import { NButton } from "../../components/replacements/NButton"
 import { NText } from "../../components/replacements/NText"
 import { NModal } from "../../components/replacements/NModal"
 import { AccentPicker } from "../../components/AccentPicker"
+import {
+    VehicleFormContent,
+    DEFAULT_VEHICLE_FORM,
+} from "../../components/bundle/VehicleFormContent"
+import { useVinDecoder } from "../../hooks/useVinDecoder"
 import { useAuthContext } from "../../context/AuthContext"
 import { useProfileContext } from "../../context/ProfileContext"
 import { useTheme } from "../../context/ThemeContext"
 import { fonts } from "../../theme"
-import { Vehicle, FuelType, Transmission } from "../types/UserProfile"
+import { Vehicle } from "../types/UserProfile"
 import type { ServiceApplication } from "../api/service-applications+api"
 import "../../i18n"
 
-const FUEL_TYPES: FuelType[] = [
-    "gasoline",
-    "diesel",
-    "electric",
-    "hybrid",
-    "plug-in-hybrid",
-    "LPG",
-]
-const TRANSMISSIONS: Transmission[] = ["automatic", "manual", "cvt"]
-
-const DEFAULT_FORM: Omit<Vehicle, "id"> = {
-    nickname: "",
-    year: "",
-    make: "",
-    model: "",
-    trim: "",
-    vin: "",
-    licensePlate: "",
-    color: "",
-    currentMileage: "",
-    engineSize: "",
-    fuelType: "gasoline",
-    transmission: "automatic",
-    isPrimary: false,
-    notes: "",
-}
+const DEFAULT_FORM = DEFAULT_VEHICLE_FORM
 
 function SectionHeader({ label }: { label: string }) {
     const { theme } = useTheme()
@@ -283,7 +261,7 @@ export default function ProfileScreen() {
     )
     const [vehicleForm, setVehicleForm] =
         useState<Omit<Vehicle, "id">>(DEFAULT_FORM)
-    const [vinLoading, setVinLoading] = useState(false)
+    const { vinLoading, handleVinChange } = useVinDecoder(setVehicleForm)
 
     // Delete confirm modal
     const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null)
@@ -393,129 +371,6 @@ export default function ProfileScreen() {
     ) => {
         setVehicleForm((prev) => ({ ...prev, [key]: value }))
     }
-
-    const handleVinChange = async (raw: string) => {
-        const vin = raw
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, "")
-            .slice(0, 17)
-        updateVehicleField("vin", vin)
-        if (vin.length !== 17) return
-
-        const apiKey = process.env.EXPO_PUBLIC_VINDECODER_API_KEY!
-        const secretKey = process.env.EXPO_PUBLIC_VINDECODER_SECRET_KEY!
-
-        setVinLoading(true)
-        try {
-            const hash = await Crypto.digestStringAsync(
-                Crypto.CryptoDigestAlgorithm.SHA1,
-                `${vin}|decode|${apiKey}|${secretKey}`,
-            )
-            const controlSum = hash.substring(0, 10)
-
-            const res = await fetch(
-                `https://api.vindecoder.eu/3.2/${apiKey}/${controlSum}/decode/${vin}.json`,
-            )
-            const data = await res.json()
-            const fields: { label: string; value: string }[] = data.decode ?? []
-
-            const get = (label: string) => {
-                const val = fields.find((f) => f.label === label)?.value
-                return val && val !== "0" && val !== "-" ? String(val) : ""
-            }
-
-            const year = get("Model Year")
-            const make = get("Make")
-            const model = get("Model")
-            const trim = get("Trim Level") || get("Body")
-            const engineL = get("Engine Displacement (L)")
-            const engineCcm = get("Engine Displacement (ccm)")
-            const fuelRaw = get("Fuel Type")
-            const engineTypeRaw = get("Engine Type")
-            const transRaw = get("Transmission")
-
-            const titleCase = (s: string) =>
-                s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
-
-            const mapFuel = (s: string): FuelType | null => {
-                const l = s.toLowerCase()
-                if (
-                    l.includes("plug") ||
-                    (l.includes("electric") && l.includes("gas"))
-                )
-                    return "plug-in-hybrid"
-                if (l.includes("electric") || l.includes("bev"))
-                    return "electric"
-                if (l.includes("hev") || l.includes("hybrid")) return "hybrid"
-                if (
-                    l.includes("diesel") ||
-                    l.includes("tdi") ||
-                    l.includes("t-di") ||
-                    l.includes("cdi") ||
-                    l.includes("hdi")
-                )
-                    return "diesel"
-                if (
-                    l.includes("gasoline") ||
-                    l.includes("petrol") ||
-                    l.includes("benzina") ||
-                    l.includes("gdi") ||
-                    l.includes("mpi") ||
-                    l.includes("tsi") ||
-                    l.includes("tfsi")
-                )
-                    return "gasoline"
-                if (
-                    l.includes("lpg") ||
-                    l.includes("gpl") ||
-                    l.includes("propane")
-                )
-                    return "LPG"
-                return null
-            }
-
-            const mapTrans = (s: string): Transmission | null => {
-                const l = s.toLowerCase()
-                if (l.includes("cvt") || l.includes("continuously"))
-                    return "cvt"
-                if (l.includes("automatic")) return "automatic"
-                if (l.includes("manual") || l.includes("standard"))
-                    return "manual"
-                return null
-            }
-
-            const engineSize = engineL
-                ? `${parseFloat(engineL).toFixed(1)}L`
-                : engineCcm
-                  ? `${(parseFloat(engineCcm) / 1000).toFixed(1)}L`
-                  : ""
-
-            setVehicleForm((prev) => {
-                const next = { ...prev }
-                if (year) next.year = String(year)
-                if (make) next.make = titleCase(make)
-                if (model) next.model = model
-                if (trim) next.trim = trim
-                if (engineSize) next.engineSize = engineSize
-                const fuel =
-                    (fuelRaw ? mapFuel(fuelRaw) : null) ??
-                    (engineTypeRaw ? mapFuel(engineTypeRaw) : null)
-                if (fuel) next.fuelType = fuel
-                const trans = transRaw ? mapTrans(transRaw) : null
-                if (trans) next.transmission = trans
-                return next
-            })
-        } catch {
-            // silently fail — VIN decode is best-effort
-        } finally {
-            setVinLoading(false)
-        }
-    }
-
-    const fuelLabel = (type: FuelType) =>
-        t(`profile.vehicleForm.fuel_${type.replace(/-/g, "_")}` as any)
-    const transLabel = (type: Transmission) =>
-        t(`profile.vehicleForm.trans_${type}` as any)
 
     return (
         <View style={styles.root}>
@@ -781,241 +636,12 @@ export default function ProfileScreen() {
                 confirmLabel={t("profile.vehicleForm.save")}
                 onConfirm={handleSaveVehicle}
             >
-                <NInput
-                    placeholder={t("profile.vehicleForm.nicknamePlaceholder")}
-                    value={vehicleForm.nickname}
-                    onChangeText={(v) => updateVehicleField("nickname", v)}
+                <VehicleFormContent
+                    vehicleForm={vehicleForm}
+                    updateVehicleField={updateVehicleField}
+                    handleVinChange={handleVinChange}
+                    vinLoading={vinLoading}
                 />
-
-                <View style={styles.vinRow}>
-                    <View
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 4,
-                            paddingHorizontal: 12,
-                        }}
-                    >
-                        <Ionicons
-                            name="information-circle-outline"
-                            size={24}
-                            color={theme.iconMuted}
-                        />
-                        <NText style={styles.vinInfo}>
-                            {t("profile.vehicleForm.vinInfo")}
-                        </NText>
-                    </View>
-                    <NInput
-                        placeholder={t("profile.vehicleForm.vinPlaceholder")}
-                        value={vehicleForm.vin}
-                        onChangeText={handleVinChange}
-                        containerStyle={styles.flex1}
-                        autoCapitalize="characters"
-                        editable={!vinLoading}
-                    />
-                    {vinLoading && (
-                        <ActivityIndicator
-                            size="small"
-                            color={theme.accentSolid}
-                            style={styles.vinSpinner}
-                        />
-                    )}
-                </View>
-
-                <View style={styles.twoCol}>
-                    <NInput
-                        placeholder={t("profile.vehicleForm.year")}
-                        value={vehicleForm.year}
-                        onChangeText={(v) => updateVehicleField("year", v)}
-                        containerStyle={styles.flex1}
-                        keyboardType="numeric"
-                    />
-                    <NInput
-                        placeholder={t("profile.vehicleForm.make")}
-                        value={vehicleForm.make}
-                        onChangeText={(v) => updateVehicleField("make", v)}
-                        containerStyle={styles.flex1}
-                    />
-                </View>
-
-                <View style={styles.twoCol}>
-                    <NInput
-                        placeholder={t("profile.vehicleForm.model")}
-                        value={vehicleForm.model}
-                        onChangeText={(v) => updateVehicleField("model", v)}
-                        containerStyle={styles.flex1}
-                    />
-                    <NInput
-                        placeholder={t("profile.vehicleForm.trimPlaceholder")}
-                        value={vehicleForm.trim}
-                        onChangeText={(v) => updateVehicleField("trim", v)}
-                        containerStyle={styles.flex1}
-                    />
-                </View>
-
-                <View style={styles.twoCol}>
-                    <NInput
-                        placeholder={t("profile.vehicleForm.licensePlate")}
-                        value={vehicleForm.licensePlate}
-                        onChangeText={(v) =>
-                            updateVehicleField("licensePlate", v)
-                        }
-                        containerStyle={styles.flex1}
-                        autoCapitalize="characters"
-                    />
-                    <NInput
-                        placeholder={t("profile.vehicleForm.color")}
-                        value={vehicleForm.color}
-                        onChangeText={(v) => updateVehicleField("color", v)}
-                        containerStyle={styles.flex1}
-                    />
-                </View>
-
-                <View style={styles.twoCol}>
-                    <NInput
-                        placeholder={t("profile.vehicleForm.mileage")}
-                        value={vehicleForm.currentMileage}
-                        onChangeText={(v) =>
-                            updateVehicleField("currentMileage", v)
-                        }
-                        containerStyle={[styles.modalInput, styles.flex1]}
-                        keyboardType="numeric"
-                    />
-                    <NInput
-                        placeholder={t(
-                            "profile.vehicleForm.engineSizePlaceholder",
-                        )}
-                        value={vehicleForm.engineSize}
-                        onChangeText={(v) =>
-                            updateVehicleField("engineSize", v)
-                        }
-                        containerStyle={[styles.modalInput, styles.flex1]}
-                    />
-                </View>
-
-                {/* Fuel Type */}
-                <NText
-                    style={[
-                        styles.chipLabel,
-                        { color: theme.textMuted, fontFamily: fonts.medium },
-                    ]}
-                >
-                    {t("profile.vehicleForm.fuelType")}
-                </NText>
-                <View style={styles.chipRow}>
-                    {FUEL_TYPES.map((type) => (
-                        <NButton
-                            key={type}
-                            color={
-                                vehicleForm.fuelType === type
-                                    ? theme.accentSubtle
-                                    : theme.surface
-                            }
-                            style={styles.chip}
-                            onPress={() => updateVehicleField("fuelType", type)}
-                        >
-                            <NText
-                                style={[
-                                    styles.chipText,
-                                    {
-                                        fontFamily:
-                                            vehicleForm.fuelType === type
-                                                ? fonts.bold
-                                                : fonts.light,
-                                    },
-                                ]}
-                            >
-                                {fuelLabel(type)}
-                            </NText>
-                        </NButton>
-                    ))}
-                </View>
-
-                {/* Transmission */}
-                <NText
-                    style={[
-                        styles.chipLabel,
-                        { color: theme.textMuted, fontFamily: fonts.medium },
-                    ]}
-                >
-                    {t("profile.vehicleForm.transmission")}
-                </NText>
-                <View style={styles.chipRow}>
-                    {TRANSMISSIONS.map((type) => (
-                        <NButton
-                            key={type}
-                            color={
-                                vehicleForm.transmission === type
-                                    ? theme.accentSubtle
-                                    : theme.surface
-                            }
-                            style={styles.chip}
-                            onPress={() =>
-                                updateVehicleField("transmission", type)
-                            }
-                        >
-                            <NText
-                                style={[
-                                    styles.chipText,
-                                    {
-                                        fontFamily:
-                                            vehicleForm.transmission === type
-                                                ? fonts.bold
-                                                : fonts.light,
-                                    },
-                                ]}
-                            >
-                                {transLabel(type)}
-                            </NText>
-                        </NButton>
-                    ))}
-                </View>
-
-                <NInput
-                    placeholder={t("profile.vehicleForm.notesPlaceholder")}
-                    value={vehicleForm.notes}
-                    onChangeText={(v) => updateVehicleField("notes", v)}
-                    containerStyle={styles.modalInput}
-                    multiline
-                />
-
-                {/* Primary toggle */}
-                <NButton
-                    color={
-                        vehicleForm.isPrimary
-                            ? theme.accentSubtle
-                            : theme.surface
-                    }
-                    style={styles.primaryToggle}
-                    onPress={() =>
-                        updateVehicleField("isPrimary", !vehicleForm.isPrimary)
-                    }
-                >
-                    <Ionicons
-                        name={vehicleForm.isPrimary ? "star" : "star-outline"}
-                        size={16}
-                        color={
-                            vehicleForm.isPrimary
-                                ? theme.accentSolid
-                                : theme.textMuted
-                        }
-                    />
-                    <NText
-                        style={[
-                            styles.chipText,
-                            {
-                                fontFamily: vehicleForm.isPrimary
-                                    ? fonts.bold
-                                    : fonts.light,
-                                color: vehicleForm.isPrimary
-                                    ? theme.accentSolid
-                                    : theme.textMuted,
-                            },
-                        ]}
-                    >
-                        {t("profile.vehicleForm.isPrimary")}
-                    </NText>
-                </NButton>
             </NModal>
 
             {/* - Delete Confirm Modal - */}

@@ -83,6 +83,12 @@ export default function SignUpScreen() {
 
         try {
             await signUp(formData.email, password)
+            // Stash the password in sessionStorage so verify.tsx can auto-login
+            // after confirmation. sessionStorage is tab-scoped and never persisted.
+            try {
+                sessionStorage.setItem("pending_auth_password", password)
+                sessionStorage.setItem("pending_auth_email", formData.email)
+            } catch {}
             router.push({
                 pathname: "/(auth)/verify",
                 params: { email: formData.email },

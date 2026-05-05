@@ -273,11 +273,13 @@ export default function RateScreen() {
                         <NButton
                             onPress={handleSubmit}
                             disabled={!selectedRating || submitting}
-                            color="rgba(33,168,112,0.5)"
                             style={styles.submitBtn}
                         >
                             {submitting ? (
-                                <ActivityIndicator size="small" color="#ffffff" />
+                                <ActivityIndicator
+                                    size="small"
+                                    color="#ffffff"
+                                />
                             ) : (
                                 <NText
                                     style={[

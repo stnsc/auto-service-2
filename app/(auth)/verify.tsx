@@ -16,7 +16,7 @@ export default function VerifyScreen() {
     const { t } = useTranslation()
     const router = useRouter()
     const { email } = useLocalSearchParams<{ email: string }>()
-    const { confirmSignUp, resendConfirmationCode } = useAuthContext()
+    const { confirmSignUp, resendConfirmationCode, signIn } = useAuthContext()
     const { theme } = useTheme()
 
     const [code, setCode] = useState("")
@@ -48,6 +48,24 @@ export default function VerifyScreen() {
 
         try {
             await confirmSignUp(email!, formData.code)
+
+            // Try to auto-login with the password saved during signup
+            try {
+                const savedEmail =
+                    sessionStorage.getItem("pending_auth_email") ?? email!
+                const savedPassword = sessionStorage.getItem(
+                    "pending_auth_password",
+                )
+                sessionStorage.removeItem("pending_auth_password")
+                sessionStorage.removeItem("pending_auth_email")
+                if (savedPassword) {
+                    await signIn(savedEmail, savedPassword)
+                    // Auth guard will redirect to /setup or /
+                    return
+                }
+            } catch {}
+
+            // Fallback: redirect to login if auto-login fails
             router.replace("/(auth)/login")
         } catch (err: any) {
             setErrors({ code: err.message || t("verify.verificationFailed") })
