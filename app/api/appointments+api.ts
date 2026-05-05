@@ -1,3 +1,5 @@
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses"
+import { SNSClient, PublishCommand } from "@aws-sdk/client-sns"
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
 import {
     DynamoDBDocumentClient,
@@ -17,6 +19,22 @@ const ddbClient = new DynamoDBClient({
     },
 })
 const docClient = DynamoDBDocumentClient.from(ddbClient)
+
+const sesClient = new SESClient({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+})
+
+const snsClient = new SNSClient({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+})
 
 const TABLE = process.env.DYNAMODB_APPOINTMENTS_TABLE_NAME!
 const SERVICE_ID = process.env.SERVICE_ID ?? "default"
@@ -80,17 +98,7 @@ async function sendCompletionNotifications(
     // Email via SES
     if (appointment.customerEmail) {
         try {
-            const { SESClient, SendEmailCommand } = await import(
-                "@aws-sdk/client-ses"
-            )
-            const ses = new SESClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await ses.send(
+            await sesClient.send(
                 new SendEmailCommand({
                     Source: fromEmail,
                     Destination: {
@@ -128,17 +136,7 @@ async function sendCompletionNotifications(
         appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
     ) {
         try {
-            const { SNSClient, PublishCommand } = await import(
-                "@aws-sdk/client-sns"
-            )
-            const sns = new SNSClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await sns.send(
+            await snsClient.send(
                 new PublishCommand({
                     PhoneNumber: appointment.customerPhone,
                     Message: `${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime }).replace(/<[^>]+>/g, "")} ${sc.rateButton}: ${ratingUrl}`,
@@ -161,17 +159,7 @@ async function sendBookingConfirmation(appointment: Appointment) {
 
     if (appointment.customerEmail) {
         try {
-            const { SESClient, SendEmailCommand } = await import(
-                "@aws-sdk/client-ses"
-            )
-            const ses = new SESClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await ses.send(
+            await sesClient.send(
                 new SendEmailCommand({
                     Source: fromEmail,
                     Destination: { ToAddresses: [appointment.customerEmail] },
@@ -211,17 +199,7 @@ async function sendBookingConfirmation(appointment: Appointment) {
         appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
     ) {
         try {
-            const { SNSClient, PublishCommand } = await import(
-                "@aws-sdk/client-sns"
-            )
-            const sns = new SNSClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await sns.send(
+            await snsClient.send(
                 new PublishCommand({
                     PhoneNumber: appointment.customerPhone,
                     Message: `${ipl(loc.hi, { name: appointment.customerName })} ${sb.intro} ${serviceName}, ${appointment.preferredDate} at ${appointment.preferredTime}.`,
@@ -247,17 +225,7 @@ async function sendCancellationNotification(
 
     if (appointment.customerEmail) {
         try {
-            const { SESClient, SendEmailCommand } = await import(
-                "@aws-sdk/client-ses"
-            )
-            const ses = new SESClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await ses.send(
+            await sesClient.send(
                 new SendEmailCommand({
                     Source: fromEmail,
                     Destination: { ToAddresses: [appointment.customerEmail] },
@@ -291,17 +259,7 @@ async function sendCancellationNotification(
         appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
     ) {
         try {
-            const { SNSClient, PublishCommand } = await import(
-                "@aws-sdk/client-sns"
-            )
-            const sns = new SNSClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await sns.send(
+            await snsClient.send(
                 new PublishCommand({
                     PhoneNumber: appointment.customerPhone,
                     Message: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName, date: appointment.preferredDate, time: appointment.preferredTime }).replace(/<[^>]+>/g, "")} ${sc.reasonLabel} ${reason}`,
@@ -324,17 +282,7 @@ async function sendStatusConfirmedNotification(appointment: Appointment) {
 
     if (appointment.customerEmail) {
         try {
-            const { SESClient, SendEmailCommand } = await import(
-                "@aws-sdk/client-ses"
-            )
-            const ses = new SESClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await ses.send(
+            await sesClient.send(
                 new SendEmailCommand({
                     Source: fromEmail,
                     Destination: { ToAddresses: [appointment.customerEmail] },
@@ -372,17 +320,7 @@ async function sendStatusConfirmedNotification(appointment: Appointment) {
         appointment.customerPhone?.match(/^\+[1-9]\d{7,14}$/)
     ) {
         try {
-            const { SNSClient, PublishCommand } = await import(
-                "@aws-sdk/client-sns"
-            )
-            const sns = new SNSClient({
-                region: process.env.AWS_REGION,
-                credentials: {
-                    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-                    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-                },
-            })
-            await sns.send(
+            await snsClient.send(
                 new PublishCommand({
                     PhoneNumber: appointment.customerPhone,
                     Message: `${ipl(loc.hi, { name: appointment.customerName })} ${ipl(sc.intro, { service: serviceName }).replace(/<[^>]+>/g, "")} ${appointment.preferredDate} at ${appointment.preferredTime}.`,
@@ -568,7 +506,7 @@ export async function POST(request: Request) {
 
     try {
         await docClient.send(new PutCommand({ TableName: TABLE, Item: item }))
-        sendBookingConfirmation(item).catch(console.error)
+        await sendBookingConfirmation(item)
         return Response.json(item, { status: 201 })
     } catch (err) {
         console.error("Failed to create appointment:", err)
@@ -655,19 +593,15 @@ export async function PATCH(request: Request) {
         )
 
         if (isConfirmingNow) {
-            sendStatusConfirmedNotification(updated).catch(console.error)
+            await sendStatusConfirmedNotification(updated)
         }
 
         if (isCompletingNow && ratingToken) {
-            sendCompletionNotifications(updated, ratingToken).catch(
-                console.error,
-            )
+            await sendCompletionNotifications(updated, ratingToken)
         }
 
         if (isCancellingNow && cancellationReason) {
-            sendCancellationNotification(updated, cancellationReason).catch(
-                console.error,
-            )
+            await sendCancellationNotification(updated, cancellationReason)
         }
 
         return Response.json(updated)
