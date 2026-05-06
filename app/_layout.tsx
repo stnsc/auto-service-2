@@ -6,6 +6,7 @@ import {
     useWindowDimensions,
     Animated,
     Easing,
+    Pressable,
 } from "react-native"
 import { useEffect, useRef, useState } from "react"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
@@ -27,6 +28,7 @@ import { AuthProvider, useAuthContext } from "../context/AuthContext"
 import { ThemeProvider, useTheme } from "../context/ThemeContext"
 import type { AccentKey } from "../theme"
 import { ProfileProvider } from "../context/ProfileContext"
+import { StudyProvider, useStudyContext } from "../context/StudyContext"
 import { NModal } from "../components/replacements/NModal"
 import { NText } from "../components/replacements/NText"
 import { useAlphaNotice } from "../hooks/useAlphaNotice"
@@ -50,7 +52,9 @@ export default function RootLayout() {
     return (
         <ThemeProvider>
             <AuthProvider>
-                <AuthGatedLayout />
+                <StudyProvider>
+                    <AuthGatedLayout />
+                </StudyProvider>
             </AuthProvider>
         </ThemeProvider>
     )
@@ -63,6 +67,8 @@ function AuthGatedLayout() {
     const segments = useSegments()
     const router = useRouter()
     const welcomeNotice = useAlphaNotice("alpha-welcome")
+    const { isRunning, recordTransition, abandonSession } = useStudyContext()
+    const [showAbandonConfirm, setShowAbandonConfirm] = useState(false)
 
     // Auth guard — redirect based on auth state
     useEffect(() => {
@@ -126,6 +132,13 @@ function AuthGatedLayout() {
         maplibregl.prewarm()
     }, [])
 
+    // Track screen transitions for the study session
+    const pathname = usePathname()
+    useEffect(() => {
+        if (isRunning) {
+            recordTransition(pathname)
+        }
+    }, [pathname, isRunning])
     // Font loading
     const [fontsLoaded] = useFonts({
         IosevkaCharon_300Light,
@@ -133,9 +146,6 @@ function AuthGatedLayout() {
         IosevkaCharon_500Medium,
         IosevkaCharon_700Bold,
     })
-
-    // Pathname hook for active tab state
-    const pathname = usePathname()
 
     const TAB_ROUTES: Record<string, string> = {
         chat: "/chat",
@@ -187,6 +197,7 @@ function AuthGatedLayout() {
 
     const isAdmin =
         pathname.startsWith("/admin") || pathname.startsWith("/master-admin")
+    const isStudy = pathname.startsWith("/study-")
     const isAuth = [
         "/login",
         "/signup",
@@ -200,7 +211,7 @@ function AuthGatedLayout() {
     ].includes(pathname)
     const isRate = pathname === "/rate"
     const showContainer = !isAdmin
-    const showNav = !isAdmin && !isAuth
+    const showNav = !isAdmin && !isAuth && !isStudy
     const showTopBar = showNav
 
     activeKey === "chat" ? (intensity = 30) : (intensity = 0)
@@ -395,6 +406,50 @@ function AuthGatedLayout() {
                                 </NText>
                             </NModal>
                         )}
+
+                        {/* Floating study-mode indicator — visible only while a session is running */}
+                        {isRunning && !isStudy && (
+                            <Pressable
+                                style={studyStyles.studyPill}
+                                onPress={() => setShowAbandonConfirm(true)}
+                            >
+                                <Ionicons
+                                    name="flask"
+                                    size={13}
+                                    color="#fff"
+                                    style={{ marginRight: 5 }}
+                                />
+                                <NText style={studyStyles.studyPillText}>
+                                    {t("study.layout.studyPill")}
+                                </NText>
+                            </Pressable>
+                        )}
+
+                        <NModal
+                            visible={showAbandonConfirm}
+                            onDismiss={() => setShowAbandonConfirm(false)}
+                            title={t("study.layout.endSessionTitle")}
+                            dismissLabel={t("common.cancel")}
+                            confirmLabel={t("study.layout.markAbandoned")}
+                            onConfirm={() => {
+                                abandonSession()
+                                setShowAbandonConfirm(false)
+                                router.push("/study-sus" as any)
+                            }}
+                        >
+                            <NText style={modalStyles.text}>
+                                {t("study.layout.abandonBody1")}
+                            </NText>
+                            <NText
+                                style={[
+                                    modalStyles.text,
+                                    { marginTop: 8 },
+                                ]}
+                            >
+                                {t("study.layout.abandonBody2")}
+                            </NText>
+                        </NModal>
+
                         <Analytics />
                         <SpeedInsights />
                     </GestureHandlerRootView>
@@ -470,5 +525,25 @@ const modalStyles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
         marginBottom: 10,
+    },
+})
+
+const studyStyles = StyleSheet.create({
+    studyPill: {
+        position: "absolute",
+        top: Platform.OS === "web" ? 12 : 44,
+        right: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "rgba(139,92,246,0.85)",
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+        zIndex: 200,
+    },
+    studyPillText: {
+        color: "#fff",
+        fontSize: 12,
+        fontWeight: "bold",
     },
 })

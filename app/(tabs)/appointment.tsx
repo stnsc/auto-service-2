@@ -21,6 +21,7 @@ import { WeeklyCalendar } from "../../components/appointment/WeeklyCalendar"
 import { useTranslation } from "react-i18next"
 import { useTheme } from "../../context/ThemeContext"
 import type { ServiceConfig } from "../api/service-config+api"
+import { useStudyContext } from "../../context/StudyContext"
 import "../../i18n"
 
 const STEPS_KEYS = [
@@ -53,6 +54,7 @@ export default function AppointmentScreen() {
     const STEPS = t("appointment.steps", { returnObjects: true }) as string[]
     const req = t("common.isRequired")
     const { theme } = useTheme()
+    const { isRunning, completeSession } = useStudyContext()
     const VALIDATION_RULES = {
         vehicleYear: [
             validators.required(t("appointment.year"), req),
@@ -131,6 +133,9 @@ export default function AppointmentScreen() {
         useState<ServiceType | null>(null)
     const [submitSuccess, setSubmitSuccess] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
+    // Captures whether a study session was active at the moment of booking,
+    // because completeSession() sets isRunning→false before the modal renders.
+    const [studySessionWasActive, setStudySessionWasActive] = useState(false)
     const [submittedAppointment, setSubmittedAppointment] = useState<{
         preferredDate: string
         preferredTime: string
@@ -370,6 +375,10 @@ export default function AppointmentScreen() {
                 appointmentId: appt.appointmentId ?? "",
             })
             setSubmitSuccess(true)
+            if (isRunning) {
+                setStudySessionWasActive(true)
+                completeSession()
+            }
         } catch {
             setSubmitError(t("appointment.submitError"))
         } finally {
@@ -380,6 +389,7 @@ export default function AppointmentScreen() {
     const handleSuccessDismiss = () => {
         setSubmitSuccess(false)
         setSubmittedAppointment(null)
+        setStudySessionWasActive(false)
         resetAppointment()
     }
 
@@ -1101,6 +1111,25 @@ export default function AppointmentScreen() {
                             </NText>
                         </NButton>
                     </View>
+                )}
+                {studySessionWasActive && (
+                    <NButton
+                        color="rgba(139,92,246,0.5)"
+                        style={{ width: "100%", marginTop: 10 }}
+                        onPress={() => {
+                            handleSuccessDismiss()
+                            router.push("/study-sus" as any)
+                        }}
+                    >
+                        <NText
+                            style={[
+                                styles.calendarBtnText,
+                                { fontFamily: fonts.bold },
+                            ]}
+                        >
+                            {t("study.appointment.continueSus")}
+                        </NText>
+                    </NButton>
                 )}
             </NModal>
 
