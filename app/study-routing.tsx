@@ -1106,7 +1106,7 @@ export default function StudyRoutingScreen() {
     }, [isRunning])
 
     const exportJson = useCallback(() => {
-        if (!isDone || !Platform.OS === "web") return
+        if (!isDone || Platform.OS !== "web") return
         const doneResults = results.filter((r) => r.status === "done")
         const stats = computeStats(doneResults)
         const payload = {

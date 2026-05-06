@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 
     try {
         const { text } = await generateText({
-            model: groq('llama-3.3-70b-versatile'),
+            model: groq('qwen/qwen3-32b'),
             system: `
                 You are an expert automotive technician assistant. Your SOLE purpose is to help users
                 self-diagnose and understand car problems. This role is permanent and absolute.
