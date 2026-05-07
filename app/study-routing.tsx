@@ -344,35 +344,54 @@ function checkKeywordIntent(text: string): Intent | null {
 
 async function callChat(
     messages: { role: string; content: string }[],
+    retries = 3,
 ): Promise<{ intent: Intent; confidence: number; reply: string }> {
-    const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            messages,
-            vehicleInfo: {
-                make: null,
-                model: null,
-                year: null,
-                mileage: null,
-                warningLights: null,
-            },
-            userId: "study-routing-researcher",
-            conversationId: `routing_study_${Date.now()}_${Math.random()
-                .toString(36)
-                .slice(2)}`,
-        }),
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    return {
-        intent: (["appointment", "shop", "map", "chat"].includes(data.intent)
-            ? data.intent
-            : "chat") as Intent,
-        confidence:
-            typeof data.confidence === "number" ? data.confidence : 0,
-        reply: data.reply || "",
+    let lastError: Error | null = null
+    for (let attempt = 0; attempt < retries; attempt++) {
+        if (attempt > 0) {
+            // Exponential backoff: 2 s, 4 s, 8 s …
+            await new Promise((r) => setTimeout(r, 2000 * Math.pow(2, attempt - 1)))
+        }
+        try {
+            const res = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    messages,
+                    vehicleInfo: {
+                        make: null,
+                        model: null,
+                        year: null,
+                        mileage: null,
+                        warningLights: null,
+                    },
+                    userId: "study-routing-researcher",
+                    conversationId: `routing_study_${Date.now()}_${Math.random()
+                        .toString(36)
+                        .slice(2)}`,
+                }),
+            })
+            if (!res.ok) {
+                lastError = new Error(`HTTP ${res.status}`)
+                // Don't retry client errors (4xx), only server errors (5xx)
+                if (res.status < 500) throw lastError
+                continue
+            }
+            const data = await res.json()
+            return {
+                intent: (["appointment", "shop", "map", "chat"].includes(data.intent)
+                    ? data.intent
+                    : "chat") as Intent,
+                confidence:
+                    typeof data.confidence === "number" ? data.confidence : 0,
+                reply: data.reply || "",
+            }
+        } catch (err) {
+            lastError = err instanceof Error ? err : new Error(String(err))
+            // Non-HTTP errors (network failure) are always retried
+        }
     }
+    throw lastError ?? new Error("callChat failed")
 }
 
 function isRoutingTriggered(intent: Intent, confidence: number): boolean {
@@ -1077,8 +1096,10 @@ export default function StudyRoutingScreen() {
                 )
             }
 
-            // Brief pause between API calls to avoid rate limiting
-            await new Promise((resolve) => setTimeout(resolve, 600))
+            // Pause between prompts to stay within Groq rate limits.
+            // Each prompt can fire up to 2 API calls; 1.5 s gives the inference
+            // endpoint enough breathing room for a 32 B model.
+            await new Promise((resolve) => setTimeout(resolve, 1500))
         }
 
         setCurrentId(null)

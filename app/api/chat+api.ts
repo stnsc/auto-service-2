@@ -151,30 +151,51 @@ export async function POST(request: Request) {
             messages: validMessages,
         });
 
-        // Parse and validate the JSON response from the AI
-        // The LLM sometimes outputs text before the JSON block, so extract it
+        // Parse and validate the JSON response from the AI.
+        // Thinking models (e.g. qwen3-32b) prepend <think>...</think> blocks to their
+        // output.  Strip them before any JSON extraction so the greedy regex doesn't
+        // accidentally start matching inside the reasoning content.
+        const strippedText = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
         let parsed;
         try {
-            parsed = JSON.parse(text);
+            parsed = JSON.parse(strippedText);
         } catch {
-            // Try to extract JSON object from the text
-            const jsonMatch = text.match(/\{[\s\S]*\}/)
-            if (jsonMatch) {
+            // Try to extract the last (outermost) JSON object from the stripped text.
+            // Using the last match avoids picking up partial JSON fragments that
+            // sometimes appear earlier in the text.
+            const jsonMatches = [...strippedText.matchAll(/\{[\s\S]*?\}/g)];
+            // Walk matches and find the first one that is actually valid JSON
+            let found = false;
+            for (let i = jsonMatches.length - 1; i >= 0; i--) {
                 try {
-                    parsed = JSON.parse(jsonMatch[0])
+                    parsed = JSON.parse(jsonMatches[i][0]);
+                    found = true;
+                    break;
                 } catch {
-                    console.error('Failed to parse extracted JSON:', text);
+                    // not valid JSON on its own, keep trying
+                }
+            }
+            // Fallback: greedy match on the stripped text (original behaviour)
+            if (!found) {
+                const greedyMatch = strippedText.match(/\{[\s\S]*\}/);
+                if (greedyMatch) {
+                    try {
+                        parsed = JSON.parse(greedyMatch[0]);
+                    } catch {
+                        console.error('Failed to parse extracted JSON:', text);
+                        return new Response(
+                            JSON.stringify({ error: 'Invalid response format from AI' }),
+                            { status: 500, headers: { 'Content-Type': 'application/json' } }
+                        );
+                    }
+                } else {
+                    console.error('No JSON found in AI response:', text);
                     return new Response(
                         JSON.stringify({ error: 'Invalid response format from AI' }),
                         { status: 500, headers: { 'Content-Type': 'application/json' } }
                     );
                 }
-            } else {
-                console.error('No JSON found in AI response:', text);
-                return new Response(
-                    JSON.stringify({ error: 'Invalid response format from AI' }),
-                    { status: 500, headers: { 'Content-Type': 'application/json' } }
-                );
             }
         }
 
