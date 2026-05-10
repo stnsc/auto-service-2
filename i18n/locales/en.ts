@@ -682,6 +682,10 @@ const en = {
             noTransitions: "No transitions recorded.",
             exportData: "EXPORT DATA",
             downloadJson: "Download JSON",
+            uploadDynamo: "Upload to Database",
+            uploading: "Uploading…",
+            uploadSuccess: "Uploaded Successfully",
+            uploadError: "Upload Failed — Tap to Retry",
             copyClipboard: "Copy to Clipboard",
             benchmarkNote:
                 "← Below average · Average (68) · Good (80) · Excellent (90+) →",

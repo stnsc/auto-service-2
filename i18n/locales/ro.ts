@@ -683,6 +683,10 @@ const ro = {
             noTransitions: "Nu s-au înregistrat tranziții.",
             exportData: "EXPORTARE DATE",
             downloadJson: "Descarcă JSON",
+            uploadDynamo: "Încarcă în Baza de Date",
+            uploading: "Se încarcă…",
+            uploadSuccess: "Încărcat cu Succes",
+            uploadError: "Eroare la Încărcare — Apasă pentru Reîncercare",
             copyClipboard: "Copiază în Clipboard",
             benchmarkNote:
                 "← Sub medie · Medie (68) · Bun (80) · Excelent (90+) →",

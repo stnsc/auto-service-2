@@ -5,6 +5,7 @@ import {
     Platform,
     Pressable,
 } from "react-native"
+import { useState } from "react"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
@@ -142,6 +143,7 @@ export default function StudyResultsScreen() {
     const router = useRouter()
     const { t } = useTranslation()
     const { session, computeMetrics, exportData, clearSession } = useStudyContext()
+    const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "success" | "error">("idle")
 
     const metrics: StudyMetrics | null = computeMetrics()
 
@@ -177,18 +179,21 @@ export default function StudyResultsScreen() {
         }
     }
 
-    const downloadJson = () => {
-        const data = exportData()
-        if (Platform.OS === "web") {
-            try {
-                const blob = new Blob([data], { type: "application/json" })
-                const url = URL.createObjectURL(blob)
-                const a = document.createElement("a")
-                a.href = url
-                a.download = `study_${session?.participantId ?? "unknown"}_${session?.group ?? "?"}.json`
-                a.click()
-                URL.revokeObjectURL(url)
-            } catch {}
+    const uploadToDynamoDB = async () => {
+        if (uploadStatus === "uploading" || uploadStatus === "success") return
+        setUploadStatus("uploading")
+        try {
+            const data = exportData()
+            const res = await fetch("/api/study-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: data,
+            })
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            setUploadStatus("success")
+        } catch (err) {
+            console.error("Failed to upload study session:", err)
+            setUploadStatus("error")
         }
     }
 
@@ -452,13 +457,27 @@ export default function StudyResultsScreen() {
                 {t("study.results.exportData")}
             </NText>
             <NButton
-                color={theme.accent}
-                onPress={downloadJson}
+                color={
+                    uploadStatus === "success"
+                        ? "#22c55e"
+                        : uploadStatus === "error"
+                        ? "#ef4444"
+                        : theme.accent
+                }
+                onPress={uploadToDynamoDB}
                 style={styles.exportBtn}
             >
                 <View style={styles.btnInner}>
                     <Ionicons
-                        name="download-outline"
+                        name={
+                            uploadStatus === "success"
+                                ? "checkmark-circle-outline"
+                                : uploadStatus === "error"
+                                ? "alert-circle-outline"
+                                : uploadStatus === "uploading"
+                                ? "cloud-upload-outline"
+                                : "cloud-upload-outline"
+                        }
                         size={18}
                         color="#fff"
                         style={{ marginRight: 8 }}
@@ -469,7 +488,13 @@ export default function StudyResultsScreen() {
                             { color: "#fff", fontFamily: fonts.bold },
                         ]}
                     >
-                        {t("study.results.downloadJson")}
+                        {uploadStatus === "success"
+                            ? t("study.results.uploadSuccess")
+                            : uploadStatus === "error"
+                            ? t("study.results.uploadError")
+                            : uploadStatus === "uploading"
+                            ? t("study.results.uploading")
+                            : t("study.results.uploadDynamo")}
                     </NText>
                 </View>
             </NButton>
