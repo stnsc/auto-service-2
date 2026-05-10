@@ -1,4 +1,4 @@
-import {
+﻿import {
     View,
     StyleSheet,
     ScrollView,
@@ -8,11 +8,11 @@ import {
 import { useState } from "react"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
-import { NButton } from "../components/replacements/NButton"
-import { NText } from "../components/replacements/NText"
-import { useTheme } from "../context/ThemeContext"
-import { useStudyContext, computeSusScore } from "../context/StudyContext"
-import { fonts } from "../theme"
+import { NButton } from "../../components/replacements/NButton"
+import { NText } from "../../components/replacements/NText"
+import { useTheme } from "../../context/ThemeContext"
+import { useStudyContext, computeSusScore } from "../../context/StudyContext"
+import { fonts } from "../../theme"
 
 // ─── SUS questions and Likert labels come from i18n translations ──────────────
 
@@ -133,7 +133,7 @@ export default function StudySusScreen() {
             return
         }
         saveSusAnswers(answers as number[])
-        router.replace("/study-results" as any)
+        router.replace("/study/results" as any)
     }
 
     const answeredCount = answers.filter((a) => a !== null).length

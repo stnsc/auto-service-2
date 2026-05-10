@@ -1,4 +1,4 @@
-import {
+﻿import {
     View,
     StyleSheet,
     ScrollView,
@@ -9,15 +9,15 @@ import { useState } from "react"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
-import { NButton } from "../components/replacements/NButton"
-import { NText } from "../components/replacements/NText"
-import { GlassCard } from "../components/replacements/GlassCard"
-import { useTheme } from "../context/ThemeContext"
+import { NButton } from "../../components/replacements/NButton"
+import { NText } from "../../components/replacements/NText"
+import { GlassCard } from "../../components/replacements/GlassCard"
+import { useTheme } from "../../context/ThemeContext"
 import {
     useStudyContext,
     StudyMetrics,
-} from "../context/StudyContext"
-import { fonts } from "../theme"
+} from "../../context/StudyContext"
+import { fonts } from "../../theme"
 
 // ─── Helper components ────────────────────────────────────────────────────────
 
@@ -199,7 +199,7 @@ export default function StudyResultsScreen() {
 
     const handleNewSession = () => {
         clearSession()
-        router.replace("/study-setup" as any)
+        router.replace("/study" as any)
     }
 
     if (!session) {
@@ -215,7 +215,7 @@ export default function StudyResultsScreen() {
                 </NText>
                 <NButton
                     style={{ marginTop: 16 }}
-                    onPress={() => router.replace("/study-setup" as any)}
+                    onPress={() => router.replace("/study" as any)}
                 >
                     <NText style={{ color: theme.text, fontFamily: fonts.bold }}>
                         {t("study.results.startNew")}

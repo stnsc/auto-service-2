@@ -17,6 +17,7 @@ const TABS: SidebarItem[] = [
     { key: "users", label: "Users", icon: "people-outline" },
     { key: "feedback", label: "Feedback", icon: "chatbubble-ellipses-outline" },
     { key: "study", label: "Study Case 1", icon: "flask-outline" },
+    { key: "study-eval", label: "Study Case 2", icon: "star-outline" },
 ]
 
 const ROUTES: Record<string, string> = {
@@ -26,6 +27,7 @@ const ROUTES: Record<string, string> = {
     users: "/master-admin/users",
     feedback: "/master-admin/feedback",
     study: "/master-admin/study",
+    "study-eval": "/master-admin/study-eval",
 }
 
 const PAGE_TITLES: Record<string, string> = {
@@ -35,6 +37,7 @@ const PAGE_TITLES: Record<string, string> = {
     "/master-admin/users": "Users",
     "/master-admin/feedback": "Feedback",
     "/master-admin/study": "Study Case 1 — SUS Data",
+    "/master-admin/study-eval": "Study Case 2 — Blind Evaluation Ratings",
 }
 
 export default function MasterAdminLayout() {

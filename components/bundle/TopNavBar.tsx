@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+﻿import React, { useEffect, useState } from "react"
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
 import { NContextMenu } from "../replacements/NContextMenu"
@@ -103,7 +103,7 @@ export const TopNavBar = () => {
             return
         }
         if (key === "study") {
-            router.push("/study-setup" as any)
+            router.push("/study" as any)
             return
         }
         if (key === "github") {

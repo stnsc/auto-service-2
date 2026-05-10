@@ -1,4 +1,4 @@
-import {
+﻿import {
     View,
     ScrollView,
     StyleSheet,
@@ -9,11 +9,11 @@ import {
 import { useState, useCallback } from "react"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { NButton } from "../components/replacements/NButton"
-import { NText } from "../components/replacements/NText"
-import { GlassCard } from "../components/replacements/GlassCard"
-import { useTheme } from "../context/ThemeContext"
-import { fonts } from "../theme"
+import { NButton } from "../../components/replacements/NButton"
+import { NText } from "../../components/replacements/NText"
+import { GlassCard } from "../../components/replacements/GlassCard"
+import { useTheme } from "../../context/ThemeContext"
+import { fonts } from "../../theme"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

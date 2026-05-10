@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native"
+﻿import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native"
 import { useState, useEffect, useMemo, useCallback } from "react"
 import type { ServiceType } from "../types/CarService"
 import { TYPE_COLORS } from "../../data/carServicesMock"
@@ -1118,7 +1118,7 @@ export default function AppointmentScreen() {
                         style={{ width: "100%", marginTop: 10 }}
                         onPress={() => {
                             handleSuccessDismiss()
-                            router.push("/study-sus" as any)
+                            router.push("/study/sus" as any)
                         }}
                     >
                         <NText

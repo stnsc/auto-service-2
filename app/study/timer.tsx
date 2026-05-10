@@ -1,14 +1,14 @@
-import { View, StyleSheet, Platform } from "react-native"
+﻿import { View, StyleSheet, Platform } from "react-native"
 import { useEffect, useState } from "react"
 import { useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { Ionicons } from "@expo/vector-icons"
-import { NButton } from "../components/replacements/NButton"
-import { NText } from "../components/replacements/NText"
-import { GlassCard } from "../components/replacements/GlassCard"
-import { useTheme } from "../context/ThemeContext"
-import { useStudyContext } from "../context/StudyContext"
-import { fonts } from "../theme"
+import { NButton } from "../../components/replacements/NButton"
+import { NText } from "../../components/replacements/NText"
+import { GlassCard } from "../../components/replacements/GlassCard"
+import { useTheme } from "../../context/ThemeContext"
+import { useStudyContext } from "../../context/StudyContext"
+import { fonts } from "../../theme"
 
 export default function StudyTimerScreen() {
     const { theme } = useTheme()
@@ -35,12 +35,12 @@ export default function StudyTimerScreen() {
 
     const handleComplete = () => {
         completeSession()
-        router.replace("/study-sus" as any)
+        router.replace("/study/sus" as any)
     }
 
     const handleAbandon = () => {
         abandonSession()
-        router.replace("/study-sus" as any)
+        router.replace("/study/sus" as any)
     }
 
     return (

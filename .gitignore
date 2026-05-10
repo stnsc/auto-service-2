@@ -5,3 +5,4 @@ dist
 .VSCodeCounter
 .github
 scripts
+.gitignore

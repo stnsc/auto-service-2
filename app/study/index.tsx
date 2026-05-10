@@ -1,4 +1,4 @@
-import {
+﻿import {
     View,
     StyleSheet,
     ScrollView,
@@ -9,13 +9,13 @@ import { useState } from "react"
 import { useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
-import { NButton } from "../components/replacements/NButton"
-import { NText } from "../components/replacements/NText"
-import { NInput } from "../components/replacements/NInput"
-import { GlassCard } from "../components/replacements/GlassCard"
-import { useTheme } from "../context/ThemeContext"
-import { useStudyContext, StudyGroup } from "../context/StudyContext"
-import { fonts } from "../theme"
+import { NButton } from "../../components/replacements/NButton"
+import { NText } from "../../components/replacements/NText"
+import { NInput } from "../../components/replacements/NInput"
+import { GlassCard } from "../../components/replacements/GlassCard"
+import { useTheme } from "../../context/ThemeContext"
+import { useStudyContext, StudyGroup } from "../../context/StudyContext"
+import { fonts } from "../../theme"
 
 
 function OptionPill({
@@ -92,7 +92,7 @@ export default function StudySetupScreen() {
             ageGroup: ageGroup!,
             serviceTaskFrequency: frequency!,
         })
-        router.replace(group === "A" ? "/(tabs)/chat" : "/study-timer" as any)
+        router.replace(group === "A" ? "/(tabs)/chat" : "/study/timer" as any)
     }
 
     return (
@@ -282,6 +282,39 @@ export default function StudySetupScreen() {
                 {t("study.setup.footer")}
             </NText>
 
+            {/* ── Study Case 2: Blind Quality Evaluation ───────────────────── */}
+            <GlassCard
+                color="#F59E0B"
+                borderRadius={12}
+                style={styles.routingSectionOuter}
+                innerStyle={styles.routingSectionInner}
+            >
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <Ionicons name="eye-off-outline" size={16} color="#F59E0B" />
+                    <NText style={[styles.routingLabel, { color: "#F59E0B", fontFamily: fonts.bold }]}>
+                        STUDY CASE 2
+                    </NText>
+                </View>
+                <NText style={[styles.routingTitle, { color: theme.text, fontFamily: fonts.bold }]}>
+                    Blind Response Evaluation
+                </NText>
+                <NText style={[styles.routingHint, { color: theme.textMuted }]}>
+                    Rate 40 automotive AI responses on accuracy, helpfulness, and clarity. Model identities are hidden. Takes ~10 minutes.
+                </NText>
+                <NButton
+                    color="#F59E0B"
+                    onPress={() => router.push("/study/eval" as any)}
+                    style={{ marginTop: 10 }}
+                >
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                        <Ionicons name="star-outline" size={14} color="#fff" />
+                        <NText style={{ color: "#fff", fontFamily: fonts.bold, fontSize: 14 }}>
+                            {t("study.eval.openEval")}
+                        </NText>
+                    </View>
+                </NButton>
+            </GlassCard>
+
             {/* ── Study Case 3: Intent Routing ─────────────────────────────── */}
             <GlassCard
                 color="#8B5CF6"
@@ -303,7 +336,7 @@ export default function StudySetupScreen() {
                 </NText>
                 <NButton
                     color="#8B5CF6"
-                    onPress={() => router.push("/study-routing" as any)}
+                    onPress={() => router.push("/study/routing" as any)}
                     style={{ marginTop: 10 }}
                 >
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>

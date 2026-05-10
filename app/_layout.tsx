@@ -1,4 +1,4 @@
-import {
+﻿import {
     Platform,
     Image,
     View,
@@ -197,7 +197,7 @@ function AuthGatedLayout() {
 
     const isAdmin =
         pathname.startsWith("/admin") || pathname.startsWith("/master-admin")
-    const isStudy = pathname.startsWith("/study-")
+    const isStudy = pathname.startsWith("/study")
     const isAuth = [
         "/login",
         "/signup",
@@ -434,7 +434,7 @@ function AuthGatedLayout() {
                             onConfirm={() => {
                                 abandonSession()
                                 setShowAbandonConfirm(false)
-                                router.push("/study-sus" as any)
+                                router.push("/study/sus" as any)
                             }}
                         >
                             <NText style={modalStyles.text}>
