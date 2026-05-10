@@ -251,6 +251,7 @@ const en = {
         typeTowing: "Towing",
         noResults: "No services match this filter.",
         searchPlaceholder: "Search location...",
+        allTypes: "All Service Types",
     },
     carousel: {
         getDirections: "Get Directions",
@@ -262,6 +263,7 @@ const en = {
         chatHistory: "Chat History",
         reportBug: "Report Bug / Feedback",
         adminPanel: "Admin Panel",
+        studySetup: "Case Studies",
         logout: "Logout",
     },
     feedback: {
@@ -610,6 +612,8 @@ const en = {
         setup: {
             title: "Study Setup",
             subtitle: "A/B Usability Study — Pilot Session",
+            caseTitle: "Case Study 1 — Booking Flow Usability",
+            caseDescription: "The participant's task is to successfully book a car service appointment using the app. The session is timed from the start until the confirmation screen appears (or until the participant gives up). Group A uses the AI chat assistant; Group B does not use the app at all and tries to find a service on their own.",
             participantId: "Participant ID",
             participantIdPlaceholder: "e.g. P01",
             groupLabel: "Study Group",

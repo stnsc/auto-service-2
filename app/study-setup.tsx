@@ -101,6 +101,14 @@ export default function StudySetupScreen() {
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
         >
+            {/* Back button */}
+            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={20} color={theme.textMuted} />
+                <NText style={[styles.backLabel, { color: theme.textMuted }]}>
+                    Back
+                </NText>
+            </Pressable>
+
             {/* Header */}
             <View style={styles.header}>
                 <View
@@ -125,6 +133,19 @@ export default function StudySetupScreen() {
                 </NText>
                 <NText style={[styles.subtitle, { color: theme.textMuted }]}>
                     {t("study.setup.subtitle")}
+                </NText>
+            </View>
+
+            {/* Study Case 1 description */}
+            <View style={[styles.caseCard, { borderColor: theme.accentSubtle, backgroundColor: theme.accentSubtle }]}>
+                <View style={styles.caseCardHeader}>
+                    <Ionicons name="information-circle-outline" size={16} color={theme.accentIcon} />
+                    <NText style={[styles.caseCardTitle, { color: theme.accentIcon, fontFamily: fonts.bold }]}>
+                        {t("study.setup.caseTitle")}
+                    </NText>
+                </View>
+                <NText style={[styles.caseCardBody, { color: theme.textMuted }]}>
+                    {t("study.setup.caseDescription")}
                 </NText>
             </View>
 
@@ -308,7 +329,7 @@ const styles = StyleSheet.create({
     header: {
         alignItems: "center",
         marginBottom: 32,
-        paddingTop: Platform.OS === "web" ? 16 : 48,
+        paddingTop: 16,
     },
     iconCircle: {
         width: 72,
@@ -328,6 +349,26 @@ const styles = StyleSheet.create({
     },
     section: {
         marginBottom: 24,
+    },
+    caseCard: {
+        borderWidth: 1,
+        borderRadius: 14,
+        padding: 14,
+        marginBottom: 28,
+        gap: 8,
+    },
+    caseCardHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+    },
+    caseCardTitle: {
+        fontSize: 13,
+    },
+    caseCardBody: {
+        fontSize: 13,
+        lineHeight: 20,
+        fontFamily: "IosevkaCharon_300Light",
     },
     label: {
         fontSize: 15,
@@ -371,6 +412,18 @@ const styles = StyleSheet.create({
         fontSize: 12,
         textAlign: "center",
         lineHeight: 18,
+    },
+    backBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        paddingTop: Platform.OS === "web" ? 8 : 48,
+        paddingBottom: 8,
+        alignSelf: "flex-start",
+    },
+    backLabel: {
+        fontSize: 14,
+        fontFamily: "IosevkaCharon_400Regular",
     },
     routingSectionOuter: {
         marginTop: 32,

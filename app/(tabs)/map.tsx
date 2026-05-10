@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     },
     carousel: {
         position: "absolute",
-        bottom: 35,
+        bottom: 90,
         left: 0,
         right: 0,
     },

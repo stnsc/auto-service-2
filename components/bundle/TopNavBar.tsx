@@ -1,15 +1,10 @@
 import React, { useEffect, useState } from "react"
-import {
-    View,
-    StyleSheet,
-    Image,
-    TouchableOpacity,
-} from "react-native"
+import { View, StyleSheet, Image, TouchableOpacity } from "react-native"
 import { useRouter } from "expo-router"
 import { NContextMenu } from "../replacements/NContextMenu"
 import { Ionicons } from "@expo/vector-icons"
 import { NText } from "../replacements/NText"
-import { fonts } from "../../theme"
+import { fonts, accentColors } from "../../theme"
 import { useAuthContext } from "../../context/AuthContext"
 import { useTheme } from "../../context/ThemeContext"
 import { useTranslation } from "react-i18next"
@@ -57,6 +52,18 @@ export const TopNavBar = () => {
             icon: <Ionicons name="time-outline" size={18} color={theme.icon} />,
         },
         {
+            key: "study",
+            label: t("topNav.studySetup"),
+            icon: (
+                <Ionicons
+                    name="school-outline"
+                    size={18}
+                    color={accentColors.purple[colorScheme].accentIcon}
+                />
+            ),
+            color: accentColors.purple[colorScheme].accentSolid,
+        },
+        {
             key: "github",
             label: t("topNav.reportBug"),
             icon: <Ionicons name="bug-outline" size={18} color={theme.icon} />,
@@ -93,6 +100,10 @@ export const TopNavBar = () => {
         }
         if (key === "history") {
             router.push("/history" as any)
+            return
+        }
+        if (key === "study") {
+            router.push("/study-setup" as any)
             return
         }
         if (key === "github") {

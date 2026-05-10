@@ -88,7 +88,7 @@ function LikertRow({
                             <NText
                                 style={[
                                     styles.scaleLabel,
-                                    { color: theme.textSubtle },
+                                    { color: theme.textMuted },
                                 ]}
                             >
                                 {likertLabels[score - 1]}
@@ -329,9 +329,9 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
     scaleLabel: {
-        fontSize: 9,
+        fontSize: 10,
         textAlign: "center",
-        lineHeight: 12,
+        lineHeight: 13,
     },
     error: {
         fontSize: 13,

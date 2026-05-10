@@ -28,6 +28,7 @@ export interface MenuAction {
     label: string
     icon: React.ReactNode
     destructive?: boolean
+    color?: string
 }
 
 interface NContextMenuProps {
@@ -83,7 +84,7 @@ function AnimatedMenuItem({
                             {
                                 color: action.destructive
                                     ? theme.error
-                                    : theme.text,
+                                    : action.color ?? theme.text,
                             },
                             { fontFamily: fonts.light },
                         ]}

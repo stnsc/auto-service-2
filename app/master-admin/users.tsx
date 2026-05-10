@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect } from "react"
 import {
     StyleSheet,
     View,
@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
 } from "react-native"
 import type { CognitoUser, ActivityLog } from "../api/auth/users+api"
+import type { UserDetails } from "../api/auth/user-details+api"
 import { LinearGradient } from "expo-linear-gradient"
 import { BlurView } from "expo-blur"
 import { Ionicons } from "@expo/vector-icons"
@@ -38,6 +39,16 @@ function parseUserAgent(ua: string): string {
     return ua.slice(0, 48)
 }
 
+function StatCard({ icon, label, value }: { icon: string; label: string; value: string }) {
+    return (
+        <View style={styles.statCard}>
+            <Ionicons name={icon as any} size={16} color="rgba(255,255,255,0.5)" style={{ marginBottom: 4 }} />
+            <NText style={[styles.statValue, { fontFamily: fonts.bold }]}>{value}</NText>
+            <NText style={[styles.statLabel, { fontFamily: fonts.light }]}>{label}</NText>
+        </View>
+    )
+}
+
 function ActivityModal({
     user,
     onClose,
@@ -46,18 +57,36 @@ function ActivityModal({
     onClose: () => void
 }) {
     const [logs, setLogs] = useState<ActivityLog[]>([])
+    const [details, setDetails] = useState<UserDetails | null>(null)
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         if (!user) return
         setLoading(true)
         setLogs([])
-        fetch(`/api/auth/users?email=${encodeURIComponent(user.email)}`)
-            .then((r) => r.json())
-            .then((data) => setLogs(Array.isArray(data) ? data : []))
-            .catch(() => {})
-            .finally(() => setLoading(false))
+        setDetails(null)
+
+        Promise.allSettled([
+            fetch(`/api/auth/users?email=${encodeURIComponent(user.email)}`).then((r) => r.json()),
+            fetch(`/api/auth/user-details?email=${encodeURIComponent(user.email)}`).then((r) => r.json()),
+        ]).then(([logsRes, detailsRes]) => {
+            if (logsRes.status === "fulfilled") {
+                setLogs(Array.isArray(logsRes.value) ? logsRes.value : [])
+            }
+            if (detailsRes.status === "fulfilled" && detailsRes.value && !detailsRes.value.error) {
+                setDetails(detailsRes.value as UserDetails)
+            }
+        }).finally(() => setLoading(false))
     }, [user?.email])
+
+    const profile = details?.profile
+    const fullName = profile
+        ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") || "—"
+        : "—"
+    const phone = profile?.phoneNumber || "—"
+    const vehicles = profile?.vehicles ?? []
+    const applications = details?.applications ?? []
+    const appointmentCount = details?.appointmentCount ?? 0
 
     return (
         <NModal
@@ -71,47 +100,119 @@ function ActivityModal({
                 Joined {formatDate(user?.createdAt ?? "")}
             </NText>
 
-            <NText style={[styles.sectionLabel, { fontFamily: fonts.medium }]}>
-                Login History
-            </NText>
-
             {loading ? (
                 <View style={styles.loadingRow}>
                     <ActivityIndicator color="rgba(255,255,255,0.5)" size="small" />
                 </View>
-            ) : logs.length === 0 ? (
-                <NText style={[styles.emptyText, { fontFamily: fonts.light }]}>
-                    No login activity recorded.
-                </NText>
             ) : (
-                logs.map((log, i) => (
-                    <View key={i} style={styles.logEntry}>
-                        <View style={styles.logLeft}>
-                            <Ionicons
-                                name={
-                                    log.payload?.provider === "google"
-                                        ? "logo-google"
-                                        : "log-in-outline"
-                                }
-                                size={16}
-                                color="rgba(255,255,255,0.5)"
-                            />
-                        </View>
-                        <View style={styles.logBody}>
-                            <NText style={[styles.logTime, { fontFamily: fonts.medium }]}>
-                                {formatDate(log.timestamp)}
-                            </NText>
-                            <NText style={[styles.logMeta, { fontFamily: fonts.light }]}>
-                                {parseUserAgent(log.payload?.userAgent ?? "")}
-                                {log.payload?.ip ? ` · ${log.payload.ip}` : ""}
-                                {log.payload?.location?.country &&
-                                log.payload.location.country !== "unknown"
-                                    ? ` · ${log.payload.location.country}`
-                                    : ""}
-                            </NText>
-                        </View>
+                <>
+                    <View style={styles.statsRow}>
+                        <StatCard icon="person-outline" label="Name" value={fullName} />
+                        <StatCard icon="call-outline" label="Phone" value={phone} />
+                        <StatCard icon="calendar-outline" label="Appointments" value={String(appointmentCount)} />
                     </View>
-                ))
+
+                    {vehicles.length > 0 && (
+                        <>
+                            <NText style={[styles.sectionLabel, { fontFamily: fonts.medium }]}>
+                                Vehicles ({vehicles.length})
+                            </NText>
+                            {vehicles.map((v) => (
+                                <View key={v.id} style={styles.logEntry}>
+                                    <View style={styles.logLeft}>
+                                        <Ionicons name="car-outline" size={15} color="rgba(255,255,255,0.5)" />
+                                    </View>
+                                    <View style={styles.logBody}>
+                                        <NText style={[styles.logTime, { fontFamily: fonts.medium }]}>
+                                            {[v.year, v.make, v.model].filter(Boolean).join(" ")}
+                                            {v.nickname ? ` · ${v.nickname}` : ""}
+                                        </NText>
+                                        <NText style={[styles.logMeta, { fontFamily: fonts.light }]}>
+                                            {[v.licensePlate, v.fuelType, v.transmission].filter(Boolean).join(" · ")}
+                                        </NText>
+                                    </View>
+                                    {v.isPrimary && (
+                                        <View style={styles.primaryBadge}>
+                                            <NText style={[styles.badgeText, { fontFamily: fonts.medium }]}>primary</NText>
+                                        </View>
+                                    )}
+                                </View>
+                            ))}
+                        </>
+                    )}
+
+                    {applications.length > 0 && (
+                        <>
+                            <NText style={[styles.sectionLabel, { fontFamily: fonts.medium }]}>
+                                Service Applications ({applications.length})
+                            </NText>
+                            {applications.map((app) => (
+                                <View key={app.applicationId} style={styles.logEntry}>
+                                    <View style={styles.logLeft}>
+                                        <Ionicons name="business-outline" size={15} color="rgba(255,255,255,0.5)" />
+                                    </View>
+                                    <View style={styles.logBody}>
+                                        <NText style={[styles.logTime, { fontFamily: fonts.medium }]}>
+                                            {app.serviceName}
+                                        </NText>
+                                        <NText style={[styles.logMeta, { fontFamily: fonts.light }]}>
+                                            {app.address}
+                                            {app.createdAt ? ` · ${formatDate(app.createdAt)}` : ""}
+                                        </NText>
+                                    </View>
+                                    <View style={[
+                                        styles.statusBadge,
+                                        app.status === "approved" && styles.statusApproved,
+                                        app.status === "rejected" && styles.statusRejected,
+                                    ]}>
+                                        <NText style={[styles.badgeText, { fontFamily: fonts.medium }]}>
+                                            {app.status}
+                                        </NText>
+                                    </View>
+                                </View>
+                            ))}
+                        </>
+                    )}
+
+                    <NText style={[styles.sectionLabel, { fontFamily: fonts.medium }]}>
+                        Login History
+                    </NText>
+
+                    {logs.length === 0 ? (
+                        <NText style={[styles.emptyText, { fontFamily: fonts.light }]}>
+                            No login activity recorded.
+                        </NText>
+                    ) : (
+                        logs.map((log, i) => (
+                            <View key={i} style={styles.logEntry}>
+                                <View style={styles.logLeft}>
+                                    <Ionicons
+                                        name={
+                                            log.payload?.provider === "google"
+                                                ? "logo-google"
+                                                : "log-in-outline"
+                                        }
+                                        size={16}
+                                        color="rgba(255,255,255,0.5)"
+                                    />
+                                </View>
+                                <View style={styles.logBody}>
+                                    <NText style={[styles.logTime, { fontFamily: fonts.medium }]}>
+                                        {formatDate(log.timestamp)}
+                                    </NText>
+                                    <NText style={[styles.logMeta, { fontFamily: fonts.light }]}>
+                                        {parseUserAgent(log.payload?.userAgent ?? "")}
+                                        {log.payload?.ip ? ` · ${log.payload.ip}` : ""}
+                                        {log.payload?.location?.country &&
+                                        log.payload.location.country !== "unknown"
+                                            ? ` · ${log.payload.location.country}`
+                                            : ""}
+                                    </NText>
+                                </View>
+                            </View>
+                        ))
+                    )}
+                </>
             )}
         </NModal>
     )
@@ -398,13 +499,31 @@ const styles = StyleSheet.create({
         textTransform: "uppercase" as const,
         letterSpacing: 1,
         marginBottom: 12,
+        marginTop: 20,
     },
+    statsRow: {
+        flexDirection: "row",
+        gap: 10,
+        marginBottom: 4,
+    },
+    statCard: {
+        flex: 1,
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderRadius: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        alignItems: "center",
+        gap: 2,
+    },
+    statValue: { color: "#ffffff", fontSize: 14, textAlign: "center" as const },
+    statLabel: { color: "rgba(255,255,255,0.45)", fontSize: 11, textAlign: "center" as const },
     logEntry: {
         flexDirection: "row",
         gap: 12,
         paddingVertical: 10,
         borderBottomWidth: StyleSheet.hairlineWidth,
         borderBottomColor: "rgba(255,255,255,0.08)",
+        alignItems: "center",
     },
     logLeft: {
         width: 24,
@@ -414,4 +533,18 @@ const styles = StyleSheet.create({
     logBody: { flex: 1, gap: 3 },
     logTime: { color: "#ffffff", fontSize: 13 },
     logMeta: { color: "rgba(255,255,255,0.45)", fontSize: 12 },
+    primaryBadge: {
+        backgroundColor: "rgba(33,168,112,0.5)",
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        borderRadius: 7,
+    },
+    statusBadge: {
+        backgroundColor: "rgba(255,255,255,0.15)",
+        paddingHorizontal: 7,
+        paddingVertical: 2,
+        borderRadius: 7,
+    },
+    statusApproved: { backgroundColor: "rgba(33,168,112,0.5)" },
+    statusRejected: { backgroundColor: "rgba(220,50,50,0.5)" },
 })

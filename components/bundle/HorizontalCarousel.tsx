@@ -14,7 +14,7 @@ import {
     GestureHandlerRootView,
     PanGesture,
 } from "react-native-gesture-handler"
-import { NButton } from "../replacements/NButton"
+import { NModal } from "../replacements/NModal"
 import { GestureContext } from "../../context/GestureContext"
 import { NText } from "../replacements/NText"
 import { CarService } from "../../app/types/CarService"
@@ -25,12 +25,106 @@ import { router, useRouter } from "expo-router"
 import { useTranslation } from "react-i18next"
 import { StarRating } from "./StarRating"
 import { useTheme } from "../../context/ThemeContext"
+import { NButton } from "../replacements/NButton"
 import "../../i18n"
 
 interface HorizontalCarouselProps {
     services: CarService[]
     activeIndex: number
     onIndexChange: (index: number) => void
+}
+
+const MAX_VISIBLE_TAGS = 3
+
+function TagRow({ types, name }: { types: string[]; name: string }) {
+    const [modalVisible, setModalVisible] = useState(false)
+    const { t } = useTranslation()
+    const { theme } = useTheme()
+    const overflow = types.length - MAX_VISIBLE_TAGS
+
+    return (
+        <>
+            <View
+                style={{
+                    alignSelf: "center",
+                    flexDirection: "row",
+                    flexWrap: "nowrap",
+                    gap: 4,
+                    marginBottom: -14,
+                    zIndex: 1,
+                }}
+            >
+                {types.slice(0, MAX_VISIBLE_TAGS).map((st) => (
+                    <View
+                        key={st}
+                        style={{
+                            backgroundColor:
+                                TYPE_COLORS[st as keyof typeof TYPE_COLORS] ??
+                                theme.accent,
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 20,
+                        }}
+                    >
+                        <NText style={{ fontSize: 12, fontFamily: fonts.bold }}>
+                            {t(`settings.types.${st}`)}
+                        </NText>
+                    </View>
+                ))}
+                {overflow > 0 && (
+                    <Pressable
+                        onPress={() => setModalVisible(true)}
+                        style={{
+                            backgroundColor: "rgba(255,255,255,0.18)",
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 20,
+                        }}
+                    >
+                        <NText style={{ fontSize: 12, fontFamily: fonts.bold }}>
+                            +{overflow}
+                        </NText>
+                    </Pressable>
+                )}
+            </View>
+            <NModal
+                visible={modalVisible}
+                onDismiss={() => setModalVisible(false)}
+                title={`${t("map.allTypes")} — ${name}`}
+            >
+                <View
+                    style={{
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        gap: 8,
+                        justifyContent: "center",
+                        paddingTop: 4,
+                    }}
+                >
+                    {types.map((st) => (
+                        <View
+                            key={st}
+                            style={{
+                                backgroundColor:
+                                    TYPE_COLORS[
+                                        st as keyof typeof TYPE_COLORS
+                                    ] ?? theme.accent,
+                                paddingHorizontal: 12,
+                                paddingVertical: 6,
+                                borderRadius: 20,
+                            }}
+                        >
+                            <NText
+                                style={{ fontSize: 13, fontFamily: fonts.bold }}
+                            >
+                                {t(`settings.types.${st}`)}
+                            </NText>
+                        </View>
+                    ))}
+                </View>
+            </NModal>
+        </>
+    )
 }
 
 // Velocity threshold to trigger a flick to the next/prev card
@@ -197,38 +291,10 @@ export default function HorizontalCarousel({
                                                 },
                                             ]}
                                         >
-                                            <View
-                                                style={{
-                                                    alignSelf: "center",
-                                                    flexDirection: "row",
-                                                    gap: 4,
-                                                    marginBottom: -14,
-                                                    zIndex: 1,
-                                                }}
-                                            >
-                                                {(service.type ?? []).map((st) => (
-                                                    <View
-                                                        key={st}
-                                                        style={{
-                                                            backgroundColor: TYPE_COLORS[st as keyof typeof TYPE_COLORS] ?? theme.accent,
-                                                            paddingHorizontal: 10,
-                                                            paddingVertical: 4,
-                                                            borderRadius: 20,
-                                                        }}
-                                                    >
-                                                        <NText
-                                                            style={{
-                                                                fontSize: 12,
-                                                                fontFamily: fonts.bold,
-                                                            }}
-                                                        >
-                                                            {t(
-                                                                `settings.types.${st}`,
-                                                            )}
-                                                        </NText>
-                                                    </View>
-                                                ))}
-                                            </View>
+                                            <TagRow
+                                                types={service.type ?? []}
+                                                name={service.name}
+                                            />
                                             <NButton color={theme.overlayBg}>
                                                 <View
                                                     style={{
@@ -271,13 +337,17 @@ export default function HorizontalCarousel({
                                                                 )}
                                                             </NText>
                                                         </Pressable>
-                                                        <StarRating rating={service.rating} />
+                                                        <StarRating
+                                                            rating={
+                                                                service.rating
+                                                            }
+                                                        />
                                                     </View>
                                                     <NText
                                                         style={{
                                                             fontFamily:
                                                                 fonts.bold,
-                                                            fontSize: 22,
+                                                            fontSize: 18,
                                                         }}
                                                     >
                                                         {service.name}
@@ -302,7 +372,7 @@ export default function HorizontalCarousel({
                                                             flex: 1,
                                                             justifyContent:
                                                                 "space-evenly",
-                                                            marginTop: 20,
+                                                            marginTop: 10,
                                                             flexDirection:
                                                                 "row",
                                                             gap: 8,
@@ -313,8 +383,12 @@ export default function HorizontalCarousel({
                                                             style={{ flex: 1 }}
                                                             onPress={() => {
                                                                 router.push({
-                                                                    pathname: "/appointment",
-                                                                    params: { serviceId: service.id },
+                                                                    pathname:
+                                                                        "/appointment",
+                                                                    params: {
+                                                                        serviceId:
+                                                                            service.id,
+                                                                    },
                                                                 })
                                                             }}
                                                         >
@@ -378,7 +452,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: "center",
-        paddingVertical: 40,
+        paddingVertical: 16,
     },
     title: {
         fontSize: 28,
@@ -389,7 +463,7 @@ const styles = StyleSheet.create({
     // Clipping window — overflow hidden hides the rest
     track: {
         overflow: "hidden",
-        height: 240,
+        height: 185,
     },
     // The full row of cards, laid out side by side
     row: {

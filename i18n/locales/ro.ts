@@ -251,6 +251,7 @@ const ro = {
         typeTowing: "Tractare",
         noResults: "Niciun serviciu nu corespunde acestui filtru.",
         searchPlaceholder: "Caută locație...",
+        allTypes: "Toate Tipurile de Servicii",
     },
     carousel: {
         getDirections: "Obține Direcții",
@@ -262,6 +263,7 @@ const ro = {
         chatHistory: "Istoric Chat",
         reportBug: "Raportează Eroare / Feedback",
         adminPanel: "Panou Admin",
+        studySetup: "Studii de Caz",
         logout: "Deconectare",
     },
     feedback: {
@@ -611,6 +613,8 @@ const ro = {
         setup: {
             title: "Configurare Studiu",
             subtitle: "Studiu de Utilizabilitate A/B — Sesiune Pilot",
+            caseTitle: "Studiu de Caz 1 — Programare Service",
+            caseDescription: "Sarcina participantului este să rezerve cu succes o programare la service auto folosind aplicația. Sesiunea este cronometrată de la start până la apariția ecranului de confirmare a rezervării (sau până când participantul renunță). Grupa A folosește asistentul AI de chat; Grupa B nu foloseste aplicatia DELOC si incearca sa isi gaseasca un service pe cont propriu.",
             participantId: "ID Participant",
             participantIdPlaceholder: "ex. P01",
             groupLabel: "Grupă de Studiu",
