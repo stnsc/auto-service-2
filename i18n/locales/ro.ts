@@ -7,6 +7,7 @@ const ro = {
         isRequired: "este obligatoriu",
         close: "Închide",
         cancel: "Anulează",
+        googleDepricated: "Logarea prin Google va disparea după data de 20 August 2026. Asigură-te că ai contul facut prin logarea normală dacă vrei să mai folosești această aplicație în continuare."
     },
     tabs: {
         chat: "Chat",

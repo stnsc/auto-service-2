@@ -156,16 +156,27 @@ export default function LoginScreen() {
                         style={!request ? styles.buttonDisabled : undefined}
                     >
                         <View style={styles.googleRow}>
-                            <Ionicons
-                                name="logo-google"
-                                size={18}
-                                color={theme.icon}
-                            />
                             <NText style={styles.buttonText}>
+                                <Ionicons
+                                    name="logo-google"
+                                    size={18}
+                                    color={theme.icon}
+                                    style={{padding: 10}}
+                                />
                                 {googleLoading
                                     ? t("common.signingIn")
                                     : t("common.continueWithGoogle")}
                             </NText>
+                            <View style={styles.googleDepricated}>
+                                <Ionicons
+                                name="warning"
+                                size={30}
+                                color={theme.icon}
+                                style={{padding: 10}}
+                            />
+                                <NText>{t("common.googleDepricated")}</NText>
+                                
+                            </View>
                         </View>
                     </NButton>
 
@@ -252,9 +263,17 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     googleRow: {
-        flexDirection: "row",
+        flexDirection: "column",
         alignItems: "center",
         gap: 10,
+    },
+    googleDepricated: {
+        flexDirection: "row",
+        alignItems: "center",
+        textAlign: "center",
+        backgroundColor: "#ff343465",
+        borderRadius: 10,
+        padding: 10,
     },
     dividerRow: {
         flexDirection: "row",

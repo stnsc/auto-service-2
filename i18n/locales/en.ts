@@ -7,6 +7,7 @@ const en = {
         isRequired: "is required",
         close: "Close",
         cancel: "Cancel",
+        googleDepricated: "Google Login will become unusable from the 20th of August 2026. Ensure that your account is made through regular login if you want to keep using this app."
     },
     tabs: {
         chat: "Chat",
